@@ -1,0 +1,1214 @@
+{
+  "metadata": {
+    "total_frames": 83,
+    "extraction_time": "2025-07-07T23:18:24.312220",
+    "frames_with_ball": 47,
+    "total_balls_detected": 47,
+    "coordinate_system": "original_pixel_coordinates"
+  },
+  "ball_trajectory": [
+    {
+      "frame_number": 1,
+      "timestamp": 0.041666666666666664,
+      "ball_detections": [
+        {
+          "bbox": [
+            279.7641906738281,
+            126.44963836669922,
+            316.6058654785156,
+            164.6204376220703
+          ],
+          "confidence": 0.7319517135620117,
+          "class_id": 0,
+          "center_x": 298.1850280761719,
+          "center_y": 145.5350341796875,
+          "width": 36.8416748046875,
+          "height": 38.170799255371094
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 2,
+      "timestamp": 0.08333333333333333,
+      "ball_detections": [
+        {
+          "bbox": [
+            277.58990478515625,
+            127.56321716308594,
+            314.3658752441406,
+            166.1404571533203
+          ],
+          "confidence": 0.7108946442604065,
+          "class_id": 0,
+          "center_x": 295.9779052734375,
+          "center_y": 146.85183715820312,
+          "width": 36.775970458984375,
+          "height": 38.577239990234375
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 3,
+      "timestamp": 0.125,
+      "ball_detections": [
+        {
+          "bbox": [
+            276.2160949707031,
+            128.54763793945312,
+            312.6964416503906,
+            166.8081512451172
+          ],
+          "confidence": 0.6859191656112671,
+          "class_id": 0,
+          "center_x": 294.4562683105469,
+          "center_y": 147.67788696289062,
+          "width": 36.4803466796875,
+          "height": 38.26051330566406
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 4,
+      "timestamp": 0.16666666666666666,
+      "ball_detections": [
+        {
+          "bbox": [
+            275.0604553222656,
+            130.61143493652344,
+            311.22930908203125,
+            169.33636474609375
+          ],
+          "confidence": 0.7376703023910522,
+          "class_id": 0,
+          "center_x": 293.1448974609375,
+          "center_y": 149.97390747070312,
+          "width": 36.168853759765625,
+          "height": 38.72492980957031
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 5,
+      "timestamp": 0.20833333333333334,
+      "ball_detections": [
+        {
+          "bbox": [
+            274.1268310546875,
+            131.86160278320312,
+            310.2176513671875,
+            170.77833557128906
+          ],
+          "confidence": 0.7573223114013672,
+          "class_id": 0,
+          "center_x": 292.1722412109375,
+          "center_y": 151.31997680664062,
+          "width": 36.0908203125,
+          "height": 38.91673278808594
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 6,
+      "timestamp": 0.25,
+      "ball_detections": [
+        {
+          "bbox": [
+            271.0382385253906,
+            133.27554321289062,
+            308.7153015136719,
+            172.31796264648438
+          ],
+          "confidence": 0.72311931848526,
+          "class_id": 0,
+          "center_x": 289.87677001953125,
+          "center_y": 152.7967529296875,
+          "width": 37.67706298828125,
+          "height": 39.04241943359375
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 7,
+      "timestamp": 0.2916666666666667,
+      "ball_detections": [
+        {
+          "bbox": [
+            270.14495849609375,
+            138.02133178710938,
+            307.3720397949219,
+            175.8356170654297
+          ],
+          "confidence": 0.7341357469558716,
+          "class_id": 0,
+          "center_x": 288.75848388671875,
+          "center_y": 156.928466796875,
+          "width": 37.227081298828125,
+          "height": 37.81428527832031
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 8,
+      "timestamp": 0.3333333333333333,
+      "ball_detections": [
+        {
+          "bbox": [
+            268.7169494628906,
+            142.14622497558594,
+            305.5194396972656,
+            181.4133758544922
+          ],
+          "confidence": 0.7116725444793701,
+          "class_id": 0,
+          "center_x": 287.1181945800781,
+          "center_y": 161.77980041503906,
+          "width": 36.802490234375,
+          "height": 39.26715087890625
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 9,
+      "timestamp": 0.375,
+      "ball_detections": [
+        {
+          "bbox": [
+            264.9815368652344,
+            153.27093505859375,
+            303.8345031738281,
+            192.3375244140625
+          ],
+          "confidence": 0.7617406249046326,
+          "class_id": 0,
+          "center_x": 284.40802001953125,
+          "center_y": 172.80422973632812,
+          "width": 38.85296630859375,
+          "height": 39.06658935546875
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 10,
+      "timestamp": 0.4166666666666667,
+      "ball_detections": [
+        {
+          "bbox": [
+            264.4865417480469,
+            162.28555297851562,
+            302.5359191894531,
+            201.7949981689453
+          ],
+          "confidence": 0.7278864979743958,
+          "class_id": 0,
+          "center_x": 283.51123046875,
+          "center_y": 182.040283203125,
+          "width": 38.04937744140625,
+          "height": 39.50944519042969
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 11,
+      "timestamp": 0.4583333333333333,
+      "ball_detections": [
+        {
+          "bbox": [
+            261.9522399902344,
+            171.03778076171875,
+            302.5453796386719,
+            210.8846435546875
+          ],
+          "confidence": 0.7228683829307556,
+          "class_id": 0,
+          "center_x": 282.2488098144531,
+          "center_y": 190.96121215820312,
+          "width": 40.5931396484375,
+          "height": 39.84686279296875
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 12,
+      "timestamp": 0.5,
+      "ball_detections": [
+        {
+          "bbox": [
+            262.3719482421875,
+            174.25880432128906,
+            302.3066101074219,
+            212.64794921875
+          ],
+          "confidence": 0.7513680458068848,
+          "class_id": 0,
+          "center_x": 282.33929443359375,
+          "center_y": 193.453369140625,
+          "width": 39.934661865234375,
+          "height": 38.38914489746094
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 13,
+      "timestamp": 0.5416666666666666,
+      "ball_detections": [
+        {
+          "bbox": [
+            264.00262451171875,
+            169.38217163085938,
+            303.1851501464844,
+            208.83311462402344
+          ],
+          "confidence": 0.725666344165802,
+          "class_id": 0,
+          "center_x": 283.5938720703125,
+          "center_y": 189.10763549804688,
+          "width": 39.182525634765625,
+          "height": 39.45094299316406
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 14,
+      "timestamp": 0.5833333333333334,
+      "ball_detections": [
+        {
+          "bbox": [
+            265.83795166015625,
+            161.8509979248047,
+            303.2712707519531,
+            201.50267028808594
+          ],
+          "confidence": 0.7383379936218262,
+          "class_id": 0,
+          "center_x": 284.55462646484375,
+          "center_y": 181.6768341064453,
+          "width": 37.433319091796875,
+          "height": 39.65167236328125
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 15,
+      "timestamp": 0.625,
+      "ball_detections": [
+        {
+          "bbox": [
+            264.300048828125,
+            144.44618225097656,
+            303.46014404296875,
+            184.03244018554688
+          ],
+          "confidence": 0.7546202540397644,
+          "class_id": 0,
+          "center_x": 283.8800964355469,
+          "center_y": 164.23931884765625,
+          "width": 39.16009521484375,
+          "height": 39.58625793457031
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 16,
+      "timestamp": 0.6666666666666666,
+      "ball_detections": [
+        {
+          "bbox": [
+            262.1906433105469,
+            131.26937866210938,
+            300.8198547363281,
+            169.9405059814453
+          ],
+          "confidence": 0.7441333532333374,
+          "class_id": 0,
+          "center_x": 281.5052490234375,
+          "center_y": 150.60494995117188,
+          "width": 38.62921142578125,
+          "height": 38.67112731933594
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 17,
+      "timestamp": 0.7083333333333334,
+      "ball_detections": [
+        {
+          "bbox": [
+            253.26612854003906,
+            111.72676849365234,
+            292.9307556152344,
+            149.23764038085938
+          ],
+          "confidence": 0.7041343450546265,
+          "class_id": 0,
+          "center_x": 273.09844970703125,
+          "center_y": 130.48220825195312,
+          "width": 39.66462707519531,
+          "height": 37.51087188720703
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 18,
+      "timestamp": 0.75,
+      "ball_detections": [
+        {
+          "bbox": [
+            245.834228515625,
+            97.78549194335938,
+            285.3916931152344,
+            136.3459014892578
+          ],
+          "confidence": 0.7021723985671997,
+          "class_id": 0,
+          "center_x": 265.61297607421875,
+          "center_y": 117.0656967163086,
+          "width": 39.557464599609375,
+          "height": 38.56040954589844
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 19,
+      "timestamp": 0.7916666666666666,
+      "ball_detections": [
+        {
+          "bbox": [
+            240.1912384033203,
+            89.03987884521484,
+            280.7345886230469,
+            127.54469299316406
+          ],
+          "confidence": 0.7410561442375183,
+          "class_id": 0,
+          "center_x": 260.4629211425781,
+          "center_y": 108.29228210449219,
+          "width": 40.54335021972656,
+          "height": 38.50481414794922
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 20,
+      "timestamp": 0.8333333333333334,
+      "ball_detections": [
+        {
+          "bbox": [
+            233.59425354003906,
+            80.06350708007812,
+            276.5344543457031,
+            120.55860900878906
+          ],
+          "confidence": 0.7032132148742676,
+          "class_id": 0,
+          "center_x": 255.06436157226562,
+          "center_y": 100.3110580444336,
+          "width": 42.94020080566406,
+          "height": 40.49510192871094
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 21,
+      "timestamp": 0.875,
+      "ball_detections": [
+        {
+          "bbox": [
+            233.13780212402344,
+            77.24714660644531,
+            272.3639831542969,
+            116.86736297607422
+          ],
+          "confidence": 0.6988220810890198,
+          "class_id": 0,
+          "center_x": 252.75088500976562,
+          "center_y": 97.0572509765625,
+          "width": 39.22618103027344,
+          "height": 39.620216369628906
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 22,
+      "timestamp": 0.9166666666666666,
+      "ball_detections": [
+        {
+          "bbox": [
+            228.48532104492188,
+            69.50279998779297,
+            269.1344299316406,
+            110.57394409179688
+          ],
+          "confidence": 0.7077777981758118,
+          "class_id": 0,
+          "center_x": 248.80987548828125,
+          "center_y": 90.03837585449219,
+          "width": 40.64910888671875,
+          "height": 41.071144104003906
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 23,
+      "timestamp": 0.9583333333333334,
+      "ball_detections": [
+        {
+          "bbox": [
+            227.2268829345703,
+            65.82965850830078,
+            266.3509521484375,
+            102.02286529541016
+          ],
+          "confidence": 0.7029284834861755,
+          "class_id": 0,
+          "center_x": 246.78890991210938,
+          "center_y": 83.92626190185547,
+          "width": 39.12406921386719,
+          "height": 36.193206787109375
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 24,
+      "timestamp": 1.0,
+      "ball_detections": [
+        {
+          "bbox": [
+            224.59873962402344,
+            62.726436614990234,
+            266.0279235839844,
+            99.68143463134766
+          ],
+          "confidence": 0.690656840801239,
+          "class_id": 0,
+          "center_x": 245.31332397460938,
+          "center_y": 81.20393371582031,
+          "width": 41.42918395996094,
+          "height": 36.95499801635742
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 25,
+      "timestamp": 1.0416666666666667,
+      "ball_detections": [
+        {
+          "bbox": [
+            224.05699157714844,
+            59.860713958740234,
+            264.55767822265625,
+            96.77178955078125
+          ],
+          "confidence": 0.6958222985267639,
+          "class_id": 0,
+          "center_x": 244.30734252929688,
+          "center_y": 78.31625366210938,
+          "width": 40.50068664550781,
+          "height": 36.911075592041016
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 26,
+      "timestamp": 1.0833333333333333,
+      "ball_detections": [
+        {
+          "bbox": [
+            221.09706115722656,
+            56.785221099853516,
+            264.5554504394531,
+            94.61275482177734
+          ],
+          "confidence": 0.7060542702674866,
+          "class_id": 0,
+          "center_x": 242.82626342773438,
+          "center_y": 75.69898986816406,
+          "width": 43.45838928222656,
+          "height": 37.82753372192383
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 27,
+      "timestamp": 1.125,
+      "ball_detections": [
+        {
+          "bbox": [
+            219.9106903076172,
+            53.60007858276367,
+            262.8968505859375,
+            91.3888931274414
+          ],
+          "confidence": 0.7177201509475708,
+          "class_id": 0,
+          "center_x": 241.40377807617188,
+          "center_y": 72.4944839477539,
+          "width": 42.98616027832031,
+          "height": 37.788814544677734
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 28,
+      "timestamp": 1.1666666666666667,
+      "ball_detections": [
+        {
+          "bbox": [
+            219.1379852294922,
+            50.79539489746094,
+            260.48956298828125,
+            90.59676361083984
+          ],
+          "confidence": 0.7007185816764832,
+          "class_id": 0,
+          "center_x": 239.81378173828125,
+          "center_y": 70.69607543945312,
+          "width": 41.35157775878906,
+          "height": 39.801368713378906
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 29,
+      "timestamp": 1.2083333333333333,
+      "ball_detections": [
+        {
+          "bbox": [
+            217.79376220703125,
+            46.61699295043945,
+            260.8579406738281,
+            90.72360229492188
+          ],
+          "confidence": 0.721662700176239,
+          "class_id": 0,
+          "center_x": 239.3258514404297,
+          "center_y": 68.67029571533203,
+          "width": 43.064178466796875,
+          "height": 44.10660934448242
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 30,
+      "timestamp": 1.25,
+      "ball_detections": [
+        {
+          "bbox": [
+            217.74392700195312,
+            44.76753616333008,
+            258.8166198730469,
+            80.6214828491211
+          ],
+          "confidence": 0.691470205783844,
+          "class_id": 0,
+          "center_x": 238.2802734375,
+          "center_y": 62.69451141357422,
+          "width": 41.07269287109375,
+          "height": 35.853946685791016
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 31,
+      "timestamp": 1.2916666666666667,
+      "ball_detections": [
+        {
+          "bbox": [
+            216.77772521972656,
+            40.35671615600586,
+            257.33697509765625,
+            78.52236938476562
+          ],
+          "confidence": 0.7003024816513062,
+          "class_id": 0,
+          "center_x": 237.05734252929688,
+          "center_y": 59.439544677734375,
+          "width": 40.55924987792969,
+          "height": 38.165653228759766
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 32,
+      "timestamp": 1.3333333333333333,
+      "ball_detections": [
+        {
+          "bbox": [
+            217.5405731201172,
+            36.96869659423828,
+            256.17242431640625,
+            74.84228515625
+          ],
+          "confidence": 0.7077013850212097,
+          "class_id": 0,
+          "center_x": 236.85650634765625,
+          "center_y": 55.90549087524414,
+          "width": 38.63185119628906,
+          "height": 37.87358856201172
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 33,
+      "timestamp": 1.375,
+      "ball_detections": [
+        {
+          "bbox": [
+            217.37124633789062,
+            32.292964935302734,
+            256.7418518066406,
+            72.62525939941406
+          ],
+          "confidence": 0.7018833756446838,
+          "class_id": 0,
+          "center_x": 237.05654907226562,
+          "center_y": 52.45911407470703,
+          "width": 39.37060546875,
+          "height": 40.33229446411133
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 34,
+      "timestamp": 1.4166666666666667,
+      "ball_detections": [
+        {
+          "bbox": [
+            216.62835693359375,
+            29.882726669311523,
+            257.3621826171875,
+            71.22312927246094
+          ],
+          "confidence": 0.7457593083381653,
+          "class_id": 0,
+          "center_x": 236.99526977539062,
+          "center_y": 50.55292892456055,
+          "width": 40.73382568359375,
+          "height": 41.34040069580078
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 35,
+      "timestamp": 1.4583333333333333,
+      "ball_detections": [
+        {
+          "bbox": [
+            215.79202270507812,
+            26.344221115112305,
+            257.7786560058594,
+            68.49297332763672
+          ],
+          "confidence": 0.7234222292900085,
+          "class_id": 0,
+          "center_x": 236.78533935546875,
+          "center_y": 47.41859817504883,
+          "width": 41.98663330078125,
+          "height": 42.14875030517578
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 36,
+      "timestamp": 1.5,
+      "ball_detections": [
+        {
+          "bbox": [
+            217.11378479003906,
+            22.834049224853516,
+            258.0683898925781,
+            64.15189361572266
+          ],
+          "confidence": 0.7333871126174927,
+          "class_id": 0,
+          "center_x": 237.59109497070312,
+          "center_y": 43.49297332763672,
+          "width": 40.95460510253906,
+          "height": 41.31784439086914
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 37,
+      "timestamp": 1.5416666666666667,
+      "ball_detections": [
+        {
+          "bbox": [
+            216.44908142089844,
+            19.137407302856445,
+            259.18988037109375,
+            61.11760711669922
+          ],
+          "confidence": 0.7093936204910278,
+          "class_id": 0,
+          "center_x": 237.81948852539062,
+          "center_y": 40.127506256103516,
+          "width": 42.74079895019531,
+          "height": 41.980201721191406
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 38,
+      "timestamp": 1.5833333333333333,
+      "ball_detections": [
+        {
+          "bbox": [
+            217.26126098632812,
+            15.19240665435791,
+            258.7201843261719,
+            54.860496520996094
+          ],
+          "confidence": 0.7201299667358398,
+          "class_id": 0,
+          "center_x": 237.99072265625,
+          "center_y": 35.026451110839844,
+          "width": 41.45892333984375,
+          "height": 39.6680908203125
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 39,
+      "timestamp": 1.625,
+      "ball_detections": [
+        {
+          "bbox": [
+            216.62107849121094,
+            11.824795722961426,
+            258.8395080566406,
+            53.17820358276367
+          ],
+          "confidence": 0.7084887623786926,
+          "class_id": 0,
+          "center_x": 237.73028564453125,
+          "center_y": 32.50149917602539,
+          "width": 42.21842956542969,
+          "height": 41.35340881347656
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 40,
+      "timestamp": 1.6666666666666667,
+      "ball_detections": [
+        {
+          "bbox": [
+            218.9584197998047,
+            7.3310089111328125,
+            258.6297302246094,
+            48.54058837890625
+          ],
+          "confidence": 0.7003889679908752,
+          "class_id": 0,
+          "center_x": 238.7940673828125,
+          "center_y": 27.93579864501953,
+          "width": 39.67131042480469,
+          "height": 41.20957946777344
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 41,
+      "timestamp": 1.7083333333333333,
+      "ball_detections": [
+        {
+          "bbox": [
+            219.58079528808594,
+            0.5684031844139099,
+            261.914306640625,
+            43.661739349365234
+          ],
+          "confidence": 0.73284512758255,
+          "class_id": 0,
+          "center_x": 240.74755859375,
+          "center_y": 22.115070343017578,
+          "width": 42.33351135253906,
+          "height": 43.09333801269531
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 42,
+      "timestamp": 1.75,
+      "ball_detections": [
+        {
+          "bbox": [
+            221.83642578125,
+            0.0,
+            264.5144348144531,
+            39.732295989990234
+          ],
+          "confidence": 0.7347049117088318,
+          "class_id": 0,
+          "center_x": 243.17543029785156,
+          "center_y": 19.866147994995117,
+          "width": 42.678009033203125,
+          "height": 39.732295989990234
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 43,
+      "timestamp": 1.7916666666666667,
+      "ball_detections": [
+        {
+          "bbox": [
+            224.23712158203125,
+            0.0,
+            266.3479919433594,
+            33.37190628051758
+          ],
+          "confidence": 0.696678638458252,
+          "class_id": 0,
+          "center_x": 245.2925567626953,
+          "center_y": 16.68595314025879,
+          "width": 42.110870361328125,
+          "height": 33.37190628051758
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 44,
+      "timestamp": 1.8333333333333333,
+      "ball_detections": [
+        {
+          "bbox": [
+            226.66976928710938,
+            0.0,
+            269.6231384277344,
+            26.618242263793945
+          ],
+          "confidence": 0.7069759368896484,
+          "class_id": 0,
+          "center_x": 248.14645385742188,
+          "center_y": 13.309121131896973,
+          "width": 42.953369140625,
+          "height": 26.618242263793945
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 45,
+      "timestamp": 1.875,
+      "ball_detections": [
+        {
+          "bbox": [
+            229.84805297851562,
+            0.0,
+            270.8605041503906,
+            20.966482162475586
+          ],
+          "confidence": 0.6527981758117676,
+          "class_id": 0,
+          "center_x": 250.35427856445312,
+          "center_y": 10.483241081237793,
+          "width": 41.012451171875,
+          "height": 20.966482162475586
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 46,
+      "timestamp": 1.9166666666666667,
+      "ball_detections": [
+        {
+          "bbox": [
+            234.71890258789062,
+            0.0,
+            275.13238525390625,
+            14.654881477355957
+          ],
+          "confidence": 0.4435345530509949,
+          "class_id": 0,
+          "center_x": 254.92564392089844,
+          "center_y": 7.3274407386779785,
+          "width": 40.413482666015625,
+          "height": 14.654881477355957
+        }
+      ],
+      "ball_count": 1
+    },
+    {
+      "frame_number": 47,
+      "timestamp": 1.9583333333333333,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 48,
+      "timestamp": 2.0,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 49,
+      "timestamp": 2.0416666666666665,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 50,
+      "timestamp": 2.0833333333333335,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 51,
+      "timestamp": 2.125,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 52,
+      "timestamp": 2.1666666666666665,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 53,
+      "timestamp": 2.2083333333333335,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 54,
+      "timestamp": 2.25,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 55,
+      "timestamp": 2.2916666666666665,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 56,
+      "timestamp": 2.3333333333333335,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 57,
+      "timestamp": 2.375,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 58,
+      "timestamp": 2.4166666666666665,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 59,
+      "timestamp": 2.4583333333333335,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 60,
+      "timestamp": 2.5,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 61,
+      "timestamp": 2.5416666666666665,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 62,
+      "timestamp": 2.5833333333333335,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 63,
+      "timestamp": 2.625,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 64,
+      "timestamp": 2.6666666666666665,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 65,
+      "timestamp": 2.7083333333333335,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 66,
+      "timestamp": 2.75,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 67,
+      "timestamp": 2.7916666666666665,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 68,
+      "timestamp": 2.8333333333333335,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 69,
+      "timestamp": 2.875,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 70,
+      "timestamp": 2.9166666666666665,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 71,
+      "timestamp": 2.9583333333333335,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 72,
+      "timestamp": 3.0,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 73,
+      "timestamp": 3.0416666666666665,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 74,
+      "timestamp": 3.0833333333333335,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 75,
+      "timestamp": 3.125,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 76,
+      "timestamp": 3.1666666666666665,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 77,
+      "timestamp": 3.2083333333333335,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 78,
+      "timestamp": 3.25,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 79,
+      "timestamp": 3.2916666666666665,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 80,
+      "timestamp": 3.3333333333333335,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 81,
+      "timestamp": 3.375,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 82,
+      "timestamp": 3.4166666666666665,
+      "ball_detections": [],
+      "ball_count": 0
+    },
+    {
+      "frame_number": 83,
+      "timestamp": 3.4583333333333335,
+      "ball_detections": [
+        {
+          "bbox": [
+            303.69927978515625,
+            227.78697204589844,
+            421.2792053222656,
+            334.5936584472656
+          ],
+          "confidence": 0.7882192134857178,
+          "class_id": 0,
+          "center_x": 362.4892578125,
+          "center_y": 281.1903076171875,
+          "width": 117.57992553710938,
+          "height": 106.80668640136719
+        }
+      ],
+      "ball_count": 1
+    }
+  ]
+}
