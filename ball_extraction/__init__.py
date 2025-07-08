@@ -5,13 +5,11 @@
 """
 
 from .ball_detection_layer import BallDetectionLayer
-from .ball_normalization_layer import BallNormalizationLayer
 from .ball_storage_layer import BallStorageLayer
 from .ball_extraction_pipeline import BallExtractionPipeline
 
 __all__ = [
     'BallDetectionLayer',
-    'BallNormalizationLayer',
     'BallStorageLayer', 
     'BallExtractionPipeline'
 ]

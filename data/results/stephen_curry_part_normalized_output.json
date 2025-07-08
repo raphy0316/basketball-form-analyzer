@@ -1,15 +1,15 @@
 {
   "metadata": {
     "video_path": "data\\video\\stephen_curry_part.mp4",
-    "analysis_date": "2025-07-07T23:18:24.378237",
+    "analysis_date": "2025-07-08T01:02:00.644919",
     "total_frames": 83,
     "phases_detected": [
-      "Set-up",
-      "Follow-through",
       "Rising",
-      "Recovery",
       "Release",
-      "Loading"
+      "Recovery",
+      "Set-up",
+      "Loading",
+      "Follow-through"
     ],
     "normalization_method": "ball_radius_based",
     "phase_detection_method": "sequential_transition"

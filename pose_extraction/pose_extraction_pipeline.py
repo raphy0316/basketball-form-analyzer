@@ -1,71 +1,71 @@
 # -*- coding: utf-8 -*-
 """
-포즈 추출 통합 파이프라인
-원본 절대좌표만 추출하여 JSON으로 저장
+Pose Extraction Integrated Pipeline
+Extracts only original absolute coordinates and saves as JSON
 """
 
 import os
 import sys
 from typing import Dict, List, Optional
 
-# 레이어 모듈들 import
+# Import layer modules
 from .pose_model_layer import PoseModelLayer
 from .pose_storage_layer import PoseStorageLayer
 
 class PoseExtractionPipeline:
     def __init__(self, output_dir: str = "data"):
-        """포즈 추출 파이프라인 초기화"""
+        """Initialize pose extraction pipeline"""
         self.model_layer = PoseModelLayer()
         self.storage_layer = PoseStorageLayer(output_dir)
         
-        print("포즈 추출 파이프라인 초기화 완료")
+        print("Pose extraction pipeline initialized")
         print("=" * 50)
 
     def extract_poses(self, video_path: str, confidence_threshold: float = 0.3) -> str:
         """
-        원본 절대좌표 포즈 추출 파이프라인 실행
+        Run pose extraction pipeline for original absolute coordinates
         
         Args:
-            video_path: 비디오 파일 경로
-            confidence_threshold: 신뢰도 임계값
+            video_path: Path to video file
+            confidence_threshold: Confidence threshold
         
         Returns:
-            저장된 파일 경로
+            Path to saved file
         """
-        print(f"🎬 비디오 파일: {video_path}")
-        print(f"🎯 신뢰도 임계값: {confidence_threshold}")
+        print(f"🎬 Video file: {video_path}")
+        print(f"🎯 Confidence threshold: {confidence_threshold}")
         print("-" * 50)
         
         try:
-            # 1단계: 모델 레이어 - 원본 포즈 데이터 추출
-            print("🔍 1단계: 원본 포즈 데이터 추출 중...")
+            # Step 1: Model layer - extract original pose data
+            print("🔍 Step 1: Extracting original pose data...")
             raw_pose_data = self.model_layer.extract_poses_from_video(video_path)
-            print(f"✅ 추출 완료: {len(raw_pose_data)} 프레임")
+            print(f"✅ Extraction complete: {len(raw_pose_data)} frames")
             
-            # 2단계: 신뢰도 필터링 (낮은 신뢰도 키포인트 제거)
-            print("\n🔄 2단계: 신뢰도 필터링 중...")
+            # Step 2: Confidence filtering (remove low-confidence keypoints)
+            print("\n🔄 Step 2: Filtering by confidence...")
             filtered_data = self._filter_low_confidence_poses(raw_pose_data, confidence_threshold)
-            print(f"✅ 필터링 완료: {len(filtered_data)} 프레임")
+            print(f"✅ Filtering complete: {len(filtered_data)} frames")
             
-            # 3단계: 원본 절대좌표 JSON 저장
-            print("\n💾 3단계: 원본 데이터 저장 중...")
+            # Step 3: Save original absolute coordinates as JSON
+            print("\n💾 Step 3: Saving original data...")
             base_filename = f"{os.path.splitext(os.path.basename(video_path))[0]}_pose_original"
             saved_file = self.storage_layer.save_original_as_json(filtered_data, f"{base_filename}.json")
             
-            print("✅ 저장 완료")
+            print("✅ Save complete")
             print("=" * 50)
             
-            # 결과 요약
+            # Print summary
             self._print_summary(filtered_data, saved_file)
             
             return saved_file
             
         except Exception as e:
-            print(f"❌ 오류 발생: {e}")
+            print(f"❌ Error occurred: {e}")
             raise
 
     def _filter_low_confidence_poses(self, pose_data: List[Dict], confidence_threshold: float) -> List[Dict]:
-        """낮은 신뢰도 키포인트 필터링"""
+        """Filter out low-confidence keypoints"""
         filtered_data = []
         
         for frame_data in pose_data:
@@ -77,10 +77,10 @@ class PoseExtractionPipeline:
             
             for kp_name, kp_data in frame_data['pose'].items():
                 if kp_data['confidence'] >= confidence_threshold:
-                    # 원본 절대좌표만 저장
+                    # Save only original absolute coordinates
                     filtered_frame['pose'][kp_name] = {
-                        'x': kp_data['x'],  # 원본 픽셀 좌표
-                        'y': kp_data['y'],  # 원본 픽셀 좌표
+                        'x': kp_data['x'],  # Original pixel coordinate
+                        'y': kp_data['y'],  # Original pixel coordinate
                         'confidence': kp_data['confidence']
                     }
             
@@ -89,15 +89,15 @@ class PoseExtractionPipeline:
         return filtered_data
 
     def _print_summary(self, pose_data: List[Dict], saved_file: str):
-        """결과 요약 출력"""
-        print("\n📋 추출 결과 요약:")
-        print(f"   • 총 프레임 수: {len(pose_data)}")
-        print(f"   • 키포인트 수: {len(pose_data[0]['pose']) if pose_data else 0}")
-        print(f"   • 저장된 파일: {os.path.basename(saved_file)}")
-        print(f"   • 좌표 시스템: 원본 절대좌표 (픽셀 단위)")
+        """Print extraction summary"""
+        print("\n📋 Extraction summary:")
+        print(f"   • Total frames: {len(pose_data)}")
+        print(f"   • Keypoints per frame: {len(pose_data[0]['pose']) if pose_data else 0}")
+        print(f"   • Saved file: {os.path.basename(saved_file)}")
+        print(f"   • Coordinate system: Original absolute coordinates (pixel units)")
 
     def get_pipeline_info(self) -> Dict:
-        """파이프라인 정보 반환"""
+        """Return pipeline info"""
         storage_info = self.storage_layer.get_storage_info()
         
         return {
@@ -109,38 +109,38 @@ class PoseExtractionPipeline:
         }
 
 def main():
-    """메인 실행 함수"""
-    print("🏀 농구 포즈 추출 파이프라인 (원본 절대좌표)")
+    """Main execution function"""
+    print("🏀 Basketball Pose Extraction Pipeline (Original Absolute Coordinates)")
     print("=" * 50)
     
-    # 파이프라인 초기화
+    # Initialize pipeline
     pipeline = PoseExtractionPipeline()
     
-    # 비디오 파일 경로 설정
+    # Set video file path
     video_path = "../References/stephen_curry_multy_person_part.mp4"
     
     if not os.path.exists(video_path):
-        print(f"❌ 비디오 파일을 찾을 수 없습니다: {video_path}")
+        print(f"❌ Video file not found: {video_path}")
         return
     
     try:
-        # 포즈 추출 실행
+        # Run pose extraction
         saved_file = pipeline.extract_poses(
             video_path=video_path,
             confidence_threshold=0.3
         )
         
-        print("\n🎉 포즈 추출 파이프라인 완료!")
+        print("\n🎉 Pose extraction pipeline complete!")
         
-        # 파이프라인 정보 출력
+        # Print pipeline info
         info = pipeline.get_pipeline_info()
-        print(f"\n📊 파이프라인 정보:")
-        print(f"   • 모델: {info['model_info']['model_name']}")
-        print(f"   • 키포인트 수: {info['model_info']['keypoint_count']}")
-        print(f"   • 저장소: {info['storage_info']['output_dir']}")
+        print(f"\n📊 Pipeline info:")
+        print(f"   • Model: {info['model_info']['model_name']}")
+        print(f"   • Keypoint count: {info['model_info']['keypoint_count']}")
+        print(f"   • Storage: {info['storage_info']['output_dir']}")
         
     except Exception as e:
-        print(f"❌ 파이프라인 실행 중 오류 발생: {e}")
+        print(f"❌ Error during pipeline execution: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

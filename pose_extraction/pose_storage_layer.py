@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-포즈 데이터 저장 레이어
-정규화된 포즈 데이터를 다양한 형식으로 저장
+Pose Data Storage Layer
+Saves normalized pose data in various formats
 """
 
 import json
@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 def convert_numpy_types(obj):
-    """numpy 타입을 Python 기본 타입으로 변환"""
+    """Convert numpy types to Python basic types"""
     if isinstance(obj, np.integer):
         return int(obj)
     elif isinstance(obj, np.floating):
@@ -32,14 +32,14 @@ class PoseStorageLayer:
         os.makedirs(output_dir, exist_ok=True)
 
     def save_original_as_json(self, pose_data: List[Dict], filename: Optional[str] = None) -> str:
-        """원본 절대좌표 포즈 데이터를 JSON 형식으로 저장"""
+        """Save original absolute coordinate pose data as JSON"""
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"pose_original_{timestamp}.json"
         
         filepath = os.path.join(self.output_dir, filename)
         
-        # 원본 절대좌표만 포함하도록 데이터 구조 수정
+        # Only include original absolute coordinates
         original_pose_data = []
         for frame_data in pose_data:
             original_frame = {
@@ -47,14 +47,14 @@ class PoseStorageLayer:
                 'timestamp': frame_data['timestamp']
             }
             
-            # 원본 절대좌표만 저장
+            # Save only original absolute coordinates
             pose = frame_data['pose']
             original_pose = {}
             
             for kp_name, kp_data in pose.items():
                 original_pose[kp_name] = {
-                    'x': kp_data['x'],  # 원본 픽셀 좌표
-                    'y': kp_data['y'],  # 원본 픽셀 좌표
+                    'x': kp_data['x'],  # Original pixel coordinate
+                    'y': kp_data['y'],  # Original pixel coordinate
                     'confidence': kp_data['confidence']
                 }
             
@@ -71,24 +71,24 @@ class PoseStorageLayer:
             "pose_data": original_pose_data
         }
         
-        # numpy 타입을 Python 기본 타입으로 변환
+        # Convert numpy types to Python basic types
         data_to_save = convert_numpy_types(data_to_save)
         
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(data_to_save, f, indent=2, ensure_ascii=False)
         
-        print(f"원본 JSON 저장 완료: {filepath}")
+        print(f"Original JSON save complete: {filepath}")
         return filepath
 
     def save_as_json(self, pose_data: List[Dict], filename: Optional[str] = None) -> str:
-        """포즈 데이터를 JSON 형식으로 저장 (원본 + 정규화된 좌표 모두 포함)"""
+        """Save pose data as JSON (includes both original and normalized coordinates)"""
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"pose_data_{timestamp}.json"
         
         filepath = os.path.join(self.output_dir, filename)
         
-        # 원본 픽셀 좌표와 정규화된 좌표를 모두 포함하도록 데이터 구조 수정
+        # Include both original pixel coordinates and normalized coordinates
         enhanced_pose_data = []
         for frame_data in pose_data:
             enhanced_frame = {
@@ -96,17 +96,17 @@ class PoseStorageLayer:
                 'timestamp': frame_data['timestamp']
             }
             
-            # 원본 픽셀 좌표와 정규화된 좌표를 모두 저장
+            # Save both original pixel coordinates and normalized coordinates
             pose = frame_data['pose']
             enhanced_pose = {}
             
             for kp_name, kp_data in pose.items():
                 enhanced_pose[kp_name] = {
-                    'x': kp_data['x'],  # 정규화된 좌표
-                    'y': kp_data['y'],  # 정규화된 좌표
+                    'x': kp_data['x'],  # Normalized coordinate
+                    'y': kp_data['y'],  # Normalized coordinate
                     'confidence': kp_data['confidence'],
-                    'original_x': kp_data.get('original_x', kp_data['x']),  # 원본 픽셀 좌표
-                    'original_y': kp_data.get('original_y', kp_data['y'])   # 원본 픽셀 좌표
+                    'original_x': kp_data.get('original_x', kp_data['x']),  # Original pixel coordinate
+                    'original_y': kp_data.get('original_y', kp_data['y'])   # Original pixel coordinate
                 }
             
             enhanced_frame['pose'] = enhanced_pose
@@ -122,24 +122,24 @@ class PoseStorageLayer:
             "pose_data": enhanced_pose_data
         }
         
-        # numpy 타입을 Python 기본 타입으로 변환
+        # Convert numpy types to Python basic types
         data_to_save = convert_numpy_types(data_to_save)
         
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(data_to_save, f, indent=2, ensure_ascii=False)
         
-        print(f"JSON 저장 완료: {filepath}")
+        print(f"JSON save complete: {filepath}")
         return filepath
 
     def save_as_csv(self, pose_data: List[Dict], filename: Optional[str] = None) -> str:
-        """포즈 데이터를 CSV 형식으로 저장"""
+        """Save pose data as CSV"""
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"pose_data_{timestamp}.csv"
         
         filepath = os.path.join(self.output_dir, filename)
         
-        # CSV 형식으로 변환
+        # Convert to CSV format
         csv_data = []
         for frame_data in pose_data:
             row = {
@@ -147,7 +147,7 @@ class PoseStorageLayer:
                 'timestamp': frame_data['timestamp']
             }
             
-            # 각 키포인트를 컬럼으로 추가
+            # Add each keypoint as a column
             for kp_name, kp_data in frame_data['pose'].items():
                 row[f'{kp_name}_x'] = kp_data['x']
                 row[f'{kp_name}_y'] = kp_data['y']
@@ -158,22 +158,22 @@ class PoseStorageLayer:
         df = pd.DataFrame(csv_data)
         df.to_csv(filepath, index=False, encoding='utf-8')
         
-        print(f"CSV 저장 완료: {filepath}")
+        print(f"CSV save complete: {filepath}")
         return filepath
 
     def save_metadata(self, pose_data: List[Dict], filename: Optional[str] = None) -> str:
-        """메타데이터만 별도로 저장"""
+        """Save only metadata separately"""
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"metadata_{timestamp}.json"
         
         filepath = os.path.join(self.output_dir, filename)
         
-        # 통계 정보 계산
+        # Calculate statistics
         total_frames = len(pose_data)
         keypoint_names = list(pose_data[0]['pose'].keys()) if pose_data else []
         
-        # 신뢰도 통계
+        # Confidence statistics
         confidence_stats = {}
         for kp_name in keypoint_names:
             confidences = [frame['pose'][kp_name]['confidence'] for frame in pose_data if kp_name in frame['pose']]
@@ -195,42 +195,42 @@ class PoseStorageLayer:
             "confidence_statistics": confidence_stats
         }
         
-        # numpy 타입을 Python 기본 타입으로 변환
+        # Convert numpy types to Python basic types
         metadata = convert_numpy_types(metadata)
         
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=2, ensure_ascii=False)
         
-        print(f"메타데이터 저장 완료: {filepath}")
+        print(f"Metadata save complete: {filepath}")
         return filepath
 
     def save_all_formats(self, pose_data: List[Dict], base_filename: Optional[str] = None) -> Dict[str, str]:
-        """모든 형식으로 저장"""
+        """Save in all formats"""
         if base_filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             base_filename = f"pose_data_{timestamp}"
         
         saved_files = {}
         
-        # JSON 저장
+        # JSON save
         json_file = self.save_as_json(pose_data, f"{base_filename}.json")
         saved_files['json'] = json_file
         
-        # CSV 저장
+        # CSV save
         csv_file = self.save_as_csv(pose_data, f"{base_filename}.csv")
         saved_files['csv'] = csv_file
         
-        # 메타데이터 저장
+        # Metadata save
         metadata_file = self.save_metadata(pose_data, f"{base_filename}_metadata.json")
         saved_files['metadata'] = metadata_file
         
-        print(f"모든 형식 저장 완료: {len(saved_files)}개 파일")
+        print(f"All formats saved: {len(saved_files)} files")
         return saved_files
 
     def load_pose_data(self, filepath: str) -> List[Dict]:
-        """저장된 포즈 데이터 로드"""
+        """Load saved pose data"""
         if not os.path.exists(filepath):
-            raise FileNotFoundError(f"파일을 찾을 수 없습니다: {filepath}")
+            raise FileNotFoundError(f"File not found: {filepath}")
         
         with open(filepath, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -238,10 +238,10 @@ class PoseStorageLayer:
         if "pose_data" in data:
             return data["pose_data"]
         else:
-            return data  # 직접 pose_data 배열인 경우
+            return data  # If directly an array
 
     def get_storage_info(self) -> Dict:
-        """저장소 정보 반환"""
+        """Return storage info"""
         if not os.path.exists(self.output_dir):
             return {"output_dir": self.output_dir, "exists": False, "file_count": 0}
         

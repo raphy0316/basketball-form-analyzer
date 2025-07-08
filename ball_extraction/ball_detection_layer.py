@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-농구공 인식 모델 레이어
-YOLOv8을 사용해서 비디오에서 농구공을 감지하고 추적
+Basketball Detection Model Layer
+Detects and tracks basketballs in video using YOLOv8
 """
 
 import cv2
@@ -13,39 +13,39 @@ import torch
 class BallDetectionLayer:
     def __init__(self, model_path: str = "ball_extraction/yolov8n736-customContinue.pt"):
         """
-        농구공 인식 모델 초기화
+        Initialize basketball detection model
         
         Args:
-            model_path: YOLOv8 모델 파일 경로
+            model_path: YOLOv8 model file path
         """
         self.model_path = model_path
         self.model = None
         self._load_model()
         
     def _load_model(self):
-        """YOLOv8 모델 로드"""
+        """Load YOLOv8 model"""
         try:
             self.model = YOLO(self.model_path)
-            print(f"YOLOv8 모델 로드 완료: {self.model_path}")
+            print(f"YOLOv8 model loaded: {self.model_path}")
         except Exception as e:
-            print(f"모델 로드 실패: {e}")
-            # 기본 YOLOv8 모델로 대체
+            print(f"Model load failed: {e}")
+            # Fallback to default YOLOv8 model
             self.model = YOLO("yolov8n.pt")
-            print("기본 YOLOv8 모델로 대체")
+            print("Fallback to default YOLOv8 model")
 
     def detect_ball_in_frame(self, frame: np.ndarray, conf_threshold: float = 0.15, 
                            classes: List[int] = [0, 1, 2], iou_threshold: float = 0.1) -> List[Dict]:
         """
-        단일 프레임에서 농구공 감지
+        Detect basketball in a single frame
         
         Args:
-            frame: 입력 프레임
-            conf_threshold: 신뢰도 임계값
-            classes: 감지할 클래스 (0: 농구공, 1: 선수, 2: 기타)
-            iou_threshold: IoU 임계값
+            frame: Input frame
+            conf_threshold: Confidence threshold
+            classes: Classes to detect (0: basketball, 1: player, 2: other)
+            iou_threshold: IoU threshold
             
         Returns:
-            감지된 공들의 정보 리스트
+            List of detected balls
         """
         results = self.model(frame, conf=conf_threshold, classes=classes, 
                            iou=iou_threshold, imgsz=736, verbose=False)
@@ -56,12 +56,12 @@ class BallDetectionLayer:
             boxes = result.boxes
             if boxes is not None:
                 for box in boxes:
-                    # 박스 좌표 추출
+                    # Extract box coordinates
                     x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
                     confidence = box.conf[0].cpu().numpy()
                     class_id = int(box.cls[0].cpu().numpy())
                     
-                    # 농구공 클래스 (0)인 경우만 처리
+                    # Process only basketball class (0)
                     if class_id == 0:
                         ball_info = {
                             'bbox': [float(x1), float(y1), float(x2), float(y2)],
@@ -79,25 +79,25 @@ class BallDetectionLayer:
     def extract_ball_trajectory_from_video(self, video_path: str, conf_threshold: float = 0.15,
                                          classes: List[int] = [0, 1, 2], iou_threshold: float = 0.1) -> List[Dict]:
         """
-        비디오에서 농구공 궤적 추출
+        Extract basketball trajectory from video
         
         Args:
-            video_path: 비디오 파일 경로
-            conf_threshold: 신뢰도 임계값
-            classes: 감지할 클래스
-            iou_threshold: IoU 임계값
+            video_path: Path to video file
+            conf_threshold: Confidence threshold
+            classes: Classes to detect
+            iou_threshold: IoU threshold
             
         Returns:
-            프레임별 공 감지 정보 리스트
+            List of per-frame ball detection info
         """
         if not cv2.VideoCapture(video_path).isOpened():
-            raise FileNotFoundError(f"비디오 파일을 찾을 수 없습니다: {video_path}")
+            raise FileNotFoundError(f"Video file not found: {video_path}")
         
         cap = cv2.VideoCapture(video_path)
         fps = int(cap.get(cv2.CAP_PROP_FPS))
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         
-        print(f"농구공 궤적 추출 시작: {total_frames}프레임, {fps}fps")
+        print(f"Basketball trajectory extraction started: {total_frames} frames, {fps}fps")
         
         ball_trajectory = []
         frame_count = 0
@@ -108,9 +108,9 @@ class BallDetectionLayer:
                 break
                 
             frame_count += 1
-            print(f"공 감지 처리: {frame_count}/{total_frames}", end="\r")
+            print(f"Ball detection processing: {frame_count}/{total_frames}", end="\r")
             
-            # 현재 프레임에서 공 감지
+            # Detect ball in current frame
             ball_detections = self.detect_ball_in_frame(
                 frame, conf_threshold, classes, iou_threshold
             )
@@ -124,7 +124,7 @@ class BallDetectionLayer:
             ball_trajectory.append(frame_data)
         
         cap.release()
-        print(f"\n농구공 궤적 추출 완료: {len(ball_trajectory)} 프레임")
+        print(f"\nBasketball trajectory extraction complete: {len(ball_trajectory)} frames")
         
         return ball_trajectory
 
@@ -132,15 +132,15 @@ class BallDetectionLayer:
                              min_confidence: float = 0.3, 
                              min_ball_size: float = 10.0) -> List[Dict]:
         """
-        공 감지 결과 필터링
+        Filter ball detection results
         
         Args:
-            ball_trajectory: 공 궤적 데이터
-            min_confidence: 최소 신뢰도
-            min_ball_size: 최소 공 크기 (픽셀)
+            ball_trajectory: Ball trajectory data
+            min_confidence: Minimum confidence
+            min_ball_size: Minimum ball size (pixels)
             
         Returns:
-            필터링된 공 궤적 데이터
+            Filtered ball trajectory data
         """
         filtered_trajectory = []
         
@@ -161,16 +161,16 @@ class BallDetectionLayer:
             }
             filtered_trajectory.append(filtered_frame)
         
-        print(f"공 감지 필터링: {len(ball_trajectory)} -> {len(filtered_trajectory)} 프레임")
+        print(f"Ball detection filtering: {len(ball_trajectory)} -> {len(filtered_trajectory)} frames")
         return filtered_trajectory
 
     def get_ball_statistics(self, ball_trajectory: List[Dict]) -> Dict:
-        """공 감지 통계 정보 반환"""
+        """Return ball detection statistics"""
         total_frames = len(ball_trajectory)
         frames_with_ball = sum(1 for frame in ball_trajectory if frame['ball_count'] > 0)
         total_balls_detected = sum(frame['ball_count'] for frame in ball_trajectory)
         
-        # 신뢰도 통계
+        # Confidence statistics
         confidences = []
         for frame in ball_trajectory:
             for detection in frame['ball_detections']:

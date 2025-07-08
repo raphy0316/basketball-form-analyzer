@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-농구공 궤적 저장 레이어
-정규화된 공 궤적 데이터를 다양한 형식으로 저장
+Ball Trajectory Storage Layer
+Saves normalized ball trajectory data in various formats
 """
 
 import json
@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 def convert_numpy_types(obj):
-    """numpy 타입을 Python 기본 타입으로 변환"""
+    """Convert numpy types to Python basic types"""
     if isinstance(obj, np.integer):
         return int(obj)
     elif isinstance(obj, np.floating):
@@ -32,7 +32,7 @@ class BallStorageLayer:
         os.makedirs(output_dir, exist_ok=True)
 
     def save_original_as_json(self, ball_trajectory: List[Dict], filename: Optional[str] = None) -> str:
-        """원본 절대좌표 공 궤적 데이터를 JSON 형식으로 저장"""
+        """Save original absolute coordinate ball trajectory data as JSON"""
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"ball_original_{timestamp}.json"
@@ -50,17 +50,17 @@ class BallStorageLayer:
             "ball_trajectory": ball_trajectory
         }
         
-        # numpy 타입을 Python 기본 타입으로 변환
+        # Convert numpy types to Python basic types
         data_to_save = convert_numpy_types(data_to_save)
         
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(data_to_save, f, indent=2, ensure_ascii=False)
         
-        print(f"원본 공 궤적 JSON 저장 완료: {filepath}")
+        print(f"Original ball trajectory JSON save complete: {filepath}")
         return filepath
 
     def save_as_json(self, ball_trajectory: List[Dict], filename: Optional[str] = None) -> str:
-        """공 궤적 데이터를 JSON 형식으로 저장"""
+        """Save ball trajectory data as JSON"""
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"ball_trajectory_{timestamp}.json"
@@ -77,24 +77,24 @@ class BallStorageLayer:
             "ball_trajectory": ball_trajectory
         }
         
-        # numpy 타입을 Python 기본 타입으로 변환
+        # Convert numpy types to Python basic types
         data_to_save = convert_numpy_types(data_to_save)
         
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(data_to_save, f, indent=2, ensure_ascii=False)
         
-        print(f"공 궤적 JSON 저장 완료: {filepath}")
+        print(f"Ball trajectory JSON save complete: {filepath}")
         return filepath
 
     def save_as_csv(self, ball_trajectory: List[Dict], filename: Optional[str] = None) -> str:
-        """공 궤적 데이터를 CSV 형식으로 저장"""
+        """Save ball trajectory data as CSV"""
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"ball_trajectory_{timestamp}.csv"
         
         filepath = os.path.join(self.output_dir, filename)
         
-        # CSV 형식으로 변환
+        # Convert to CSV format
         csv_data = []
         for frame_data in ball_trajectory:
             if frame_data['ball_count'] > 0:
@@ -111,7 +111,7 @@ class BallStorageLayer:
                         'class_id': ball['class_id']
                     }
                     
-                    # 속도 정보가 있으면 추가
+                    # Add velocity info if present
                     if 'velocity_x' in ball:
                         row['velocity_x'] = ball['velocity_x']
                         row['velocity_y'] = ball['velocity_y']
@@ -119,7 +119,7 @@ class BallStorageLayer:
                     
                     csv_data.append(row)
             else:
-                # 공이 감지되지 않은 프레임
+                # Frame with no detected ball
                 row = {
                     'frame_number': frame_data['frame_number'],
                     'timestamp': frame_data['timestamp'],
@@ -136,11 +136,11 @@ class BallStorageLayer:
         df = pd.DataFrame(csv_data)
         df.to_csv(filepath, index=False, encoding='utf-8')
         
-        print(f"공 궤적 CSV 저장 완료: {filepath}")
+        print(f"Ball trajectory CSV save complete: {filepath}")
         return filepath
 
     def save_ball_events(self, ball_events: Dict, filename: Optional[str] = None) -> str:
-        """공 이벤트 데이터 저장"""
+        """Save ball event data"""
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"ball_events_{timestamp}.json"
@@ -158,28 +158,28 @@ class BallStorageLayer:
             "events": ball_events
         }
         
-        # numpy 타입을 Python 기본 타입으로 변환
+        # Convert numpy types to Python basic types
         events_data = convert_numpy_types(events_data)
         
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(events_data, f, indent=2, ensure_ascii=False)
         
-        print(f"공 이벤트 저장 완료: {filepath}")
+        print(f"Ball event data save complete: {filepath}")
         return filepath
 
     def save_trajectory_analysis(self, ball_trajectory: List[Dict], filename: Optional[str] = None) -> str:
-        """공 궤적 분석 결과 저장"""
+        """Save ball trajectory analysis results"""
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"trajectory_analysis_{timestamp}.json"
         
         filepath = os.path.join(self.output_dir, filename)
         
-        # 궤적 분석
+        # Trajectory analysis
         frames_with_ball = [frame for frame in ball_trajectory if frame['ball_count'] > 0]
         
         if frames_with_ball:
-            # 공 위치 통계
+            # Ball position statistics
             center_xs = []
             center_ys = []
             velocities = []
@@ -231,51 +231,46 @@ class BallStorageLayer:
                     "frames_with_ball": 0,
                     "detection_rate": 0
                 },
-                "error": "공이 감지되지 않았습니다."
+                "error": "No ball detected."
             }
         
-        # numpy 타입을 Python 기본 타입으로 변환
+        # Convert numpy types to Python basic types
         analysis = convert_numpy_types(analysis)
         
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(analysis, f, indent=2, ensure_ascii=False)
         
-        print(f"궤적 분석 저장 완료: {filepath}")
+        print(f"Trajectory analysis save complete: {filepath}")
         return filepath
 
     def save_all_formats(self, ball_trajectory: List[Dict], ball_events: Optional[Dict] = None,
                         base_filename: Optional[str] = None) -> Dict[str, str]:
-        """모든 형식으로 저장"""
+        """Save in all formats"""
         if base_filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             base_filename = f"ball_trajectory_{timestamp}"
         
         saved_files = {}
         
-        # JSON 저장
+        # JSON save
         json_file = self.save_as_json(ball_trajectory, f"{base_filename}.json")
         saved_files['json'] = json_file
         
-        # CSV 저장
+        # CSV save
         csv_file = self.save_as_csv(ball_trajectory, f"{base_filename}.csv")
         saved_files['csv'] = csv_file
         
-        # 궤적 분석 저장
-        analysis_file = self.save_trajectory_analysis(ball_trajectory, f"{base_filename}_analysis.json")
-        saved_files['analysis'] = analysis_file
+        # Metadata save
+        metadata_file = self.save_metadata(ball_trajectory, f"{base_filename}_metadata.json")
+        saved_files['metadata'] = metadata_file
         
-        # 이벤트 저장 (있는 경우)
-        if ball_events:
-            events_file = self.save_ball_events(ball_events, f"{base_filename}_events.json")
-            saved_files['events'] = events_file
-        
-        print(f"공 궤적 모든 형식 저장 완료: {len(saved_files)}개 파일")
+        print(f"All formats saved: {len(saved_files)} files")
         return saved_files
 
     def load_ball_trajectory(self, filepath: str) -> List[Dict]:
-        """저장된 공 궤적 데이터 로드"""
+        """Load saved ball trajectory data"""
         if not os.path.exists(filepath):
-            raise FileNotFoundError(f"파일을 찾을 수 없습니다: {filepath}")
+            raise FileNotFoundError(f"File not found: {filepath}")
         
         with open(filepath, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -283,10 +278,10 @@ class BallStorageLayer:
         if "ball_trajectory" in data:
             return data["ball_trajectory"]
         else:
-            return data  # 직접 trajectory 배열인 경우
+            return data  # If directly an array
 
     def get_storage_info(self) -> Dict:
-        """저장소 정보 반환"""
+        """Return storage info"""
         if not os.path.exists(self.output_dir):
             return {"output_dir": self.output_dir, "exists": False, "file_count": 0}
         

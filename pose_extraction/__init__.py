@@ -5,13 +5,11 @@
 """
 
 from .pose_model_layer import PoseModelLayer
-from .pose_normalization_layer import PoseNormalizationLayer
 from .pose_storage_layer import PoseStorageLayer
 from .pose_extraction_pipeline import PoseExtractionPipeline
 
 __all__ = [
     'PoseModelLayer',
-    'PoseNormalizationLayer', 
     'PoseStorageLayer',
     'PoseExtractionPipeline'
 ]
