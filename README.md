@@ -90,15 +90,14 @@ pipeline.run_full_pipeline("data/video/your_video.mp4", overwrite_mode=True)
 
 ## Shooting Phase Transition Table
 
-| From → To             | Condition                                                                                 |
-|----------------------|------------------------------------------------------------------------------------------|
-| General → Set-up     | The ball is held in hand for at least 3 consecutive frames *(Not implemented yet)*        |
-| Set-up → Loading     | At least 2 out of 3: knee, wrist, or ball are moving downward (y-coordinate decreasing)   |
-| Loading → Rising     | Wrist, elbow, and ball are all moving upward simultaneously (y increasing)                |
-| Rising → Release     | - Ball leaves the hand *(Currently disabled)*<br>- Left or right elbow angle ≥ 120°       |
-| Release → Follow-through | - Ball has fully left the hand<br>- Knee or hip begins to descend (y starts decreasing) |
-| Follow-through → Recovery | - Knee starts rising again after descending<br>- Elbow angle ≤ 80° (arm begins to fold) |
-| Recovery → General   | Knee, wrist, and hip movement becomes minimal for several frames (abs(Δy) < threshold)    |
+| Phase           | Frame-Based Definition Summary                                 |
+|-----------------|---------------------------------------------------------------|
+| Set-up          | Stable posture before loading                                  |
+| Loading         | Maximum knee bend                                              |
+| Rising          | Jump upward while arms lift                                    |
+| Release         | Wrist and ball begin downward motion                           |
+| Follow-through  | Arm stays extended as lower body descends                      |
+| Recovery        | Motion ends and body stabilizes                                |
 
 **Note:**
 - Conditions marked as *Currently disabled* or *Not implemented yet* are temporarily excluded due to inconsistent values and detection errors, which affect accurate phase detection.
@@ -112,32 +111,6 @@ MoveNet detects 17 keypoints:
 - left_shoulder, right_shoulder, left_elbow, right_elbow
 - left_wrist, right_wrist, left_hip, right_hip
 - left_knee, right_knee, left_ankle, right_ankle
-
-## Reference Data
-
-Reference datasets included in `data/`:
-- `5 player realease Shotform__Processed.csv`: Shooting form data for 5 players
-- `player_metrics_open.csv`: Player metrics
-- `path_detail_open.csv`: Path details
-
-## Tips & Troubleshooting
-
-- **Video Quality**: High resolution and stable camera yield better results.
-- **Lighting**: Good lighting is important for accurate detection.
-- **Player Visibility**: The player should be clearly visible in the frame.
-- **GPU**: Using TensorFlow with GPU is recommended for faster processing.
-
-### Model Load Error
-
-```bash
-pip uninstall tensorflow tensorflow-hub
-pip install tensorflow tensorflow-hub
-```
-
-### Out of Memory
-
-- Split video into smaller segments.
-- Use `model_name="lightning"` for faster, lower-memory inference.
 
 ## Download Required Model File (YOLOv8 .pt)
 
@@ -161,4 +134,8 @@ This project is for educational and research purposes.
 
 ## Contributing
 
-Please open an issue for bug reports or feature requests. 
+Please open an issue for bug reports or feature requests.
+
+## Video Input Folder
+
+Place the video files you want to analyze in the `data/video` folder. Only videos in this folder will be available for selection and analysis in the pipeline. 
