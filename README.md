@@ -77,27 +77,26 @@ pipeline.run_full_pipeline("data/video/your_video.mp4", overwrite_mode=True)
 
 ## Shooting Phase Definitions
 
-| Phase           | Frame-Based Definition Summary                                 | 2D Coordinate-Based Detection Criteria (Current Implementation)         |
-|-----------------|---------------------------------------------------------------|------------------------------------------------------------------------|
-| Set-up          | Stable posture before loading                                 | At least 2 of knee.y, wrist.y, ball.y decrease (d_y < -0.01)           |
-| Loading         | Maximum knee bend                                             | Wrist, elbow, and ball y all decrease (d_y < 0)                        |
-| Rising          | Jump upward while arms lift                                   | Wrist, elbow, and ball y all increase (d_y < 0) *(should be d_y > 0)*  |
-| Release         | Wrist and ball begin downward motion                          | Shoulder-elbow-wrist angle ≥ 120° (left or right arm)                   |
-| Follow-through  | Arm stays extended as lower body descends                     | Ball far from hand (distance > 0.5) or knee/hip starts to drop          |
-| Recovery        | Motion ends and body stabilizes                               | Knee, hip, and wrist y change < 0.002 for 5 frames; AND arm angle < 80° |
-
-> **Note:** Some phase criteria in code differ from biomechanical definitions (see code for details).
+| Phase           | Frame-Based Definition Summary                                 |
+|-----------------|---------------------------------------------------------------|
+| Set-up          | Stable posture before loading                                 |
+| Loading         | Maximum knee bend                                             |
+| Rising          | Jump upward while arms lift                                   |
+| Release         | Wrist and ball begin downward motion                          |
+| Follow-through  | Arm stays extended as lower body descends                     |
+| Recovery        | Motion ends and body stabilizes                               |
 
 ## Shooting Phase Transition Table
 
-| Phase           | Frame-Based Definition Summary                                 |
-|-----------------|---------------------------------------------------------------|
-| Set-up          | Stable posture before loading                                  |
-| Loading         | Maximum knee bend                                              |
-| Rising          | Jump upward while arms lift                                    |
-| Release         | Wrist and ball begin downward motion                           |
-| Follow-through  | Arm stays extended as lower body descends                      |
-| Recovery        | Motion ends and body stabilizes                                |
+| From → To             | Condition                                                                                 |
+|----------------------|------------------------------------------------------------------------------------------|
+| General → Set-up     | The ball is held in hand for at least 3 consecutive frames *(Not implemented yet)*        |
+| Set-up → Loading     | At least 2 out of 3: knee, wrist, or ball are moving downward (y-coordinate decreasing)   |
+| Loading → Rising     | Wrist, elbow, and ball are all moving upward simultaneously (y increasing)                |
+| Rising → Release     | - Ball leaves the hand *(Currently disabled)*<br>- Left or right elbow angle ≥ 120°       |
+| Release → Follow-through | - Ball has fully left the hand<br>- Knee or hip begins to descend (y starts decreasing) |
+| Follow-through → Recovery | - Knee starts rising again after descending<br>- Elbow angle ≤ 80° (arm begins to fold) |
+| Recovery → General   | Knee, wrist, and hip movement becomes minimal for several frames (abs(Δy) < threshold)    |
 
 **Note:**
 - Conditions marked as *Currently disabled* or *Not implemented yet* are temporarily excluded due to inconsistent values and detection errors, which affect accurate phase detection.
@@ -111,6 +110,7 @@ MoveNet detects 17 keypoints:
 - left_shoulder, right_shoulder, left_elbow, right_elbow
 - left_wrist, right_wrist, left_hip, right_hip
 - left_knee, right_knee, left_ankle, right_ankle
+
 
 ## Download Required Model File (YOLOv8 .pt)
 
@@ -128,14 +128,10 @@ ball_extraction/yolov8n736-customContinue.pt
 
 Without this file, ball detection and full shooting analysis will not work.
 
-## License
 
-This project is for educational and research purposes.
+## Video Preparation
 
-## Contributing
+- **Place the video you want to analyze in the `data/video` folder.**
+- The program will only show videos located in this folder for selection.
 
-Please open an issue for bug reports or feature requests.
-
-## Video Input Folder
-
-Place the video files you want to analyze in the `data/video` folder. Only videos in this folder will be available for selection and analysis in the pipeline. 
+If the 'data/visualized_video' folder is not auto-created by the code, add a note instructing users to create it manually. If it is auto-created, no note is needed. 
