@@ -47,7 +47,7 @@ class BallExtractionPipeline:
         try:
             # Step 1: Detection layer - extract original ball trajectory
             print("🔍 Step 1: Extracting original basketball trajectory...")
-            raw_ball_trajectory = self.detection_layer.extract_ball_trajectory_from_video(
+            raw_ball_trajectory, rim_info = self.detection_layer.extract_ball_trajectory_and_rim_info_from_video(
                 video_path, conf_threshold, classes, iou_threshold
             )
             print(f"✅ Extraction complete: {len(raw_ball_trajectory)} frames")
@@ -110,7 +110,7 @@ def main():
     pipeline = BallExtractionPipeline()
     
     # Set video file path
-    video_path = "../References/stephen_curry_multy_person_part.mp4"
+    video_path = "../data/video/curry_freethrow1.mp4"
     
     if not os.path.exists(video_path):
         print(f"❌ Video file not found: {video_path}")

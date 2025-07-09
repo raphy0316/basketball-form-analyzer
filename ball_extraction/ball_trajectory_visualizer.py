@@ -9,6 +9,7 @@ import numpy as np
 import os
 from typing import Dict, List, Tuple, Optional
 from datetime import datetime
+from ultralytics import YOLO
 
 class BallTrajectoryVisualizer:
     def __init__(self, model_path: str = "ball_extraction/yolov8n736-customContinue.pt"):
@@ -36,8 +37,7 @@ class BallTrajectoryVisualizer:
         Returns:
             Visualized frame
         """
-        # Load YOLOv8 model and detect basketball
-        from ultralytics import YOLO
+        
         model = YOLO(self.model_path)
         
         results = model(frame, conf=conf_threshold, classes=classes, 
