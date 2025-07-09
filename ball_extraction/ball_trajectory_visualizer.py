@@ -256,7 +256,7 @@ def main():
     visualizer = BallTrajectoryVisualizer()
     
     # Set video file path
-    input_video = "../References/stephen_curry_multy_person_part.mp4"
+    input_video = "data/video/two_score_two_miss.mp4"
     
     if not os.path.exists(input_video):
         print(f"❌ Could not find video file: {input_video}")

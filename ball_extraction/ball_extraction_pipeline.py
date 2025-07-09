@@ -46,7 +46,7 @@ class BallExtractionPipeline:
         
         try:
             # Step 1: Detection layer - extract original ball trajectory
-            print("🔍 Step 1: Extracting original basketball trajectory...")
+            print("🔍 Step 1: Extracting original basketball trajectory and rim info...")
             raw_ball_trajectory, rim_info = self.detection_layer.extract_ball_trajectory_and_rim_info_from_video(
                 video_path, conf_threshold, classes, iou_threshold
             )
@@ -58,12 +58,14 @@ class BallExtractionPipeline:
                 raw_ball_trajectory, min_confidence, min_ball_size
             )
             print(f"✅ Filtering complete: {len(filtered_trajectory)} frames")
-            
+            filtered_rim = self.detection_layer.filter_rim_detections(rim_info, min_confidence)
             # Step 3: Save original absolute coordinates as JSON
             print("\n💾 Step 3: Saving original data...")
             base_filename = f"{os.path.splitext(os.path.basename(video_path))[0]}_ball_original"
             saved_file = self.storage_layer.save_original_as_json(filtered_trajectory, f"{base_filename}.json")
-            
+
+            base_filename2 = f"{os.path.splitext(os.path.basename(video_path))[0]}_rim_original"
+            self.storage_layer.save_rim_original_as_json(filtered_rim, f"{base_filename2}.json")
             print("✅ Save complete")
             print("=" * 50)
             
@@ -89,7 +91,7 @@ class BallExtractionPipeline:
         print(f"   • Average confidence: {stats['avg_confidence']:.3f}")
         print(f"   • Saved file: {os.path.basename(saved_file)}")
         print(f"   • Coordinate system: Original absolute coordinates (pixel units)")
-
+        
     def get_pipeline_info(self) -> Dict:
         """Return pipeline info"""
         storage_info = self.storage_layer.get_storage_info()

@@ -147,7 +147,7 @@ class BallDetectionLayer:
         return ball_trajectory, rim_info
 
     def filter_rim_detections(self, rim_info: List[Dict],
-                              min_confidence: float = 0.3) -> List[Dict]:
+                              min_confidence: float = 0.4) -> List[Dict]:
         """
         Filter rim detection results
         
@@ -157,8 +157,9 @@ class BallDetectionLayer:
         Returns
         """
         filtered_rim = []
-        median_width = np.median([detection['width'] for frame in rim_info for detection in frame['rim_detections']])
-        std = np.std([detection['width'] for frame in rim_info for detection in frame['rim_detections']])
+        widths = [detection['width'] for frame in rim_info for detection in frame['rim_detections']]
+        median_width = np.median(widths)
+        std = np.std(widths)
         for frame_data in rim_info:
             filtered_detections = []
             
@@ -194,13 +195,16 @@ class BallDetectionLayer:
             Filtered ball trajectory data
         """
         filtered_trajectory = []
-        median_width = np.median([detection['width'] for frame in ball_trajectory for detection in frame['ball_detections']])
+        widths = [detection['width'] for frame in ball_trajectory for detection in frame['ball_detections']]
+        median_width = np.median(widths)
+        std = np.std(widths)
         for frame_data in ball_trajectory:
             filtered_detections = []
             
             for detection in frame_data['ball_detections']:
                 if (detection['confidence'] >= min_confidence and 
                     detection['width']  >= min_ball_size and 
+                    abs(detection['width'] - median_width) <= std and
                     detection['height'] >= min_ball_size):
                     filtered_detections.append(detection)
             
