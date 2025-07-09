@@ -9,9 +9,10 @@ import numpy as np
 import os
 from typing import Dict, List, Tuple, Optional
 from datetime import datetime
+from ultralytics import YOLO
 
 class BallTrajectoryVisualizer:
-    def __init__(self, model_path: str = "ball_extraction/yolov8n736-customContinue.pt"):
+    def __init__(self, model_path: str = "ball_extraction/models/yolov8n736-customContinue.pt"):
         """
         Initialize basketball trajectory visualization
         
@@ -36,8 +37,7 @@ class BallTrajectoryVisualizer:
         Returns:
             Visualized frame
         """
-        # Load YOLOv8 model and detect basketball
-        from ultralytics import YOLO
+        
         model = YOLO(self.model_path)
         
         results = model(frame, conf=conf_threshold, classes=classes, 
@@ -256,7 +256,7 @@ def main():
     visualizer = BallTrajectoryVisualizer()
     
     # Set video file path
-    input_video = "../References/stephen_curry_multy_person_part.mp4"
+    input_video = "data/video/two_score_two_miss.mp4"
     
     if not os.path.exists(input_video):
         print(f"❌ Could not find video file: {input_video}")

@@ -29,6 +29,7 @@ class BasketballShootingAnalyzer:
         # Data storage
         self.pose_data = []
         self.ball_data = []
+        self.rim_data = []
         self.normalized_data = []
         self.phases = []
         self.phase_statistics = {}
@@ -99,7 +100,7 @@ class BasketballShootingAnalyzer:
         # Original data file paths
         pose_original_json = os.path.join(self.extracted_data_dir, f"{base_name}_pose_original.json")
         ball_original_json = os.path.join(self.extracted_data_dir, f"{base_name}_ball_original.json")
-        
+        rim_original_json = os.path.join(self.extracted_data_dir, f"{base_name}_rim_original.json")
         # If existing files exist and overwrite mode is not selected, check
         if not overwrite_mode and (os.path.exists(pose_original_json) or os.path.exists(ball_original_json)):
             print(f"\n⚠️ Existing original extraction data found:")
@@ -152,6 +153,24 @@ class BasketballShootingAnalyzer:
             print(f"❌ Original ball data file not found: {base_name}_ball_original*.json")
             return False
         
+        # Load rim data
+        rim_files = glob.glob(os.path.join(self.extracted_data_dir, f"{base_name}_rim_original*.json"))
+        if rim_files:
+            rim_file = rim_files[0]  # Use the first file
+            try:
+                with open(rim_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    if isinstance(data, dict) and "rim_info" in data:
+                        self.rim_data = data["rim_info"]
+                    else:
+                        self.rim_data = data
+                print(f"✅ Original rim data loaded: {os.path.basename(rim_file)}")
+            except Exception as e:
+                print(f"❌ Failed to load original rim data: {e}")
+                return False
+        else:
+            print(f"❌ Original ball data file not found: {base_name}_rim_original*.json")
+            return False
         return True
     
     def normalize_pose_data(self, video_path: Optional[str] = None):
@@ -749,8 +768,9 @@ class BasketballShootingAnalyzer:
             
             # Load original ball data and normalized ball data
             original_ball_data = self.ball_data  # Already loaded original data
+            original_rim_data = self.rim_data
             normalized_ball_data = [frame['normalized_ball'] for frame in self.normalized_data]  # Normalized ball data
-            
+            print(original_rim_data)
             self.create_dual_analysis_video(
                 video_path=video_path,
                 output_path=output_video,
@@ -758,6 +778,7 @@ class BasketballShootingAnalyzer:
                 normalized_pose_data=normalized_pose_data,
                 original_ball_data=original_ball_data,
                 normalized_ball_data=normalized_ball_data,
+                original_rim_data=original_rim_data,
                 shooting_phases=self.phases
             )
             print(f"✅ Visualization video generated: {os.path.basename(output_video)}")
@@ -769,7 +790,7 @@ class BasketballShootingAnalyzer:
     def create_dual_analysis_video(self, video_path: str, output_path: str, 
                                   original_pose_data: List[Dict], normalized_pose_data: List[Dict],
                                   original_ball_data: List[Dict], normalized_ball_data: List[Dict],
-                                  shooting_phases: List[str]) -> bool:
+                                  original_rim_data: List[Dict], shooting_phases: List[str]) -> bool:
         """Generate dual visualization video (left: original absolute coordinates, right: normalized data)"""
         try:
             # Video capture
@@ -818,7 +839,8 @@ class BasketballShootingAnalyzer:
                 if frame_count < len(original_pose_data):
                     original_frame = self._draw_pose_skeleton_original(original_frame, frame_count, original_pose_data)
                     original_frame = self._draw_ball_original(original_frame, frame_count, original_ball_data)
-                
+                    original_frame = self._draw_rim_original(original_frame, frame_count, original_rim_data)
+    
                 if shooting_phases and frame_count < len(shooting_phases):
                     original_frame = self._draw_phase_label(original_frame, frame_count, "Original", shooting_phases)
                 
@@ -965,6 +987,42 @@ class BasketballShootingAnalyzer:
                            (center_x + 15, center_y), cv2.FONT_HERSHEY_SIMPLEX, 
                            0.5, color, 1)
         
+        return frame
+    
+    def _draw_rim_original(self, frame: np.ndarray, frame_idx: int, rim_data: List[Dict]) -> np.ndarray:
+        """Draw original absolute coordinates rim"""
+        if(frame_idx >= len(rim_data)):
+            return frame
+        # Check data structure and extract rim data
+        frame_data = rim_data[frame_idx]
+        if isinstance(frame_data, dict):
+            rim_detections = frame_data.get('rim_detections', [])
+        else:
+            rim_detections = []
+        for rim in rim_detections:
+            if isinstance(rim, dict):
+                # Use original absolute coordinates
+                center_x = int(rim.get('center_x', 0))
+                center_y = int(rim.get('center_y', 0))
+                width = int(rim.get('width', 10))
+                height = int(rim.get('height', 10))
+                confidence = rim.get('confidence', 0)
+                
+                # Change color based on confidence
+                if confidence > 0.7:
+                    color = (0, 255, 0)  # Green
+                elif confidence > 0.4:
+                    color = (0, 255, 255)  # Yellow
+                else:
+                    color = (0, 0, 255)  # Red
+                # Draw rim
+                cv2.rectangle(frame, 
+                              (center_x - width // 2, center_y - height // 2), 
+                              (center_x + width // 2, center_y + height // 2), 
+                              color, 2)
+                cv2.putText(frame, f"{confidence:.2f}", 
+                            (center_x + 15, center_y), cv2.FONT_HERSHEY_SIMPLEX, 
+                            0.5, color, 1)
         return frame
 
     def _draw_pose_skeleton_normalized(self, frame: np.ndarray, frame_idx: int, pose_data: List[Dict]) -> np.ndarray:

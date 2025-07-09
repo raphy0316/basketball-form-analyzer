@@ -58,6 +58,34 @@ class BallStorageLayer:
         
         print(f"Original ball trajectory JSON save complete: {filepath}")
         return filepath
+    
+    def save_rim_original_as_json(self, rim_info: List[Dict], filename: Optional[str] = None) -> str:
+        """Save original absolute coordinate rim info data as JSON"""
+        if filename is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"rim_original_{timestamp}.json"
+        
+        filepath = os.path.join(self.output_dir, filename)
+        
+        data_to_save = {
+            "metadata": {
+                "total_frames": len(rim_info),
+                "extraction_time": datetime.now().isoformat(),
+                "frames_with_rim": sum(1 for frame in rim_info if frame['rim_count'] > 0),
+                "total_rims_detected": sum(frame['rim_count'] for frame in rim_info),
+                "coordinate_system": "original_pixel_coordinates"
+            },
+            "rim_info": rim_info
+        }
+        
+        # Convert numpy types to Python basic types
+        data_to_save = convert_numpy_types(data_to_save)
+        
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(data_to_save, f, indent=2, ensure_ascii=False)
+        
+        print(f"Original rim info JSON save complete: {filepath}")
+        return filepath
 
     def save_as_json(self, ball_trajectory: List[Dict], filename: Optional[str] = None) -> str:
         """Save ball trajectory data as JSON"""
@@ -277,6 +305,19 @@ class BallStorageLayer:
         
         if "ball_trajectory" in data:
             return data["ball_trajectory"]
+        else:
+            return data  # If directly an array
+    
+    def load_rim_info(self, filepath: str) -> List[Dict]:
+        """Load saved ball trajectory data"""
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"File not found: {filepath}")
+        
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        
+        if "rim_info" in data:
+            return data["rim_info"]
         else:
             return data  # If directly an array
 

@@ -14,7 +14,7 @@ from .ball_detection_layer import BallDetectionLayer
 from .ball_storage_layer import BallStorageLayer
 
 class BallExtractionPipeline:
-    def __init__(self, model_path: str = "ball_extraction/yolov8n736-customContinue.pt", output_dir: str = "data"):
+    def __init__(self, model_path: str = "ball_extraction/models/yolov8n736-customContinue.pt", output_dir: str = "data"):
         """Initialize ball extraction pipeline"""
         self.detection_layer = BallDetectionLayer(model_path)
         self.storage_layer = BallStorageLayer(output_dir)
@@ -46,8 +46,8 @@ class BallExtractionPipeline:
         
         try:
             # Step 1: Detection layer - extract original ball trajectory
-            print("🔍 Step 1: Extracting original basketball trajectory...")
-            raw_ball_trajectory = self.detection_layer.extract_ball_trajectory_from_video(
+            print("🔍 Step 1: Extracting original basketball trajectory and rim info...")
+            raw_ball_trajectory, rim_info = self.detection_layer.extract_ball_trajectory_and_rim_info_from_video(
                 video_path, conf_threshold, classes, iou_threshold
             )
             print(f"✅ Extraction complete: {len(raw_ball_trajectory)} frames")
@@ -58,12 +58,14 @@ class BallExtractionPipeline:
                 raw_ball_trajectory, min_confidence, min_ball_size
             )
             print(f"✅ Filtering complete: {len(filtered_trajectory)} frames")
-            
+            filtered_rim = self.detection_layer.filter_rim_detections(rim_info, min_confidence)
             # Step 3: Save original absolute coordinates as JSON
             print("\n💾 Step 3: Saving original data...")
             base_filename = f"{os.path.splitext(os.path.basename(video_path))[0]}_ball_original"
             saved_file = self.storage_layer.save_original_as_json(filtered_trajectory, f"{base_filename}.json")
-            
+
+            base_filename2 = f"{os.path.splitext(os.path.basename(video_path))[0]}_rim_original"
+            self.storage_layer.save_rim_original_as_json(filtered_rim, f"{base_filename2}.json")
             print("✅ Save complete")
             print("=" * 50)
             
@@ -89,7 +91,7 @@ class BallExtractionPipeline:
         print(f"   • Average confidence: {stats['avg_confidence']:.3f}")
         print(f"   • Saved file: {os.path.basename(saved_file)}")
         print(f"   • Coordinate system: Original absolute coordinates (pixel units)")
-
+        
     def get_pipeline_info(self) -> Dict:
         """Return pipeline info"""
         storage_info = self.storage_layer.get_storage_info()
@@ -110,7 +112,7 @@ def main():
     pipeline = BallExtractionPipeline()
     
     # Set video file path
-    video_path = "../References/stephen_curry_multy_person_part.mp4"
+    video_path = "../data/video/curry_freethrow1.mp4"
     
     if not os.path.exists(video_path):
         print(f"❌ Video file not found: {video_path}")

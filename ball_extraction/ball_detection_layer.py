@@ -11,7 +11,7 @@ from typing import Dict, List, Tuple, Optional
 import torch
 
 class BallDetectionLayer:
-    def __init__(self, model_path: str = "ball_extraction/yolov8n736-customContinue.pt"):
+    def __init__(self, model_path: str = "ball_extraction/models/yolov8n736-customContinue.pt"):
         """
         Initialize basketball detection model
         
@@ -33,10 +33,10 @@ class BallDetectionLayer:
             self.model = YOLO("yolov8n.pt")
             print("Fallback to default YOLOv8 model")
 
-    def detect_ball_in_frame(self, frame: np.ndarray, conf_threshold: float = 0.15, 
+    def _detect_ball_and_rim_in_frame(self, frame: np.ndarray, conf_threshold: float = 0.15, 
                            classes: List[int] = [0, 1, 2], iou_threshold: float = 0.1) -> List[Dict]:
         """
-        Detect basketball in a single frame
+        Detect basketball and rim in a single frame
         
         Args:
             frame: Input frame
@@ -45,13 +45,13 @@ class BallDetectionLayer:
             iou_threshold: IoU threshold
             
         Returns:
-            List of detected balls
+            List of detected balls and rims
         """
         results = self.model(frame, conf=conf_threshold, classes=classes, 
                            iou=iou_threshold, imgsz=736, verbose=False)
         
         ball_detections = []
-        
+        rim_detections = []
         for result in results:
             boxes = result.boxes
             if boxes is not None:
@@ -73,10 +73,20 @@ class BallDetectionLayer:
                             'height': float(y2 - y1)
                         }
                         ball_detections.append(ball_info)
-        
-        return ball_detections
+                    elif class_id == 2:
+                        rim_info = {
+                            'bbox': [float(x1), float(y1), float(x2), float(y2)],
+                            'confidence': float(confidence),
+                            'class_id': class_id,
+                            'center_x': float((x1 + x2) / 2),
+                            'center_y': float((y1 + y2) / 2),
+                            'width': float(x2 - x1),
+                            'height': float(y2 - y1)
+                        }  
+                        rim_detections.append(rim_info)
+        return ball_detections, rim_detections
 
-    def extract_ball_trajectory_from_video(self, video_path: str, conf_threshold: float = 0.15,
+    def extract_ball_trajectory_and_rim_info_from_video(self, video_path: str, conf_threshold: float = 0.15,
                                          classes: List[int] = [0, 1, 2], iou_threshold: float = 0.1) -> List[Dict]:
         """
         Extract basketball trajectory from video
@@ -100,6 +110,7 @@ class BallDetectionLayer:
         print(f"Basketball trajectory extraction started: {total_frames} frames, {fps}fps")
         
         ball_trajectory = []
+        rim_info = []
         frame_count = 0
         
         while True:
@@ -111,7 +122,7 @@ class BallDetectionLayer:
             print(f"Ball detection processing: {frame_count}/{total_frames}", end="\r")
             
             # Detect ball in current frame
-            ball_detections = self.detect_ball_in_frame(
+            ball_detections, rim_detections = self._detect_ball_and_rim_in_frame(
                 frame, conf_threshold, classes, iou_threshold
             )
             
@@ -121,12 +132,53 @@ class BallDetectionLayer:
                 "ball_detections": ball_detections,
                 "ball_count": len(ball_detections)
             }
+            rim_data = {
+                "frame_number": frame_count,
+                "timestamp": frame_count / fps,
+                "rim_detections": rim_detections,
+                "rim_count": len(rim_detections)
+            }
             ball_trajectory.append(frame_data)
-        
+            rim_info.append(rim_data)
+    
         cap.release()
         print(f"\nBasketball trajectory extraction complete: {len(ball_trajectory)} frames")
         
-        return ball_trajectory
+        return ball_trajectory, rim_info
+
+    def filter_rim_detections(self, rim_info: List[Dict],
+                              min_confidence: float = 0.4) -> List[Dict]:
+        """
+        Filter rim detection results
+        
+        Args:
+            rim_info: Rim detection data
+            min_confidence: Minimum confidence
+        Returns
+        """
+        filtered_rim = []
+        widths = [detection['width'] for frame in rim_info for detection in frame['rim_detections']]
+        median_width = np.median(widths)
+        std = np.std(widths)
+        for frame_data in rim_info:
+            filtered_detections = []
+            
+            for detection in frame_data['rim_detections']:
+                if (detection['confidence'] >= min_confidence and 
+                    abs (detection['width'] - median_width) <= std):
+                    filtered_detections.append(detection)
+            
+            filtered_frame = {
+                "frame_number": frame_data['frame_number'],
+                "timestamp": frame_data['timestamp'],
+                "rim_detections": filtered_detections,
+                "rim_count": len(filtered_detections)
+            }
+            filtered_rim.append(filtered_frame)
+        
+        print(f"Ball detection filtering: {len(rim_info)} -> {len(filtered_rim)} frames")
+        return filtered_rim
+            
 
     def filter_ball_detections(self, ball_trajectory: List[Dict], 
                              min_confidence: float = 0.3, 
@@ -143,13 +195,16 @@ class BallDetectionLayer:
             Filtered ball trajectory data
         """
         filtered_trajectory = []
-        
+        widths = [detection['width'] for frame in ball_trajectory for detection in frame['ball_detections']]
+        median_width = np.median(widths)
+        std = np.std(widths)
         for frame_data in ball_trajectory:
             filtered_detections = []
             
             for detection in frame_data['ball_detections']:
                 if (detection['confidence'] >= min_confidence and 
-                    detection['width'] >= min_ball_size and 
+                    detection['width']  >= min_ball_size and 
+                    # abs(detection['width'] - median_width) <= std and
                     detection['height'] >= min_ball_size):
                     filtered_detections.append(detection)
             
@@ -186,4 +241,29 @@ class BallDetectionLayer:
             "max_confidence": np.max(confidences) if confidences else 0
         }
         
-        return stats 
+        return stats
+
+    def get_rim_statistics(self, rim_info: List[Dict]) -> Dict:
+        """Return rim detection statistics"""
+        total_frames = len(rim_info)
+        frames_with_rim = sum(1 for frame in rim_info if frame['rim_count'] > 0)
+        total_rims_detected = sum(frame['rim_count'] for frame in rim_info)
+        
+        # Confidence statistics
+        confidences = []
+        for frame in rim_info:
+            for detection in frame['rim_detections']:
+                confidences.append(detection['confidence'])
+            
+        stats = {
+                "total_frames": total_frames,
+                "frames_with_rim": frames_with_rim,
+                "total_rims_detected": total_rims_detected,
+                "detection_rate": frames_with_rim / total_frames if total_frames > 0 else 0,
+                "avg_confidence": np.mean(confidences) if confidences else 0,
+                "min_confidence": np.min(confidences) if confidences else 0,
+                "max_confidence": np.max(confidences) if confidences else 0
+            }
+
+        return stats
+    
