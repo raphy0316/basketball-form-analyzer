@@ -11,7 +11,7 @@ from typing import Dict, List, Tuple, Optional
 import torch
 
 class BallDetectionLayer:
-    def __init__(self, model_path: str = "ball_extraction/yolov8n736-customContinue.pt"):
+    def __init__(self, model_path: str = "ball_extraction/models/yolov8n736-customContinue.pt"):
         """
         Initialize basketball detection model
         
@@ -204,7 +204,7 @@ class BallDetectionLayer:
             for detection in frame_data['ball_detections']:
                 if (detection['confidence'] >= min_confidence and 
                     detection['width']  >= min_ball_size and 
-                    abs(detection['width'] - median_width) <= std and
+                    # abs(detection['width'] - median_width) <= std and
                     detection['height'] >= min_ball_size):
                     filtered_detections.append(detection)
             

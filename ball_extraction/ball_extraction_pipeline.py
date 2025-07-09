@@ -14,7 +14,7 @@ from .ball_detection_layer import BallDetectionLayer
 from .ball_storage_layer import BallStorageLayer
 
 class BallExtractionPipeline:
-    def __init__(self, model_path: str = "ball_extraction/yolov8n736-customContinue.pt", output_dir: str = "data"):
+    def __init__(self, model_path: str = "ball_extraction/models/yolov8n736-customContinue.pt", output_dir: str = "data"):
         """Initialize ball extraction pipeline"""
         self.detection_layer = BallDetectionLayer(model_path)
         self.storage_layer = BallStorageLayer(output_dir)
