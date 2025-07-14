@@ -90,18 +90,18 @@ pipeline.run_full_pipeline("data/video/your_video.mp4", overwrite_mode=True)
 
 | From → To             | Condition                                                                                 |
 |----------------------|------------------------------------------------------------------------------------------|
-| General → Set-up     | The ball is held in hand for at least 3 consecutive frames *(Not implemented yet)*        |
+| General → Set-up     | The ball is held in hand based on close contact only:<br>- Close contact (0.8× radius) |
 | Set-up → Loading     | At least 2 out of 3: knee, wrist, or ball are moving downward (y-coordinate decreasing)   |
 | Loading → Rising     | Wrist, elbow, and ball are all moving upward simultaneously (y increasing)                |
-| Rising → Release     | - Ball leaves the hand *(Currently disabled)*<br>- Left or right elbow angle ≥ 120°       |
-| Release → Follow-through | - Ball has fully left the hand<br>- Knee or hip begins to descend (y starts decreasing) |
+| Rising → Release     | Left or right elbow angle ≥ 120°                                                          |
+| Release → Follow-through | - Ball has left the hand with multiple distance levels:<br>  • Clearly left (4.0× radius)<br>  • Moderately away (2.5× radius)<br>  • Slightly away (1.5× radius)<br>- Knee or hip begins to descend (y starts decreasing) |
 | Follow-through → Recovery | - Knee starts rising again after descending<br>- Elbow angle ≤ 80° (arm begins to fold) |
 | Recovery → General   | Knee, wrist, and hip movement becomes minimal for several frames (abs(Δy) < threshold)    |
 
 **Note:**
-- Conditions marked as *Currently disabled* or *Not implemented yet* are temporarily excluded due to inconsistent values and detection errors, which affect accurate phase detection.
-- Once the data has been cleaned and stabilized, these conditions will be implemented according to the logic described here.
-- If the logic is later modified, please document and update the changes in this section.
+- All phase transition conditions are now fully implemented according to the specifications.
+- The system uses normalized coordinates and ball trajectory data for accurate phase detection.
+- Phase transitions are based on sequential movement patterns and anatomical angles.
 
 ## Keypoints
 

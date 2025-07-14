@@ -18,12 +18,15 @@ class BasketballShootingAnalyzer:
         """Initialize basketball shooting analyzer"""
         self.references_dir = "data"
         self.video_dir = os.path.join(self.references_dir, "video")
+        self.standard_video_dir = os.path.join(self.video_dir, "Standard")
+        self.edgecase_video_dir = os.path.join(self.video_dir, "EdgeCase")
         self.extracted_data_dir = os.path.join(self.references_dir, "extracted_data")
         self.results_dir = os.path.join(self.references_dir, "results")
         self.visualized_video_dir = os.path.join(self.references_dir, "visualized_video")
         
         # Create directories
-        for dir_path in [self.video_dir, self.extracted_data_dir, self.results_dir, self.visualized_video_dir]:
+        for dir_path in [self.video_dir, self.standard_video_dir, self.edgecase_video_dir, 
+                        self.extracted_data_dir, self.results_dir, self.visualized_video_dir]:
             os.makedirs(dir_path, exist_ok=True)
         
         # Data storage
@@ -37,57 +40,159 @@ class BasketballShootingAnalyzer:
         self.available_videos = []
 
     def list_available_videos(self) -> List[str]:
-        """Return a list of available video files"""
+        """Return a list of available video files from Standard, EdgeCase, and test folders"""
         video_extensions = ["*.mp4", "*.avi", "*.mov", "*.mkv"]
         videos = []
         
+        # Check Standard folder
         for ext in video_extensions:
-            pattern = os.path.join(self.video_dir, ext)
+            pattern = os.path.join(self.standard_video_dir, ext)
+            videos.extend(glob.glob(pattern))
+        
+        # Check EdgeCase folder
+        for ext in video_extensions:
+            pattern = os.path.join(self.edgecase_video_dir, ext)
+            videos.extend(glob.glob(pattern))
+        
+        # Check test folder
+        test_video_dir = os.path.join(self.video_dir, "test")
+        if os.path.exists(test_video_dir):
+            # Check combined_output.mov
+            combined_video = os.path.join(test_video_dir, "combined_output.mov")
+            if os.path.exists(combined_video):
+                videos.append(combined_video)
+            
+            # Check clips folder
+            clips_dir = os.path.join(test_video_dir, "clips")
+            if os.path.exists(clips_dir):
+                for ext in video_extensions:
+                    pattern = os.path.join(clips_dir, ext)
             videos.extend(glob.glob(pattern))
         
         return sorted(videos)
     
     def prompt_video_selection(self) -> Optional[str]:
-        """Prompt user to select a video"""
+        """Prompt user to select processing mode"""
         self.available_videos = self.list_available_videos()
         
         if not self.available_videos:
-            print("❌ No video files found in data/video folder.")
+            print("❌ No video files found in data/video/Standard or data/video/EdgeCase folders.")
             return None
         
-        print("\n🎬 STEP 0: Select video")
-        print("=" * 50)
-        print("Select the video to analyze:")
+        # Categorize videos by folder
+        standard_videos = []
+        edgecase_videos = []
         
-        for i, video in enumerate(self.available_videos, 1):
-            print(f"[{i}] {video}")
+        for video in self.available_videos:
+            if self.standard_video_dir in video:
+                standard_videos.append(video)
+            elif self.edgecase_video_dir in video:
+                edgecase_videos.append(video)
+        
+        print("\n🎬 STEP 0: Select processing mode")
+        print("=" * 50)
+        print("Available processing options:")
+        print(f"[1] Single video selection ({len(self.available_videos)} total videos)")
+        print(f"[2] Process all Standard videos ({len(standard_videos)} videos)")
+        print(f"[3] Process all EdgeCase videos ({len(edgecase_videos)} videos)")
+        print(f"[4] Process all videos ({len(self.available_videos)} videos)")
+        print("[5] Cancel")
         
         while True:
             try:
-                choice = input("\nEnter the number or directly enter the file name: ").strip()
+                choice = input("\nEnter your choice (1-5): ").strip()
+                
+                if choice == "1":
+                    # Single video selection
+                    return self._prompt_single_video_selection(standard_videos, edgecase_videos)
+                
+                elif choice == "2":
+                    if standard_videos:
+                        print(f"✅ Selected: Process all Standard videos ({len(standard_videos)} videos)")
+                        return "standard_all"
+                    else:
+                        print("❌ No videos found in Standard folder.")
+                        continue
+                
+                elif choice == "3":
+                    if edgecase_videos:
+                        print(f"✅ Selected: Process all EdgeCase videos ({len(edgecase_videos)} videos)")
+                        return "edgecase_all"
+                    else:
+                        print("❌ No videos found in EdgeCase folder.")
+                        continue
+                
+                elif choice == "4":
+                    if self.available_videos:
+                        print(f"✅ Selected: Process all videos ({len(self.available_videos)} videos)")
+                        return "all_videos"
+                    else:
+                        print("❌ No videos found.")
+                        continue
+                
+                elif choice == "5":
+                    print("❌ Analysis canceled.")
+                    return None
+                
+                else:
+                    print("❌ Invalid choice. Please enter 1-5.")
+                    continue
+                    
+            except KeyboardInterrupt:
+                print("\n❌ Analysis canceled.")
+                return None
+    
+    def _prompt_single_video_selection(self, standard_videos: List[str], edgecase_videos: List[str]) -> Optional[str]:
+        """Prompt user to select a single video"""
+        print("\nAvailable videos:")
+        video_list = []
+        video_categories = []
+        
+        if standard_videos:
+            print(f"\n📁 Standard folder:")
+            for video in standard_videos:
+                display_name = os.path.basename(video)
+                print(f"  [{len(video_list) + 1}] {display_name}")
+                video_list.append(video)
+                video_categories.append("Standard")
+        
+        if edgecase_videos:
+            print(f"\n📁 EdgeCase folder:")
+            for video in edgecase_videos:
+                display_name = os.path.basename(video)
+                print(f"  [{len(video_list) + 1}] {display_name}")
+                video_list.append(video)
+                video_categories.append("EdgeCase")
+        
+        print(f"\nTotal videos: {len(video_list)}")
+        
+        while True:
+            try:
+                video_choice = input("\nEnter the number or directly enter the file name: ").strip()
                 
                 # Select by number
-                if choice.isdigit():
-                    idx = int(choice) - 1
-                    if 0 <= idx < len(self.available_videos):
-                        return self.available_videos[idx]
+                if video_choice.isdigit():
+                    idx = int(video_choice) - 1
+                    if 0 <= idx < len(video_list):
+                        selected_video = video_list[idx]
+                        category = video_categories[idx]
+                        print(f"✅ Selected: {os.path.basename(selected_video)} ({category})")
+                        return selected_video
                     else:
                         print("❌ Invalid number.")
                         continue
                 
                 # Select by file name
-                if choice in self.available_videos:
-                    return choice
-                
-                # If only the file name is entered (without extension)
-                full_path = os.path.join(self.video_dir, choice)
-                if full_path in self.available_videos:
-                    return full_path
+                for i, video in enumerate(video_list):
+                    if os.path.basename(video) == video_choice:
+                        category = video_categories[i]
+                        print(f"✅ Selected: {video_choice} ({category})")
+                        return video
                 
                 print("❌ Invalid selection. Please try again.")
                 
             except KeyboardInterrupt:
-                print("\n❌ Analysis canceled.")
+                print("\n❌ Video selection canceled.")
                 return None
     
     def load_associated_data(self, video_path: str, overwrite_mode: bool = False) -> bool:
@@ -395,26 +500,30 @@ class BasketballShootingAnalyzer:
             print(f"❌ Failed to save normalized ball data: {e}")
     
     def segment_shooting_phases(self):
-        """Segment shooting movement into 6 steps (quick transition + short noise filtering)"""
-        print(f"\n📐 STEP 3: Segment shooting phases")
+        """Segment shooting movement into 6 steps using original data"""
+        print(f"\n📐 STEP 3: Segment shooting phases (using original data)")
         print("=" * 50)
         
-        if not self.normalized_data:
-            print("❌ Normalized data not found.")
+        if not self.pose_data or not self.ball_data:
+            print("❌ Original pose or ball data not found.")
             return
         
         self.phases = []
-        current_phase = "Set-up"
+        current_phase = "General" # Start with a general phase
         phase_start_frame = 0
         
+        # Track phase history for cancellation
+        phase_history = []  # List of (phase, start_frame, end_frame)
+        current_phase_start = 0
+        
         # Setup for noise filtering
-        min_phase_duration = 2  # Must last at least 2 frames
+        min_phase_duration = 3  # Must last at least 3 frames
         noise_threshold = 4  # Changes of 4 frames or less are considered noise
         
-        for i, frame_data in enumerate(self.normalized_data):
-            pose = frame_data['normalized_pose']
+        for i, frame_data in enumerate(self.pose_data):
+            pose = frame_data.get('pose', {})
             
-            # Extract necessary keypoints
+            # Extract necessary keypoints from original data
             left_knee = pose.get('left_knee', {'y': 0})
             right_knee = pose.get('right_knee', {'y': 0})
             left_wrist = pose.get('left_wrist', {'y': 0})
@@ -424,23 +533,82 @@ class BasketballShootingAnalyzer:
             left_ankle = pose.get('left_ankle', {'y': 0})
             right_ankle = pose.get('right_ankle', {'y': 0})
             
-            # Calculate average values
+            # Calculate average values using original coordinates
             knee_y = (left_knee['y'] + right_knee['y']) / 2
-            wrist_y = (left_wrist['y'] + right_wrist['y']) / 2
             hip_y = (left_hip['y'] + right_hip['y']) / 2
             ankle_y = (left_ankle['y'] + right_ankle['y']) / 2
             
+            # Get ball position for wrist selection
+            ball_info = None
+            if i < len(self.ball_data):
+                ball_frame_data = self.ball_data[i]
+                if isinstance(ball_frame_data, dict) and ball_frame_data.get('ball_detections'):
+                    ball_detections = ball_frame_data['ball_detections']
+                    if ball_detections and isinstance(ball_detections[0], dict):
+                        ball_info = ball_detections[0]
+            
+            ball_y = ball_info.get('center_y', 0) if ball_info else 0
+            
+            # Select the closest wrist to the ball
+            left_wrist_x = left_wrist.get('x', 0)
+            left_wrist_y = left_wrist['y']
+            right_wrist_x = right_wrist.get('x', 0)
+            right_wrist_y = right_wrist['y']
+            
+            # Calculate Euclidean distances to ball
+            ball_x = ball_info.get('center_x', 0) if ball_info else 0
+            left_distance = ((ball_x - left_wrist_x)**2 + (ball_y - left_wrist_y)**2)**0.5 if ball_info else float('inf')
+            right_distance = ((ball_x - right_wrist_x)**2 + (ball_y - right_wrist_y)**2)**0.5 if ball_info else float('inf')
+            
+            # Use the wrist closer to the ball
+            if left_distance <= right_distance:
+                wrist_x = left_wrist_x
+                wrist_y = left_wrist_y
+                selected_wrist = "left"
+            else:
+                wrist_x = right_wrist_x
+                wrist_y = right_wrist_y
+                selected_wrist = "right"
+            
             # Calculate change amounts compared to previous frames
             if i > 0:
-                prev_frame = self.normalized_data[i-1]
-                prev_pose = prev_frame['normalized_pose']
+                prev_frame = self.pose_data[i-1]
+                prev_pose = prev_frame.get('pose', {})
                 
                 prev_knee_y = (prev_pose.get('left_knee', {'y': 0})['y'] + 
                               prev_pose.get('right_knee', {'y': 0})['y']) / 2
-                prev_wrist_y = (prev_pose.get('left_wrist', {'y': 0})['y'] + 
-                               prev_pose.get('right_wrist', {'y': 0})['y']) / 2
                 prev_hip_y = (prev_pose.get('left_hip', {'y': 0})['y'] + 
                              prev_pose.get('right_hip', {'y': 0})['y']) / 2
+                
+                # Get previous ball position for wrist selection
+                prev_ball_info = None
+                if i-1 < len(self.ball_data):
+                    prev_ball_frame_data = self.ball_data[i-1]
+                    if isinstance(prev_ball_frame_data, dict) and prev_ball_frame_data.get('ball_detections'):
+                        prev_ball_detections = prev_ball_frame_data['ball_detections']
+                        if prev_ball_detections and isinstance(prev_ball_detections[0], dict):
+                            prev_ball_info = prev_ball_detections[0]
+                
+                prev_ball_y = prev_ball_info.get('center_y', 0) if prev_ball_info else 0
+                
+                # Select the closest wrist to the ball in previous frame
+                prev_left_wrist_x = prev_pose.get('left_wrist', {'x': 0, 'y': 0})['x']
+                prev_left_wrist_y = prev_pose.get('left_wrist', {'x': 0, 'y': 0})['y']
+                prev_right_wrist_x = prev_pose.get('right_wrist', {'x': 0, 'y': 0})['x']
+                prev_right_wrist_y = prev_pose.get('right_wrist', {'x': 0, 'y': 0})['y']
+                
+                # Calculate Euclidean distances to ball in previous frame
+                prev_ball_x = prev_ball_info.get('center_x', 0) if prev_ball_info else 0
+                prev_left_distance = ((prev_ball_x - prev_left_wrist_x)**2 + (prev_ball_y - prev_left_wrist_y)**2)**0.5 if prev_ball_info else float('inf')
+                prev_right_distance = ((prev_ball_x - prev_right_wrist_x)**2 + (prev_ball_y - prev_right_wrist_y)**2)**0.5 if prev_ball_info else float('inf')
+                
+                # Use the wrist closer to the ball in previous frame
+                if prev_left_distance <= prev_right_distance:
+                    prev_wrist_x = prev_left_wrist_x
+                    prev_wrist_y = prev_left_wrist_y
+                else:
+                    prev_wrist_x = prev_right_wrist_x
+                    prev_wrist_y = prev_right_wrist_y
                 
                 d_knee_y = knee_y - prev_knee_y
                 d_wrist_y = wrist_y - prev_wrist_y
@@ -449,25 +617,49 @@ class BasketballShootingAnalyzer:
                 d_knee_y = d_wrist_y = d_hip_y = 0
             
             # Check if current phase transitions to next phase
-            next_phase = self._check_phase_transition(current_phase, i, knee_y, wrist_y, hip_y, ankle_y, 
+            next_phase = self._check_phase_transition_original(current_phase, i, knee_y, wrist_y, hip_y, ankle_y, 
                                                     d_knee_y, d_wrist_y, d_hip_y)
             
-            # Check minimum phase duration (allow quick transition)
-            if next_phase != current_phase and (i - phase_start_frame) >= min_phase_duration:
-                # Noise filtering based on trend
-                if self._is_trend_based_transition(i, current_phase, next_phase, noise_threshold):
-                    current_phase = next_phase
-                    phase_start_frame = i
-                    print(f"Frame {i}: {current_phase} phase started")
+            # Check minimum phase duration (except for Release and later phases)
+            if next_phase != current_phase:
+                # Apply minimum duration only for phases before Rising
+                if current_phase in ["General", "Set-up", "Loading"]:
+                    # Need minimum duration for early phases
+                    if (i - phase_start_frame) >= min_phase_duration:
+                        if self._is_trend_based_transition(i, current_phase, next_phase, noise_threshold):
+                            # Record current phase in history before changing
+                            if current_phase != "General":
+                                phase_history.append((current_phase, current_phase_start, i))
+                            
+                            current_phase = next_phase
+                            phase_start_frame = i
+                            current_phase_start = i
+                            print(f"Frame {i}: {current_phase} phase started")
+                        else:
+                            if i % 10 == 0:
+                                print(f"Frame {i}: Noise detected, {current_phase} maintained")
                 else:
-                    # Consider as noise and keep current phase
-                    if i % 10 == 0:
-                        print(f"Frame {i}: Noise detected, {current_phase} maintained")
+                    # No minimum duration for Release and later phases
+                    if self._is_trend_based_transition(i, current_phase, next_phase, noise_threshold):
+                        # Record current phase in history before changing
+                        if current_phase != "General":
+                            phase_history.append((current_phase, current_phase_start, i))
+                        
+                        current_phase = next_phase
+                        phase_start_frame = i
+                        current_phase_start = i
+                        print(f"Frame {i}: {current_phase} phase started")
+                    else:
+                        if i % 10 == 0:
+                            print(f"Frame {i}: Noise detected, {current_phase} maintained")
             
             self.phases.append(current_phase)
         
         # Final trend-based organization
         self._finalize_phases_by_trend(noise_threshold)
+        
+        # Process cancellations: Replace cancelled phases with Set-up
+        self._process_cancellations()
         
         # Print phase-by-frame statistics
         phase_counts = {}
@@ -486,25 +678,242 @@ class BasketballShootingAnalyzer:
         """Final trend-based organization (does nothing)"""
         return
     
-    def _check_phase_transition(self, current_phase: str, frame_idx: int, knee_y: float, 
+    def _is_cancellation_condition(self, current_phase: str, frame_idx: int, knee_y: float, 
                                wrist_y: float, hip_y: float, ankle_y: float,
-                               d_knee_y: float, d_wrist_y: float, d_hip_y: float) -> str:
-        """Check phase transition conditions (priority-based, excluding unrecognized parts)"""
+                                 d_knee_y: float, d_wrist_y: float, d_hip_y: float) -> bool:
+        """Check if current phase should be cancelled and return to Set-up"""
         
         # Get ball data
         ball_info = None
-        if frame_idx < len(self.normalized_data):
-            ball_info = self.normalized_data[frame_idx].get('normalized_ball', {})
+        if frame_idx < len(self.ball_data):
+            ball_frame_data = self.ball_data[frame_idx]
+            if isinstance(ball_frame_data, dict) and ball_frame_data.get('ball_detections'):
+                ball_detections = ball_frame_data['ball_detections']
+                if ball_detections and isinstance(ball_detections[0], dict):
+                    ball_info = ball_detections[0]
+        
+        ball_x = ball_info.get('center_x', 0) if ball_info else 0
+        ball_y = ball_info.get('center_y', 0) if ball_info else 0
+        ball_detected = ball_info is not None
+        
+        # Get pose data
+        pose = self.pose_data[frame_idx].get('pose', {}) if frame_idx < len(self.pose_data) else {}
+        
+        # Extract keypoints
+        left_shoulder = pose.get('left_shoulder', {'x': 0, 'y': 0})
+        right_shoulder = pose.get('right_shoulder', {'x': 0, 'y': 0})
+        left_elbow = pose.get('left_elbow', {'x': 0, 'y': 0})
+        right_elbow = pose.get('right_elbow', {'x': 0, 'y': 0})
+        left_wrist = pose.get('left_wrist', {'x': 0, 'y': 0})
+        right_wrist = pose.get('right_wrist', {'x': 0, 'y': 0})
+        
+        # Calculate shoulder position
+        left_shoulder_y = left_shoulder.get('y', 0)
+        right_shoulder_y = right_shoulder.get('y', 0)
+        shoulder_y = (left_shoulder_y + right_shoulder_y) / 2
+        
+        # Calculate wrist position (closest to ball)
+        left_wrist_x = left_wrist.get('x', 0)
+        left_wrist_y = left_wrist.get('y', 0)
+        right_wrist_x = right_wrist.get('x', 0)
+        right_wrist_y = right_wrist.get('y', 0)
+        
+        # Calculate Euclidean distances to ball
+        left_distance = ((ball_x - left_wrist_x)**2 + (ball_y - left_wrist_y)**2)**0.5 if ball_detected else float('inf')
+        right_distance = ((ball_x - right_wrist_x)**2 + (ball_y - right_wrist_y)**2)**0.5 if ball_detected else float('inf')
+        
+        # Use the wrist closer to the ball
+        if left_distance <= right_distance:
+            wrist_x = left_wrist_x
+            wrist_y = left_wrist_y
+        else:
+            wrist_x = right_wrist_x
+            wrist_y = right_wrist_y
+        
+        # Calculate Euclidean distance between ball and wrist
+        ball_wrist_distance = ((ball_x - wrist_x)**2 + (ball_y - wrist_y)**2)**0.5 if ball_detected else float('inf')
+        
+        # Check cancellation conditions based on current phase
+        if current_phase == "Loading":
+            # Loading cancellation: Ball missed
+            if ball_detected:
+                ball_width = ball_info.get('width', 0)
+                ball_height = ball_info.get('height', 0)
+                ball_radius = (ball_width + ball_height) / 4
+                close_threshold = ball_radius * 1.3
+                
+                if ball_wrist_distance > close_threshold:
+                    if frame_idx % 10 == 0:
+                        print(f"Frame {frame_idx}: Loading→Set-up: Ball missed (cancellation)")
+                    return True
+        
+        elif current_phase == "Rising":
+            # Rising cancellation: Hand moving down relative to hip
+            if frame_idx > 0:
+                prev_pose = self.pose_data[frame_idx-1].get('pose', {})
+                prev_left_hip = prev_pose.get('left_hip', {'y': 0})
+                prev_right_hip = prev_pose.get('right_hip', {'y': 0})
+                prev_left_elbow = prev_pose.get('left_elbow', {'y': 0})
+                prev_right_elbow = prev_pose.get('right_elbow', {'y': 0})
+                prev_hip_y = (prev_left_hip['y'] + prev_right_hip['y']) / 2
+                prev_elbow_y = (prev_left_elbow['y'] + prev_right_elbow['y']) / 2
+                
+                # Calculate elbow position for current frame
+                elbow_y = (left_elbow['y'] + right_elbow['y']) / 2
+                
+                # Calculate relative movement (compared to hip)
+                d_wrist_relative = d_wrist_y - (hip_y - prev_hip_y)
+                d_elbow_relative = (elbow_y - prev_elbow_y) - (hip_y - prev_hip_y)
+                d_ball_relative = 0
+                if ball_detected and frame_idx > 0:
+                    prev_ball_info = None
+                    if frame_idx-1 < len(self.ball_data):
+                        prev_ball_frame_data = self.ball_data[frame_idx-1]
+                        if isinstance(prev_ball_frame_data, dict) and prev_ball_frame_data.get('ball_detections'):
+                            prev_ball_detections = prev_ball_frame_data['ball_detections']
+                            if prev_ball_detections and isinstance(prev_ball_detections[0], dict):
+                                prev_ball_info = prev_ball_detections[0]
+                    if prev_ball_info:
+                        prev_ball_y = prev_ball_info.get('center_y', 0)
+                        d_ball_relative = ball_y - prev_ball_y - (hip_y - prev_hip_y)
+                
+                wrist_moving_down_relative = d_wrist_relative > 2.0  # 손목이 엉덩이 기준으로 아래로 이동
+                elbow_moving_down_relative = d_elbow_relative > 2.0  # 팔꿈치가 엉덩이 기준으로 아래로 이동
+                
+                # Rising cancellation: Hand moving down relative to hip
+                if ball_detected:
+                    # 공이 감지되는 상황: 공, 손목, 팔꿈치가 모두 엉덩이 기준으로 아래로 이동하면 Set-up으로
+                    ball_moving_down_relative = d_ball_relative > 2.0  # 공이 엉덩이 기준으로 아래로 이동
+                    
+                    if wrist_moving_down_relative and elbow_moving_down_relative and ball_moving_down_relative:
+                        if frame_idx % 10 == 0:
+                            print(f"Frame {frame_idx}: Rising→Set-up: All moving down relative to hip (cancellation)")
+                        return True
+                else:
+                    # 공이 감지되지 않는 상황: 손목, 팔꿈치가 엉덩이 기준으로 아래로 이동하면 Set-up으로
+                    if wrist_moving_down_relative and elbow_moving_down_relative:
+                        if frame_idx % 10 == 0:
+                            print(f"Frame {frame_idx}: Rising→Set-up: Hand moving down relative to hip (cancellation)")
+                        return True
+        
+        elif current_phase == "Release":
+            # Release cancellation: Ball released but improper form
+            if ball_detected:
+                ball_width = ball_info.get('width', 0)
+                ball_height = ball_info.get('height', 0)
+                ball_radius = (ball_width + ball_height) / 4
+                close_threshold = ball_radius * 1.3
+                
+                distance = abs(ball_y - wrist_y)
+                ball_released = distance > close_threshold
+                
+                if ball_released:
+                    # Calculate angles
+                    left_angle = self._calculate_angle(
+                        left_shoulder.get('x', 0), left_shoulder.get('y', 0),
+                        left_elbow.get('x', 0), left_elbow.get('y', 0),
+                        left_wrist.get('x', 0), left_wrist.get('y', 0)
+                    )
+                    right_angle = self._calculate_angle(
+                        right_shoulder.get('x', 0), right_shoulder.get('y', 0),
+                        right_elbow.get('x', 0), right_elbow.get('y', 0),
+                        right_wrist.get('x', 0), right_wrist.get('y', 0)
+                    )
+                    
+                    wrist_above_shoulder = wrist_y < shoulder_y
+                    ball_above_shoulder = ball_y < shoulder_y
+                    
+                    # Improper form: return to General (which will be converted to Set-up)
+                    if not ((left_angle >= 130 or right_angle >= 130) and wrist_above_shoulder and ball_above_shoulder):
+                        if frame_idx % 10 == 0:
+                            print(f"Frame {frame_idx}: Release→Set-up: Improper form (cancellation)")
+                        return True
+         
+        return False
+    
+    def _process_cancellations(self):
+        """Process cancellations by replacing cancelled phases with Set-up"""
+        if not self.phases:
+            return
+        
+        print("\n🔄 Processing cancellations...")
+        
+        # Find cancellation points (transitions to Set-up from other phases)
+        cancellation_points = []
+        for i in range(1, len(self.phases)):
+            if self.phases[i] == "Set-up" and self.phases[i-1] in ["Loading", "Rising", "Release"]:
+                cancellation_points.append(i)
+        
+        if not cancellation_points:
+            print("  No cancellations found.")
+            return
+        
+        print(f"  Found {len(cancellation_points)} cancellation points.")
+        
+        # Process each cancellation point
+        for cancel_point in cancellation_points:
+            # Find the start of the cancelled sequence (look backwards for consecutive cancelled phases)
+            start_point = cancel_point - 1
+            while start_point >= 0 and self.phases[start_point] in ["Loading", "Rising", "Release"]:
+                start_point -= 1
+            
+            # Replace the entire cancelled sequence with Set-up
+            for i in range(start_point + 1, cancel_point):
+                if self.phases[i] in ["Loading", "Rising", "Release"]:
+                    self.phases[i] = "Set-up"
+                    print(f"    Frame {i}: {self.phases[i]} → Set-up (cancelled)")
+        
+        # Additional processing: Handle multiple consecutive cancellations
+        # If there are multiple cancellation points close to each other, fill gaps with Set-up
+        if len(cancellation_points) > 1:
+            for i in range(len(cancellation_points) - 1):
+                current_cancel = cancellation_points[i]
+                next_cancel = cancellation_points[i + 1]
+                
+                # If there's a gap between cancellation points, fill with Set-up
+                if next_cancel - current_cancel > 1:
+                    for j in range(current_cancel + 1, next_cancel):
+                        if self.phases[j] not in ["Set-up", "General"]:
+                            self.phases[j] = "Set-up"
+                            print(f"    Frame {j}: {self.phases[j]} → Set-up (gap fill)")
+        
+        print("  Cancellation processing completed.")
+    
+    def _check_phase_transition_original(self, current_phase: str, frame_idx: int, knee_y: float, 
+                                       wrist_y: float, hip_y: float, ankle_y: float,
+                                       d_knee_y: float, d_wrist_y: float, d_hip_y: float) -> str:
+        """Check phase transition conditions using original data"""
+        
+        # Setup for noise filtering
+        min_phase_duration = 3  # Must last at least 3 frames
+        
+        # Check for cancellation conditions first
+        if self._is_cancellation_condition(current_phase, frame_idx, knee_y, wrist_y, hip_y, ankle_y, 
+                                         d_knee_y, d_wrist_y, d_hip_y):
+            return "Set-up"  # Always return to Set-up for cancellations
+        
+        # Get ball data from original data
+        ball_info = None
+        if frame_idx < len(self.ball_data):
+            ball_frame_data = self.ball_data[frame_idx]
+            if isinstance(ball_frame_data, dict) and ball_frame_data.get('ball_detections'):
+                ball_detections = ball_frame_data['ball_detections']
+                if ball_detections and isinstance(ball_detections[0], dict):
+                    ball_info = ball_detections[0]
         
         # Previous frame ball data
         prev_ball_info = None
-        if frame_idx > 0 and frame_idx < len(self.normalized_data):
-            prev_ball_info = self.normalized_data[frame_idx-1].get('normalized_ball', {})
+        if frame_idx > 0 and frame_idx < len(self.ball_data):
+            prev_ball_frame_data = self.ball_data[frame_idx-1]
+            if isinstance(prev_ball_frame_data, dict) and prev_ball_frame_data.get('ball_detections'):
+                prev_ball_detections = prev_ball_frame_data['ball_detections']
+                if prev_ball_detections and isinstance(prev_ball_detections[0], dict):
+                    prev_ball_info = prev_ball_detections[0]
         
-        # Extract ball-related information
+        # Extract ball-related information from original coordinates
         ball_x = ball_info.get('center_x', 0) if ball_info else 0
         ball_y = ball_info.get('center_y', 0) if ball_info else 0
-        ball_detected = ball_info.get('detected', False) if ball_info else False
+        ball_detected = ball_info is not None
         
         # Calculate ball change amount compared to previous frame
         d_ball_y = 0
@@ -512,185 +921,434 @@ class BasketballShootingAnalyzer:
             prev_ball_y = prev_ball_info.get('center_y', 0)
             d_ball_y = ball_y - prev_ball_y
         
-        # Check if arm is extended (Y-axis difference between wrist and shoulder)
-        pose = self.normalized_data[frame_idx]['normalized_pose'] if frame_idx < len(self.normalized_data) else {}
-        left_shoulder = pose.get('left_shoulder', {'y': 0})
-        right_shoulder = pose.get('right_shoulder', {'y': 0})
-        left_wrist = pose.get('left_wrist', {'y': 0})
-        right_wrist = pose.get('right_wrist', {'y': 0})
+        # Get pose data for current frame from original data
+        pose = self.pose_data[frame_idx].get('pose', {}) if frame_idx < len(self.pose_data) else {}
         
-        shoulder_y = (left_shoulder['y'] + right_shoulder['y']) / 2
-        wrist_y_actual = (left_wrist['y'] + right_wrist['y']) / 2
+        # Extract keypoints
+        left_shoulder = pose.get('left_shoulder', {'x': 0, 'y': 0})
+        right_shoulder = pose.get('right_shoulder', {'x': 0, 'y': 0})
+        left_elbow = pose.get('left_elbow', {'x': 0, 'y': 0})
+        right_elbow = pose.get('right_elbow', {'x': 0, 'y': 0})
+        left_wrist = pose.get('left_wrist', {'x': 0, 'y': 0})
+        right_wrist = pose.get('right_wrist', {'x': 0, 'y': 0})
         
-        # Check if arm is extended (wrist is above shoulder and at appropriate distance)
-        arm_extended = (wrist_y_actual < shoulder_y - 0.2 and 
-                       abs(wrist_y_actual - shoulder_y) < 0.8)
+        # Calculate shoulder position
+        left_shoulder_y = left_shoulder.get('y', 0)
+        right_shoulder_y = right_shoulder.get('y', 0)
+        shoulder_y = (left_shoulder_y + right_shoulder_y) / 2
         
-        # Calculate distance between ball and wrist
-        ball_wrist_distance = abs(ball_y - wrist_y_actual) if ball_detected else float('inf')
-        ball_far_from_hands = ball_wrist_distance > 0.3  # Ball is moving away from hands
+        # Calculate elbow angles
+        left_angle = self._calculate_angle(
+            left_shoulder.get('x', 0), left_shoulder.get('y', 0),
+            left_elbow.get('x', 0), left_elbow.get('y', 0),
+            left_wrist.get('x', 0), left_wrist.get('y', 0)
+        )
+        right_angle = self._calculate_angle(
+            right_shoulder.get('x', 0), right_shoulder.get('y', 0),
+            right_elbow.get('x', 0), right_elbow.get('y', 0),
+            right_wrist.get('x', 0), right_wrist.get('y', 0)
+        )
         
-        # 1. Set-up → Loading: Knee, wrist, and ball move down simultaneously
+        # Calculate wrist position (closest to ball)
+        left_wrist_x = left_wrist.get('x', 0)
+        left_wrist_y = left_wrist.get('y', 0)
+        right_wrist_x = right_wrist.get('x', 0)
+        right_wrist_y = right_wrist.get('y', 0)
+        
+        # Calculate Euclidean distances to ball
+        left_distance = ((ball_x - left_wrist_x)**2 + (ball_y - left_wrist_y)**2)**0.5 if ball_detected else float('inf')
+        right_distance = ((ball_x - right_wrist_x)**2 + (ball_y - right_wrist_y)**2)**0.5 if ball_detected else float('inf')
+        
+        # Use the wrist closer to the ball
+        if left_distance <= right_distance:
+            wrist_x = left_wrist_x
+            wrist_y = left_wrist_y
+        else:
+            wrist_x = right_wrist_x
+            wrist_y = right_wrist_y
+        
+        # Calculate Euclidean distance between ball and wrist (original pixel coordinates)
+        ball_wrist_distance = ((ball_x - wrist_x)**2 + (ball_y - wrist_y)**2)**0.5 if ball_detected else float('inf')
+        
+        # 1. General → Set-up: The ball is held in hand based on distance only
+        if current_phase == "General":
+            # Debug: Always print General phase info
+            if frame_idx % 5 == 0:  # Print every 5 frames for debugging
+                print(f"Frame {frame_idx}: General phase - ball_detected={ball_detected}, ball_y={ball_y:.1f}, wrist_y={wrist_y:.1f}")
+            
+            # Check current frame ball-hand distance
+            if ball_detected:
+                # Calculate ball radius from width and height (original pixel coordinates)
+                ball_width = ball_info.get('width', 0)
+                ball_height = ball_info.get('height', 0)
+                ball_radius = (ball_width + ball_height) / 4
+                
+                # Dynamic threshold based on ball radius - Close contact only
+                # Close contact: 1.3 * ball radius (tight grip) - pixel units
+                close_threshold = ball_radius * 1.3
+                
+                distance = ((ball_x - wrist_x)**2 + (ball_y - wrist_y)**2)**0.5
+                
+                # Debug: Print distance info
+                if frame_idx % 5 == 0:
+                    print(f"Frame {frame_idx}: Distance={distance:.1f}, ball_radius={ball_radius:.1f}")
+                    print(f"  Threshold: close={close_threshold:.1f}")
+                
+                if distance < close_threshold:
+                    print(f"Frame {frame_idx}: General→Set-up: Close contact (distance={distance:.1f}, threshold={close_threshold:.1f})")
+                    return "Set-up"
+                else:
+                    if frame_idx % 5 == 0:
+                        print(f"Frame {frame_idx}: Distance too far ({distance:.1f} > {close_threshold:.1f})")
+            else:
+                if frame_idx % 5 == 0:
+                    print(f"Frame {frame_idx}: Ball not detected in General phase")
+        
+        # 2. Set-up → Loading: Hip AND shoulder are moving downward
         if current_phase == "Set-up":
             conditions = []
             
-            # Knee moves down
-            if d_knee_y < -0.01:
-                conditions.append("knee_down")
+            # Calculate hip and shoulder positions
+            left_hip = pose.get('left_hip', {'y': 0})
+            right_hip = pose.get('right_hip', {'y': 0})
+            left_shoulder = pose.get('left_shoulder', {'y': 0})
+            right_shoulder = pose.get('right_shoulder', {'y': 0})
             
-            # Wrist moves down
-            if d_wrist_y < -0.01:
-                conditions.append("wrist_down")
+            hip_y = (left_hip['y'] + right_hip['y']) / 2
+            shoulder_y = (left_shoulder['y'] + right_shoulder['y']) / 2
             
-            # Ball moves down
-            if ball_detected and d_ball_y > 0.01:
-                conditions.append("ball_down")
+            # Calculate hip and shoulder changes from previous frame
+            if frame_idx > 0:
+                prev_pose = self.pose_data[frame_idx-1].get('pose', {})
+                prev_left_hip = prev_pose.get('left_hip', {'y': 0})
+                prev_right_hip = prev_pose.get('right_hip', {'y': 0})
+                prev_left_shoulder = prev_pose.get('left_shoulder', {'y': 0})
+                prev_right_shoulder = prev_pose.get('right_shoulder', {'y': 0})
+                
+                prev_hip_y = (prev_left_hip['y'] + prev_right_hip['y']) / 2
+                prev_shoulder_y = (prev_left_shoulder['y'] + prev_right_shoulder['y']) / 2
+                
+                d_hip_y = hip_y - prev_hip_y
+                d_shoulder_y = shoulder_y - prev_shoulder_y
+            else:
+                d_hip_y = d_shoulder_y = 0
             
-            # Minimum 2 conditions must be met to transition to Loading
-            if len(conditions) >= 2:
+            # Hip moving downward (y-coordinate increasing) - pixel units
+            if d_hip_y > 2.0:  # hip_y increasing means moving down (pixel threshold)
+                conditions.append("hip_down")
+            
+            # Shoulder moving downward - pixel units
+            if d_shoulder_y > 2.0:  # shoulder_y increasing means moving down (pixel threshold)
+                conditions.append("shoulder_down")
+            
+            # BOTH hip AND shoulder must be moving down
+            if len(conditions) == 2:
                 if frame_idx % 10 == 0:
                     print(f"Frame {frame_idx}: Set-up→Loading conditions: {conditions}")
                 return "Loading"
         
-        # 2. Loading → Rising: Wrist, elbow, and ball move up simultaneously
+        # 3. Loading → Rising: Wrist, elbow, and ball are all moving upward relative to hip height
         if current_phase == "Loading":
             conditions = []
-            # Calculate elbow y value
-            left_elbow = pose.get('left_elbow', {'y': 0})
-            right_elbow = pose.get('right_elbow', {'y': 0})
-            elbow_y = (left_elbow['y'] + right_elbow['y']) / 2
+            
+            # Calculate hip position for relative movement
+            left_hip = pose.get('left_hip', {'y': 0})
+            right_hip = pose.get('right_hip', {'y': 0})
+            hip_y = (left_hip['y'] + right_hip['y']) / 2
+            
+            # Calculate elbow change from original data
             if frame_idx > 0:
-                prev_pose = self.normalized_data[frame_idx-1]['normalized_pose']
+                prev_pose = self.pose_data[frame_idx-1].get('pose', {})
                 prev_left_elbow = prev_pose.get('left_elbow', {'y': 0})
                 prev_right_elbow = prev_pose.get('right_elbow', {'y': 0})
+                prev_hip = prev_pose.get('left_hip', {'y': 0})
+                prev_right_hip = prev_pose.get('right_hip', {'y': 0})
+                
                 prev_elbow_y = (prev_left_elbow['y'] + prev_right_elbow['y']) / 2
-                d_elbow_y = elbow_y - prev_elbow_y
-                # Both wrist, elbow, and ball move up (Rising)
-                if d_wrist_y < 0 and d_elbow_y < 0 and d_ball_y < 0:
-                    conditions.append("wrist_up")
-                    conditions.append("elbow_up")
-                    conditions.append("ball_up")
-                # All three conditions must be met to transition to Rising
+                prev_hip_y = (prev_hip['y'] + prev_right_hip['y']) / 2
+                elbow_y = (left_elbow['y'] + right_elbow['y']) / 2
+                
+                # Calculate relative movement (compared to hip)
+                d_elbow_relative = (elbow_y - prev_elbow_y) - (hip_y - prev_hip_y)
+                d_wrist_relative = d_wrist_y - (hip_y - prev_hip_y)
+                d_ball_relative = d_ball_y - (hip_y - prev_hip_y) if ball_detected else 0
+                
+                # Wrist moving upward relative to hip (y decreasing) - pixel units
+                if d_wrist_relative < -2.0:
+                    conditions.append("wrist_up_relative")
+                
+                # Elbow moving upward relative to hip - pixel units
+                if d_elbow_relative < -2.0:
+                    conditions.append("elbow_up_relative")
+                
+                # Ball moving upward relative to hip - pixel units
+                if ball_detected and d_ball_relative < -2.0:
+                    conditions.append("ball_up_relative")
+                
+                # All three conditions must be met for normal Loading→Rising
                 if len(conditions) == 3:
                     if frame_idx % 10 == 0:
                         print(f"Frame {frame_idx}: Loading→Rising conditions: {conditions}")
                     return "Rising"
+            
+            # Loading → Set-up: Hip or shoulder starts rising (canceling loading motion) - pixel units
+            # But Rising conditions take priority
+            if frame_idx > 0:
+                # Calculate hip and shoulder changes
+                prev_pose = self.pose_data[frame_idx-1].get('pose', {})
+                prev_left_hip = prev_pose.get('left_hip', {'y': 0})
+                prev_right_hip = prev_pose.get('right_hip', {'y': 0})
+                prev_left_shoulder = prev_pose.get('left_shoulder', {'y': 0})
+                prev_right_shoulder = prev_pose.get('right_shoulder', {'y': 0})
+                
+                prev_hip_y = (prev_left_hip['y'] + prev_right_hip['y']) / 2
+                prev_shoulder_y = (prev_left_shoulder['y'] + prev_right_shoulder['y']) / 2
+                
+                d_hip_y = hip_y - prev_hip_y
+                d_shoulder_y = shoulder_y - prev_shoulder_y
+                
+                # Hip or shoulder moving upward (canceling loading)
+                if d_hip_y < -2.0 or d_shoulder_y < -2.0:  # 엉덩이 또는 어깨가 위로 이동
+                    if frame_idx % 10 == 0:
+                        print(f"Frame {frame_idx}: Loading→Set-up: Hip/shoulder rising detected (d_hip_y={d_hip_y:.1f}, d_shoulder_y={d_shoulder_y:.1f})")
+                    return "Set-up"
         
-        # 3. Rising → Release: When arm is extended (angle 120 degrees or more)
-        if current_phase == "Rising":
+        # 3.5. Set-up → Rising: Skip Loading phase if Rising conditions are met directly (relative to hip)
+        if current_phase == "Set-up":
             conditions = []
             
-            # Calculate shoulder-elbow-wrist angle
-            left_elbow = pose.get('left_elbow', {'x': 0, 'y': 0})
-            right_elbow = pose.get('right_elbow', {'x': 0, 'y': 0})
-            left_angle = self._calculate_angle(
-                left_shoulder.get('x', 0), left_shoulder.get('y', 0),
-                left_elbow.get('x', 0), left_elbow.get('y', 0),
-                left_wrist.get('x', 0), left_wrist.get('y', 0)
-            )
-            right_angle = self._calculate_angle(
-                right_shoulder.get('x', 0), right_shoulder.get('y', 0),
-                right_elbow.get('x', 0), right_elbow.get('y', 0),
-                right_wrist.get('x', 0), right_wrist.get('y', 0)
-            )
-            if left_angle >= 120 or right_angle >= 120:
-                conditions.append("arm_extended")
+            # Calculate hip position for relative movement
+            left_hip = pose.get('left_hip', {'y': 0})
+            right_hip = pose.get('right_hip', {'y': 0})
+            hip_y = (left_hip['y'] + right_hip['y']) / 2
             
-            # Transition to Release if conditions are met
-            if len(conditions) >= 1:
-                if frame_idx % 10 == 0:
-                    print(f"Frame {frame_idx}: Rising→Release conditions: {conditions}")
-                    print(f"  left_angle: {left_angle:.1f}, right_angle: {right_angle:.1f}")
-                return "Release"
+            # Calculate elbow change from original data
+            if frame_idx > 0:
+                prev_pose = self.pose_data[frame_idx-1].get('pose', {})
+                prev_left_elbow = prev_pose.get('left_elbow', {'y': 0})
+                prev_right_elbow = prev_pose.get('right_elbow', {'y': 0})
+                prev_hip = prev_pose.get('left_hip', {'y': 0})
+                prev_right_hip = prev_pose.get('right_hip', {'y': 0})
+                
+                prev_elbow_y = (prev_left_elbow['y'] + prev_right_elbow['y']) / 2
+                prev_hip_y = (prev_hip['y'] + prev_right_hip['y']) / 2
+                elbow_y = (left_elbow['y'] + right_elbow['y']) / 2
+                d_elbow_y = elbow_y - prev_elbow_y
+                
+                # Calculate relative movement (compared to hip)
+                d_elbow_relative = (elbow_y - prev_elbow_y) - (hip_y - prev_hip_y)
+                d_wrist_relative = d_wrist_y - (hip_y - prev_hip_y)
+                d_ball_relative = d_ball_y - (hip_y - prev_hip_y) if ball_detected else 0
+                
+                # Wrist moving upward relative to hip (y decreasing) - pixel units
+                if d_wrist_relative < -2.0:
+                    conditions.append("wrist_up_relative")
+                
+                # Elbow moving upward relative to hip - pixel units
+                if d_elbow_relative < -2.0:
+                    conditions.append("elbow_up_relative")
+                
+                # Ball moving upward relative to hip - pixel units
+                if ball_detected and d_ball_relative < -2.0:
+                    conditions.append("ball_up_relative")
+                
+                # All three conditions must be met to skip Loading and go directly to Rising
+                if len(conditions) == 3:
+                    if frame_idx % 10 == 0:
+                        print(f"Frame {frame_idx}: Set-up→Rising (skip Loading) conditions: {conditions}")
+                    return "Rising"
         
-        # 4. Release → Follow-through: Ball is completely away from hands + body starts moving down
+        if current_phase == "Set-up" or current_phase == "Loading" :
+            if ball_detected:
+                # Calculate ball radius from width and height (original pixel coordinates)
+                ball_width = ball_info.get('width', 0)
+                ball_height = ball_info.get('height', 0)
+                ball_radius = (ball_width + ball_height) / 4
+                
+                # Dynamic threshold based on ball radius - Close contact only
+                # Close contact: 1.3 * ball radius (tight grip) - pixel units
+                close_threshold = ball_radius * 1.3
+                
+                distance = abs(ball_y - wrist_y)
+                
+                # Debug: Print distance info
+                if frame_idx % 5 == 0:
+                    print(f"Frame {frame_idx}: Distance={distance:.1f}, ball_radius={ball_radius:.1f}")
+                    print(f"  Threshold: close={close_threshold:.1f}")
+                
+                if distance > close_threshold:
+                    print(f"Frame {frame_idx}: Missed Ball: Close contact (distance={distance:.1f}, threshold={close_threshold:.1f})")
+                    # Check minimum frame duration for General transition
+                    if frame_idx >= min_phase_duration:
+                        return "General"
+                    else:
+                        return current_phase
+
+
+        # 4. Rising → Release: Ball is released with proper form
+        if current_phase == "Rising":
+            # Check for cancellation first (Rising → Set-up)
+            # Calculate relative movement compared to hip
+            if frame_idx > 0:
+                prev_pose = self.pose_data[frame_idx-1].get('pose', {})
+                prev_left_hip = prev_pose.get('left_hip', {'y': 0})
+                prev_right_hip = prev_pose.get('right_hip', {'y': 0})
+                prev_left_elbow = prev_pose.get('left_elbow', {'y': 0})
+                prev_right_elbow = prev_pose.get('right_elbow', {'y': 0})
+                prev_hip_y = (prev_left_hip['y'] + prev_right_hip['y']) / 2
+                prev_elbow_y = (prev_left_elbow['y'] + prev_right_elbow['y']) / 2
+                
+                # Calculate elbow position for current frame
+                elbow_y = (left_elbow['y'] + right_elbow['y']) / 2
+                
+                # Calculate relative movement (compared to hip)
+                d_wrist_relative = d_wrist_y - (hip_y - prev_hip_y)
+                d_elbow_relative = (elbow_y - prev_elbow_y) - (hip_y - prev_hip_y)
+                d_ball_relative = d_ball_y - (hip_y - prev_hip_y) if ball_detected else 0
+                
+                wrist_moving_down_relative = d_wrist_relative > 2.0  # 손목이 엉덩이 기준으로 아래로 이동
+                elbow_moving_down_relative = d_elbow_relative > 2.0  # 팔꿈치가 엉덩이 기준으로 아래로 이동
+                
+                # Rising cancellation: Hand moving down relative to hip
+                if ball_detected:
+                    # 공이 감지되는 상황: 공, 손목, 팔꿈치가 모두 엉덩이 기준으로 아래로 이동하면 Set-up으로
+                    ball_moving_down_relative = d_ball_relative > 2.0  # 공이 엉덩이 기준으로 아래로 이동
+                    
+                    if wrist_moving_down_relative and elbow_moving_down_relative and ball_moving_down_relative:
+                        if frame_idx % 10 == 0:
+                            print(f"Frame {frame_idx}: Rising→Set-up: All moving down relative to hip (cancellation)")
+                        return True
+                else:
+                    # 공이 감지되지 않는 상황: 손목, 팔꿈치가 엉덩이 기준으로 아래로 이동하면 Set-up으로
+                    if wrist_moving_down_relative and elbow_moving_down_relative:
+                        if frame_idx % 10 == 0:
+                            print(f"Frame {frame_idx}: Rising→Set-up: Hand moving down relative to hip (cancellation)")
+                        return True
+            
+            # Normal Rising → Release transition
+            if ball_detected:
+                # Calculate ball radius from width and height (original pixel coordinates)
+                ball_width = ball_info.get('width', 0)
+                ball_height = ball_info.get('height', 0)
+                ball_radius = (ball_width + ball_height) / 4
+                
+                # Dynamic threshold based on ball radius - Close contact only
+                # Close contact: 1.3 * ball radius (tight grip) - pixel units
+                close_threshold = ball_radius * 1.3
+                
+                distance = abs(ball_y - wrist_y)
+                
+                # Check if wrist is above shoulder
+                wrist_above_shoulder = wrist_y < shoulder_y
+                
+                # Debug: Print distance info
+                if frame_idx % 5 == 0:
+                    print(f"Frame {frame_idx}: Distance={distance:.1f}, ball_radius={ball_radius:.1f}")
+                    print(f"  Threshold: close={close_threshold:.1f}")
+                    print(f"  Wrist above shoulder: {wrist_above_shoulder}")
+                
+                # Check if ball is released (distance > threshold)
+                ball_released = distance > close_threshold
+                
+                # Enhanced Release conditions
+                if ball_released:
+                    # Ball is released - check for proper shooting form
+                    # Check if ball is above shoulder
+                    ball_above_shoulder = ball_y < shoulder_y
+                    
+                    if (left_angle >= 110 or right_angle >= 110) and wrist_above_shoulder and ball_above_shoulder:
+                        if frame_idx % 10 == 0:
+                            print(f"Frame {frame_idx}: Rising→Release: Proper release (angle={max(left_angle, right_angle):.1f}, wrist_above_shoulder={wrist_above_shoulder}, ball_above_shoulder={ball_above_shoulder})")
+                        return "Release"
+                    else:
+                        # Ball released but improper form - return to Set-up (not General)
+                        if frame_idx % 10 == 0:
+                            print(f"Frame {frame_idx}: Rising→Set-up: Ball released but improper form (cancellation)")
+                        return "Set-up"
+                else:
+                    # Ball still in hand - check for normal release conditions
+                    # Check if ball is above shoulder
+                    ball_above_shoulder = ball_y < shoulder_y
+                    
+                    if (left_angle >= 110 or right_angle >= 110) and distance > close_threshold and ball_above_shoulder:
+                        if frame_idx % 10 == 0:
+                            print(f"Frame {frame_idx}: Rising→Release: Normal release (angle={max(left_angle, right_angle):.1f}, ball_above_shoulder={ball_above_shoulder})")
+                        return "Release"
+        
+        # 5. Release → Follow-through: Ball has fully left the hand
         if current_phase == "Release":
             conditions = []
             
-            # Ball is completely away
-            if ball_detected and ball_wrist_distance > 0.5:
-                conditions.append("ball_very_far")
+            # Ball has fully left the hand (distance > threshold)
+            if ball_detected:
+                # Dynamic threshold based on ball radius with multiple levels
+                ball_info = self.normalized_data[frame_idx].get('normalized_ball', {})
+                ball_width = ball_info.get('width', 0)
+                ball_height = ball_info.get('height', 0)
+                ball_radius = (ball_width + ball_height) / 4
+                close_threshold = ball_radius * 1.5  # Ball still near hand
+                medium_threshold = ball_radius * 2.5  # Ball moderately away
+                far_threshold = ball_radius * 4.0     # Ball clearly left hand
+                
+                if ball_wrist_distance > far_threshold:
+                    conditions.append("ball_clearly_left_hand")
+                elif ball_wrist_distance > medium_threshold:
+                    conditions.append("ball_moderately_away")
+                elif ball_wrist_distance > close_threshold:
+                    conditions.append("ball_slightly_away")
             
-            # Body starts moving down (knee or butt)
-            if d_knee_y > 0.005 or d_hip_y > 0.005:
-                conditions.append("body_down")
-            
-            # Minimum one condition must be met to transition to Follow-through
+            # Any ball distance condition is met
             if len(conditions) >= 1:
                 if frame_idx % 10 == 0:
                     print(f"Frame {frame_idx}: Release→Follow-through conditions: {conditions}")
                 return "Follow-through"
         
-        # 5. Follow-through → Recovery: Knee goes down and comes up, arm folds below 80 degrees (both conditions met)
+        # 6. Follow-through → General: Wrist below eyes relative to hip + Ball caught check
         if current_phase == "Follow-through":
-            # Check recent 5 frames' knee change amounts
-            recent_knee_changes = []
-            for i in range(max(0, frame_idx-4), frame_idx+1):
-                if i < len(self.normalized_data):
-                    pose = self.normalized_data[i]['normalized_pose']
-                    knee_y_i = (pose.get('left_knee', {'y': 0})['y'] + 
-                               pose.get('right_knee', {'y': 0})['y']) / 2
-                    recent_knee_changes.append(knee_y_i)
-            # Calculate arm angle
-            left_elbow = pose.get('left_elbow', {'x': 0, 'y': 0})
-            right_elbow = pose.get('right_elbow', {'x': 0, 'y': 0})
-            left_shoulder = pose.get('left_shoulder', {'x': 0, 'y': 0})
-            right_shoulder = pose.get('right_shoulder', {'x': 0, 'y': 0})
-            left_wrist = pose.get('left_wrist', {'x': 0, 'y': 0})
-            right_wrist = pose.get('right_wrist', {'x': 0, 'y': 0})
-            left_angle = self._calculate_angle(
-                left_shoulder.get('x', 0), left_shoulder.get('y', 0),
-                left_elbow.get('x', 0), left_elbow.get('y', 0),
-                left_wrist.get('x', 0), left_wrist.get('y', 0)
-            )
-            right_angle = self._calculate_angle(
-                right_shoulder.get('x', 0), right_shoulder.get('y', 0),
-                right_elbow.get('x', 0), right_elbow.get('y', 0),
-                right_wrist.get('x', 0), right_wrist.get('y', 0)
-            )
-            arm_folded = (left_angle < 80 or right_angle < 80)
-            if len(recent_knee_changes) >= 3:
-                # Check if knee starts going down and coming up
-                knee_going_down = all(recent_knee_changes[i] >= recent_knee_changes[i-1] 
-                                    for i in range(1, len(recent_knee_changes)-1))
-                knee_starting_up = recent_knee_changes[-1] < recent_knee_changes[-2]
-                if (knee_going_down and knee_starting_up) and arm_folded:
-                    if frame_idx % 10 == 0:
-                        print(f"Frame {frame_idx}: Follow-through→Recovery conditions: Knee+arm folded (AND)")
-                        print(f"  left_angle: {left_angle:.1f}, right_angle: {right_angle:.1f}")
-                    return "Recovery"
-        
-        # 6. Recovery → Set-up: New cycle starts (all movements stabilize)
-        if current_phase == "Recovery":
-            # Recent 5 frames' change amounts are all small
-            recent_changes = []
-            for i in range(max(0, frame_idx-4), frame_idx+1):
-                if i < len(self.normalized_data):
-                    pose = self.normalized_data[i]['normalized_pose']
-                    knee_y_i = (pose.get('left_knee', {'y': 0})['y'] + 
-                               pose.get('right_knee', {'y': 0})['y']) / 2
-                    wrist_y_i = (pose.get('left_wrist', {'y': 0})['y'] + 
-                                pose.get('right_wrist', {'y': 0})['y']) / 2
-                    hip_y_i = (pose.get('left_hip', {'y': 0})['y'] + 
-                              pose.get('right_hip', {'y': 0})['y']) / 2
-                    recent_changes.append((knee_y_i, wrist_y_i, hip_y_i))
-            
-            if len(recent_changes) >= 5:
-                # All change amounts are very small
-                all_stable = True
-                for i in range(1, len(recent_changes)):
-                    knee_diff = abs(recent_changes[i][0] - recent_changes[i-1][0])
-                    wrist_diff = abs(recent_changes[i][1] - recent_changes[i-1][1])
-                    hip_diff = abs(recent_changes[i][2] - recent_changes[i-1][2])
-                    
-                    if knee_diff > 0.002 or wrist_diff > 0.002 or hip_diff > 0.002:
-                        all_stable = False
-                        break
+            # Check if ball is caught (return to Set-up)
+            if ball_detected:
+                # Calculate ball radius and threshold
+                ball_info = self.normalized_data[frame_idx].get('normalized_ball', {})
+                ball_width = ball_info.get('width', 0)
+                ball_height = ball_info.get('height', 0)
+                ball_radius = (ball_width + ball_height) / 4
+                close_threshold = ball_radius * 1.3
                 
-                if all_stable:
+                if ball_wrist_distance <= close_threshold:
                     if frame_idx % 10 == 0:
-                        print(f"Frame {frame_idx}: Recovery→Set-up conditions: All movements stabilize")
+                        print(f"Frame {frame_idx}: Follow-through→Set-up: Ball caught (distance={ball_wrist_distance:.1f})")
                     return "Set-up"
+            
+            # Check if wrist is below eyes relative to hip
+            if frame_idx > 0:
+                # Get eye positions (use lowest eye)
+                left_eye = pose.get('left_eye', {'y': 0})
+                right_eye = pose.get('right_eye', {'y': 0})
+                eye_y = max(left_eye.get('y', 0), right_eye.get('y', 0))  # Lowest eye
+                
+                # Get wrist positions (use highest wrist)
+                left_wrist = pose.get('left_wrist', {'y': 0})
+                right_wrist = pose.get('right_wrist', {'y': 0})
+                wrist_y = min(left_wrist.get('y', 0), right_wrist.get('y', 0))  # Highest wrist
+                
+                # Get hip position
+                left_hip = pose.get('left_hip', {'y': 0})
+                right_hip = pose.get('right_hip', {'y': 0})
+                hip_y = (left_hip.get('y', 0) + right_hip.get('y', 0)) / 2
+                
+                # Calculate relative positions to hip
+                eye_relative_to_hip = eye_y - hip_y
+                wrist_relative_to_hip = wrist_y - hip_y
+                
+                # Check if wrist is below eyes relative to hip
+                if wrist_relative_to_hip > eye_relative_to_hip:
+                    if frame_idx % 10 == 0:
+                        print(f"Frame {frame_idx}: Follow-through→General: Wrist below eyes relative to hip (wrist_rel={wrist_relative_to_hip:.1f}, eye_rel={eye_relative_to_hip:.1f})")
+                    # Check minimum frame duration for General transition
+                    if frame_idx >= min_phase_duration:
+                        return "General"
+                    else:
+                        return current_phase
         
         # If no conditions are met, keep current phase
         return current_phase
@@ -811,8 +1469,8 @@ class BasketballShootingAnalyzer:
             
             print(f"🎬 Output size: {new_width}x{new_height}")
             
-            # Initialize video writer with H264 codec
-            fourcc = cv2.VideoWriter_fourcc(*'H264')
+            # Initialize video writer with mp4v codec (fallback from H264)
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
             out = cv2.VideoWriter(output_path, fourcc, fps, (new_width, new_height))
             
             if not out.isOpened():
