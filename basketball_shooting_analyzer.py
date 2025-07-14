@@ -40,7 +40,7 @@ class BasketballShootingAnalyzer:
         self.available_videos = []
 
     def list_available_videos(self) -> List[str]:
-        """Return a list of available video files from Standard, EdgeCase, and test folders"""
+        """Return a list of available video files from Standard, EdgeCase, Bakke, and test folders"""
         video_extensions = ["*.mp4", "*.avi", "*.mov", "*.mkv"]
         videos = []
         
@@ -53,6 +53,13 @@ class BasketballShootingAnalyzer:
         for ext in video_extensions:
             pattern = os.path.join(self.edgecase_video_dir, ext)
             videos.extend(glob.glob(pattern))
+        
+        # Check Bakke folder
+        bakke_video_dir = os.path.join(self.video_dir, "Bakke")
+        if os.path.exists(bakke_video_dir):
+            for ext in video_extensions:
+                pattern = os.path.join(bakke_video_dir, ext)
+                videos.extend(glob.glob(pattern))
         
         # Check test folder
         test_video_dir = os.path.join(self.video_dir, "test")
@@ -67,7 +74,7 @@ class BasketballShootingAnalyzer:
             if os.path.exists(clips_dir):
                 for ext in video_extensions:
                     pattern = os.path.join(clips_dir, ext)
-            videos.extend(glob.glob(pattern))
+                    videos.extend(glob.glob(pattern))
         
         return sorted(videos)
     
@@ -1047,7 +1054,7 @@ class BasketballShootingAnalyzer:
                     print(f"Frame {frame_idx}: Set-up→Loading conditions: {conditions}")
                 return "Loading"
         
-        # 3. Loading → Rising: Wrist, elbow, and ball are all moving upward relative to hip height
+        # 3. Loading → Rising: Wrist, elbow가 모두 위로 움직이면 Rising으로 전이 (공 조건 제외)
         if current_phase == "Loading":
             conditions = []
             
@@ -1071,7 +1078,7 @@ class BasketballShootingAnalyzer:
                 # Calculate relative movement (compared to hip)
                 d_elbow_relative = (elbow_y - prev_elbow_y) - (hip_y - prev_hip_y)
                 d_wrist_relative = d_wrist_y - (hip_y - prev_hip_y)
-                d_ball_relative = d_ball_y - (hip_y - prev_hip_y) if ball_detected else 0
+                # d_ball_relative = d_ball_y - (hip_y - prev_hip_y) if ball_detected else 0
                 
                 # Wrist moving upward relative to hip (y decreasing) - pixel units
                 if d_wrist_relative < -2.0:
@@ -1081,37 +1088,15 @@ class BasketballShootingAnalyzer:
                 if d_elbow_relative < -2.0:
                     conditions.append("elbow_up_relative")
                 
-                # Ball moving upward relative to hip - pixel units
-                if ball_detected and d_ball_relative < -2.0:
-                    conditions.append("ball_up_relative")
+                # 공(ball) 조건은 제외
+                # if ball_detected and d_ball_relative < -2.0:
+                #     conditions.append("ball_up_relative")
                 
-                # All three conditions must be met for normal Loading→Rising
-                if len(conditions) == 3:
+                # 손목, 팔꿈치 둘 다 만족하면 Rising
+                if len(conditions) == 2:
                     if frame_idx % 10 == 0:
                         print(f"Frame {frame_idx}: Loading→Rising conditions: {conditions}")
                     return "Rising"
-            
-            # Loading → Set-up: Hip or shoulder starts rising (canceling loading motion) - pixel units
-            # But Rising conditions take priority
-            if frame_idx > 0:
-                # Calculate hip and shoulder changes
-                prev_pose = self.pose_data[frame_idx-1].get('pose', {})
-                prev_left_hip = prev_pose.get('left_hip', {'y': 0})
-                prev_right_hip = prev_pose.get('right_hip', {'y': 0})
-                prev_left_shoulder = prev_pose.get('left_shoulder', {'y': 0})
-                prev_right_shoulder = prev_pose.get('right_shoulder', {'y': 0})
-                
-                prev_hip_y = (prev_left_hip['y'] + prev_right_hip['y']) / 2
-                prev_shoulder_y = (prev_left_shoulder['y'] + prev_right_shoulder['y']) / 2
-                
-                d_hip_y = hip_y - prev_hip_y
-                d_shoulder_y = shoulder_y - prev_shoulder_y
-                
-                # Hip or shoulder moving upward (canceling loading)
-                if d_hip_y < -2.0 or d_shoulder_y < -2.0:  # 엉덩이 또는 어깨가 위로 이동
-                    if frame_idx % 10 == 0:
-                        print(f"Frame {frame_idx}: Loading→Set-up: Hip/shoulder rising detected (d_hip_y={d_hip_y:.1f}, d_shoulder_y={d_shoulder_y:.1f})")
-                    return "Set-up"
         
         # 3.5. Set-up → Rising: Skip Loading phase if Rising conditions are met directly (relative to hip)
         if current_phase == "Set-up":
@@ -1605,7 +1590,94 @@ class BasketballShootingAnalyzer:
                     end_kp.get('confidence', 0) > 0.3):
                     cv2.line(frame, (start_x, start_y), (end_x, end_y), (255, 0, 0), 2)
         
+        # Draw arm angles
+        self._draw_arm_angles_original(frame, pose, w, h)
+        
         return frame
+
+    def _draw_arm_angles_original(self, frame: np.ndarray, pose: Dict, w: int, h: int):
+        font_scale = 1.2
+        thickness = 3
+        # Calculate left arm angle
+        if all(key in pose for key in ['left_shoulder', 'left_elbow', 'left_wrist']):
+            left_shoulder = pose['left_shoulder']
+            left_elbow = pose['left_elbow']
+            left_wrist = pose['left_wrist']
+            if (left_shoulder.get('confidence', 0) > 0.3 and 
+                left_elbow.get('confidence', 0) > 0.3 and 
+                left_wrist.get('confidence', 0) > 0.3):
+                left_angle = self._calculate_angle(
+                    left_shoulder['x'], left_shoulder['y'],
+                    left_elbow['x'], left_elbow['y'],
+                    left_wrist['x'], left_wrist['y']
+                )
+                elbow_x = int(left_elbow['x'])
+                elbow_y = int(left_elbow['y'])
+                wrist_x = int(left_wrist['x'])
+                wrist_y = int(left_wrist['y'])
+                elbow_x = max(0, min(w-1, elbow_x))
+                elbow_y = max(0, min(h-1, elbow_y))
+                wrist_x = max(0, min(w-1, wrist_x))
+                wrist_y = max(0, min(h-1, wrist_y))
+                if 110 <= left_angle <= 180:
+                    color = (0, 255, 0)
+                elif 90 <= left_angle < 110:
+                    color = (0, 255, 255)
+                else:
+                    color = (0, 0, 255)
+                text = f"L:{left_angle:.0f}"
+                # 팔꿈치→손목 벡터 방향으로 50픽셀 이동
+                vec_x = wrist_x - elbow_x
+                vec_y = wrist_y - elbow_y
+                norm = (vec_x**2 + vec_y**2)**0.5
+                if norm > 0:
+                    offset_x = int(vec_x / norm * 50)
+                    offset_y = int(vec_y / norm * 50)
+                else:
+                    offset_x = 40
+                    offset_y = 40
+                text_pos = (elbow_x + offset_x, elbow_y + offset_y)
+                cv2.putText(frame, text, text_pos, cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
+        # Calculate right arm angle
+        if all(key in pose for key in ['right_shoulder', 'right_elbow', 'right_wrist']):
+            right_shoulder = pose['right_shoulder']
+            right_elbow = pose['right_elbow']
+            right_wrist = pose['right_wrist']
+            if (right_shoulder.get('confidence', 0) > 0.3 and 
+                right_elbow.get('confidence', 0) > 0.3 and 
+                right_wrist.get('confidence', 0) > 0.3):
+                right_angle = self._calculate_angle(
+                    right_shoulder['x'], right_shoulder['y'],
+                    right_elbow['x'], right_elbow['y'],
+                    right_wrist['x'], right_wrist['y']
+                )
+                elbow_x = int(right_elbow['x'])
+                elbow_y = int(right_elbow['y'])
+                wrist_x = int(right_wrist['x'])
+                wrist_y = int(right_wrist['y'])
+                elbow_x = max(0, min(w-1, elbow_x))
+                elbow_y = max(0, min(h-1, elbow_y))
+                wrist_x = max(0, min(w-1, wrist_x))
+                wrist_y = max(0, min(h-1, wrist_y))
+                if 110 <= right_angle <= 180:
+                    color = (0, 255, 0)
+                elif 90 <= right_angle < 110:
+                    color = (0, 255, 255)
+                else:
+                    color = (0, 0, 255)
+                text = f"R:{right_angle:.0f}"
+                # 팔꿈치→손목 벡터 방향으로 50픽셀 이동
+                vec_x = wrist_x - elbow_x
+                vec_y = wrist_y - elbow_y
+                norm = (vec_x**2 + vec_y**2)**0.5
+                if norm > 0:
+                    offset_x = int(vec_x / norm * 50)
+                    offset_y = int(vec_y / norm * 50)
+                else:
+                    offset_x = -80
+                    offset_y = 40
+                text_pos = (elbow_x + offset_x, elbow_y + offset_y)
+                cv2.putText(frame, text, text_pos, cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
 
     def _draw_ball_original(self, frame: np.ndarray, frame_idx: int, ball_data: List[Dict]) -> np.ndarray:
         """Draw original absolute coordinates ball"""
@@ -1758,8 +1830,97 @@ class BasketballShootingAnalyzer:
                     end_kp.get('confidence', 0) > 0.3):
                     cv2.line(frame, (start_x, start_y), (end_x, end_y), (255, 0, 0), 2)
         
+        # Draw arm angles
+        self._draw_arm_angles_normalized(frame, pose, w, h, center_x, center_y)
+        
         return frame
-    
+
+    def _draw_arm_angles_normalized(self, frame: np.ndarray, pose: Dict, w: int, h: int, center_x: int, center_y: int):
+        scale_factor = min(w, h) / 12
+        font_scale = 1.2
+        thickness = 3
+        # Calculate left arm angle
+        if all(key in pose for key in ['left_shoulder', 'left_elbow', 'left_wrist']):
+            left_shoulder = pose['left_shoulder']
+            left_elbow = pose['left_elbow']
+            left_wrist = pose['left_wrist']
+            if (left_shoulder.get('confidence', 0) > 0.3 and 
+                left_elbow.get('confidence', 0) > 0.3 and 
+                left_wrist.get('confidence', 0) > 0.3):
+                left_angle = self._calculate_angle(
+                    left_shoulder['x'], left_shoulder['y'],
+                    left_elbow['x'], left_elbow['y'],
+                    left_wrist['x'], left_wrist['y']
+                )
+                # 정규화 좌표를 화면 좌표로 변환
+                elbow_x = int(center_x + left_elbow['x'] * scale_factor)
+                elbow_y = int(center_y + left_elbow['y'] * scale_factor)
+                wrist_x = int(center_x + left_wrist['x'] * scale_factor)
+                wrist_y = int(center_y + left_wrist['y'] * scale_factor)
+                elbow_x = max(0, min(w-1, elbow_x))
+                elbow_y = max(0, min(h-1, elbow_y))
+                wrist_x = max(0, min(w-1, wrist_x))
+                wrist_y = max(0, min(h-1, wrist_y))
+                if 110 <= left_angle <= 180:
+                    color = (0, 255, 0)
+                elif 90 <= left_angle < 110:
+                    color = (0, 255, 255)
+                else:
+                    color = (0, 0, 255)
+                text = f"L:{left_angle:.0f}"
+                # 팔꿈치→손목 벡터 방향으로 50픽셀 이동
+                vec_x = wrist_x - elbow_x
+                vec_y = wrist_y - elbow_y
+                norm = (vec_x**2 + vec_y**2)**0.5
+                if norm > 0:
+                    offset_x = int(vec_x / norm * 50)
+                    offset_y = int(vec_y / norm * 50)
+                else:
+                    offset_x = 40
+                    offset_y = 40
+                text_pos = (elbow_x + offset_x, elbow_y + offset_y)
+                cv2.putText(frame, text, text_pos, cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
+        # Calculate right arm angle
+        if all(key in pose for key in ['right_shoulder', 'right_elbow', 'right_wrist']):
+            right_shoulder = pose['right_shoulder']
+            right_elbow = pose['right_elbow']
+            right_wrist = pose['right_wrist']
+            if (right_shoulder.get('confidence', 0) > 0.3 and 
+                right_elbow.get('confidence', 0) > 0.3 and 
+                right_wrist.get('confidence', 0) > 0.3):
+                right_angle = self._calculate_angle(
+                    right_shoulder['x'], right_shoulder['y'],
+                    right_elbow['x'], right_elbow['y'],
+                    right_wrist['x'], right_wrist['y']
+                )
+                elbow_x = int(center_x + right_elbow['x'] * scale_factor)
+                elbow_y = int(center_y + right_elbow['y'] * scale_factor)
+                wrist_x = int(center_x + right_wrist['x'] * scale_factor)
+                wrist_y = int(center_y + right_wrist['y'] * scale_factor)
+                elbow_x = max(0, min(w-1, elbow_x))
+                elbow_y = max(0, min(h-1, elbow_y))
+                wrist_x = max(0, min(w-1, wrist_x))
+                wrist_y = max(0, min(h-1, wrist_y))
+                if 110 <= right_angle <= 180:
+                    color = (0, 255, 0)
+                elif 90 <= right_angle < 110:
+                    color = (0, 255, 255)
+                else:
+                    color = (0, 0, 255)
+                text = f"R:{right_angle:.0f}"
+                # 팔꿈치→손목 벡터 방향으로 50픽셀 이동
+                vec_x = wrist_x - elbow_x
+                vec_y = wrist_y - elbow_y
+                norm = (vec_x**2 + vec_y**2)**0.5
+                if norm > 0:
+                    offset_x = int(vec_x / norm * 50)
+                    offset_y = int(vec_y / norm * 50)
+                else:
+                    offset_x = -80
+                    offset_y = 40
+                text_pos = (elbow_x + offset_x, elbow_y + offset_y)
+                cv2.putText(frame, text, text_pos, cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
+
     def _draw_ball_normalized(self, frame: np.ndarray, frame_idx: int, ball_data: List[Dict]) -> np.ndarray:
         """Draw normalized ball (centered on screen)"""
         if frame_idx >= len(ball_data):
