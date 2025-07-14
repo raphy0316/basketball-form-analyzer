@@ -795,13 +795,13 @@ class BasketballShootingAnalyzer:
                     if wrist_moving_down_relative and elbow_moving_down_relative and ball_moving_down_relative:
                         if frame_idx % 10 == 0:
                             print(f"Frame {frame_idx}: Rising→Set-up: All moving down relative to hip (cancellation)")
-                        return True
+                        return "Set-up"
                 else:
                     # 공이 감지되지 않는 상황: 손목, 팔꿈치가 엉덩이 기준으로 아래로 이동하면 Set-up으로
                     if wrist_moving_down_relative and elbow_moving_down_relative:
                         if frame_idx % 10 == 0:
                             print(f"Frame {frame_idx}: Rising→Set-up: Hand moving down relative to hip (cancellation)")
-                        return True
+                        return "Set-up"
         
         elif current_phase == "Release":
             # Release cancellation: Ball released but improper form
@@ -1202,13 +1202,13 @@ class BasketballShootingAnalyzer:
                     if wrist_moving_down_relative and elbow_moving_down_relative and ball_moving_down_relative:
                         if frame_idx % 10 == 0:
                             print(f"Frame {frame_idx}: Rising→Set-up: All moving down relative to hip (cancellation)")
-                        return True
+                        return "Set-up"
                 else:
                     # 공이 감지되지 않는 상황: 손목, 팔꿈치가 엉덩이 기준으로 아래로 이동하면 Set-up으로
                     if wrist_moving_down_relative and elbow_moving_down_relative:
                         if frame_idx % 10 == 0:
                             print(f"Frame {frame_idx}: Rising→Set-up: Hand moving down relative to hip (cancellation)")
-                        return True
+                        return "Set-up"
             
             # Normal Rising → Release transition
             if ball_detected:
@@ -1596,8 +1596,8 @@ class BasketballShootingAnalyzer:
         return frame
 
     def _draw_arm_angles_original(self, frame: np.ndarray, pose: Dict, w: int, h: int):
-        font_scale = 1.2
-        thickness = 3
+        font_scale = 1.0  # 글자 크기 조정
+        thickness = 2      # 두께 줄임
         # Calculate left arm angle
         if all(key in pose for key in ['left_shoulder', 'left_elbow', 'left_wrist']):
             left_shoulder = pose['left_shoulder']
@@ -1626,16 +1626,16 @@ class BasketballShootingAnalyzer:
                 else:
                     color = (0, 0, 255)
                 text = f"L:{left_angle:.0f}"
-                # 팔꿈치→손목 벡터 방향으로 50픽셀 이동
+                # 팔꿈치→손목 벡터 방향으로 40픽셀 이동 (거리 줄임)
                 vec_x = wrist_x - elbow_x
                 vec_y = wrist_y - elbow_y
                 norm = (vec_x**2 + vec_y**2)**0.5
                 if norm > 0:
-                    offset_x = int(vec_x / norm * 50)
-                    offset_y = int(vec_y / norm * 50)
+                    offset_x = int(vec_x / norm * 40)
+                    offset_y = int(vec_y / norm * 40)
                 else:
-                    offset_x = 40
-                    offset_y = 40
+                    offset_x = 30
+                    offset_y = 30
                 text_pos = (elbow_x + offset_x, elbow_y + offset_y)
                 cv2.putText(frame, text, text_pos, cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
         # Calculate right arm angle
@@ -1666,16 +1666,16 @@ class BasketballShootingAnalyzer:
                 else:
                     color = (0, 0, 255)
                 text = f"R:{right_angle:.0f}"
-                # 팔꿈치→손목 벡터 방향으로 50픽셀 이동
+                # 팔꿈치→손목 벡터 방향으로 60픽셀 이동 (오른쪽은 더 멀리)
                 vec_x = wrist_x - elbow_x
                 vec_y = wrist_y - elbow_y
                 norm = (vec_x**2 + vec_y**2)**0.5
                 if norm > 0:
-                    offset_x = int(vec_x / norm * 50)
-                    offset_y = int(vec_y / norm * 50)
+                    offset_x = int(vec_x / norm * 60)
+                    offset_y = int(vec_y / norm * 60)
                 else:
-                    offset_x = -80
-                    offset_y = 40
+                    offset_x = -60
+                    offset_y = 30
                 text_pos = (elbow_x + offset_x, elbow_y + offset_y)
                 cv2.putText(frame, text, text_pos, cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
 
@@ -1837,8 +1837,8 @@ class BasketballShootingAnalyzer:
 
     def _draw_arm_angles_normalized(self, frame: np.ndarray, pose: Dict, w: int, h: int, center_x: int, center_y: int):
         scale_factor = min(w, h) / 12
-        font_scale = 1.2
-        thickness = 3
+        font_scale = 1.0  # 글자 크기 조정
+        thickness = 2      # 두께 줄임
         # Calculate left arm angle
         if all(key in pose for key in ['left_shoulder', 'left_elbow', 'left_wrist']):
             left_shoulder = pose['left_shoulder']
@@ -1868,16 +1868,16 @@ class BasketballShootingAnalyzer:
                 else:
                     color = (0, 0, 255)
                 text = f"L:{left_angle:.0f}"
-                # 팔꿈치→손목 벡터 방향으로 50픽셀 이동
+                # 팔꿈치→손목 벡터 방향으로 40픽셀 이동 (거리 줄임)
                 vec_x = wrist_x - elbow_x
                 vec_y = wrist_y - elbow_y
                 norm = (vec_x**2 + vec_y**2)**0.5
                 if norm > 0:
-                    offset_x = int(vec_x / norm * 50)
-                    offset_y = int(vec_y / norm * 50)
+                    offset_x = int(vec_x / norm * 40)
+                    offset_y = int(vec_y / norm * 40)
                 else:
-                    offset_x = 40
-                    offset_y = 40
+                    offset_x = 30
+                    offset_y = 30
                 text_pos = (elbow_x + offset_x, elbow_y + offset_y)
                 cv2.putText(frame, text, text_pos, cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
         # Calculate right arm angle
@@ -1908,16 +1908,16 @@ class BasketballShootingAnalyzer:
                 else:
                     color = (0, 0, 255)
                 text = f"R:{right_angle:.0f}"
-                # 팔꿈치→손목 벡터 방향으로 50픽셀 이동
+                # 팔꿈치→손목 벡터 방향으로 60픽셀 이동 (오른쪽은 더 멀리)
                 vec_x = wrist_x - elbow_x
                 vec_y = wrist_y - elbow_y
                 norm = (vec_x**2 + vec_y**2)**0.5
                 if norm > 0:
-                    offset_x = int(vec_x / norm * 50)
-                    offset_y = int(vec_y / norm * 50)
+                    offset_x = int(vec_x / norm * 60)
+                    offset_y = int(vec_y / norm * 60)
                 else:
-                    offset_x = -80
-                    offset_y = 40
+                    offset_x = -60
+                    offset_y = 30
                 text_pos = (elbow_x + offset_x, elbow_y + offset_y)
                 cv2.putText(frame, text, text_pos, cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
 
