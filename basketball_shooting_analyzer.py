@@ -38,7 +38,29 @@ class BasketballShootingAnalyzer:
         self.phase_statistics = {}
         self.selected_video = None
         self.available_videos = []
+        
+        # Video properties for dynamic frame calculation
+        self.video_fps = None
+        self.video_total_frames = None
 
+    def get_video_properties(self, video_path: str) -> Tuple[float, int]:
+        """Get video FPS and total frame count"""
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            print(f"❌ Could not open video: {video_path}")
+            return 30.0, 0  # Default values
+        
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        cap.release()
+        
+        return fps, total_frames
+
+    def calculate_dynamic_min_frames(self, fps: float, min_duration_ms: float = 100.0) -> int:
+        """Calculate minimum frame duration based on FPS and desired minimum duration in milliseconds"""
+        min_frames = max(1, int(fps * min_duration_ms / 1000.0))
+        return min_frames
+    
     def list_available_videos(self) -> List[str]:
         """Return a list of available video files from Standard, EdgeCase, Bakke, and test folders"""
         video_extensions = ["*.mp4", "*.avi", "*.mov", "*.mkv"]
@@ -206,6 +228,10 @@ class BasketballShootingAnalyzer:
         """Load original pose/ball data associated with the video"""
         print(f"\n📂 STEP 1: Load original data")
         print("=" * 50)
+        
+        # Get video properties for dynamic frame calculation
+        self.video_fps, self.video_total_frames = self.get_video_properties(video_path)
+        print(f"📹 Video properties: {self.video_total_frames} frames, {self.video_fps:.2f} fps")
         
         base_name = os.path.splitext(os.path.basename(video_path))[0]
         
@@ -523,8 +549,16 @@ class BasketballShootingAnalyzer:
         phase_history = []  # List of (phase, start_frame, end_frame)
         current_phase_start = 0
         
-        # Setup for noise filtering
-        min_phase_duration = 3  # Must last at least 3 frames
+        # Setup for noise filtering with dynamic frame calculation
+        if self.video_fps is not None:
+            # Calculate minimum phase duration based on FPS (100ms minimum duration)
+            min_phase_duration = self.calculate_dynamic_min_frames(self.video_fps, 100.0)
+            print(f"🎯 Dynamic minimum phase duration: {min_phase_duration} frames ({100.0}ms at {self.video_fps:.2f} fps)")
+        else:
+            # Fallback to fixed duration if FPS is not available
+            min_phase_duration = 3
+            print(f"⚠️ Using fallback minimum phase duration: {min_phase_duration} frames (FPS not available)")
+        
         noise_threshold = 4  # Changes of 4 frames or less are considered noise
         
         for i, frame_data in enumerate(self.pose_data):
@@ -891,8 +925,13 @@ class BasketballShootingAnalyzer:
                                        d_knee_y: float, d_wrist_y: float, d_hip_y: float) -> str:
         """Check phase transition conditions using original data"""
         
-        # Setup for noise filtering
-        min_phase_duration = 3  # Must last at least 3 frames
+        # Setup for noise filtering with dynamic frame calculation
+        if self.video_fps is not None:
+            # Calculate minimum phase duration based on FPS (100ms minimum duration)
+            min_phase_duration = self.calculate_dynamic_min_frames(self.video_fps, 100.0)
+        else:
+            # Fallback to fixed duration if FPS is not available
+            min_phase_duration = 3
         
         # Check for cancellation conditions first
         if self._is_cancellation_condition(current_phase, frame_idx, knee_y, wrist_y, hip_y, ankle_y, 
