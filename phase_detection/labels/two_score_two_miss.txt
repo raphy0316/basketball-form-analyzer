@@ -1,0 +1,16 @@
+14~26 Rising
+27~29 Release
+30~46 Follow-through
+
+114~131 Rising
+132~133 Release
+134~160 Follow-through
+
+222~241 Rising
+242~243 Release
+244~263 Follow-through
+
+
+325~341 Rising
+342~343 Release
+344~354 Follow-through

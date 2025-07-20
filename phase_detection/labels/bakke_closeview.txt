@@ -1,0 +1,49 @@
+484~496 General
+496~552 Rising
+553~556 Release
+557~582 Follow-through
+
+1057~1102 Rising
+1103~1104 Release
+1104~1187 Follow-through
+
+1311~1357 Rising
+1362~1364 Release
+1165~1407 Follow-through
+
+1700~1742 Rising
+1743~1744 Release
+1745~1781 Follow-through
+
+2337~2394 Rising
+2395~2396 Release
+2397~2462 Follow-through
+
+2807~2859 Rising
+2860~2861 Release
+2862~2895 Follow-through
+
+3340~3380 Rising
+3382~3384 Release
+3385~2464 Follow-through
+
+3928~3981 Rising
+3981~3983 Release
+3984~4042 Follow-through
+
+4545~4594 Rising
+4595~4597 Release
+4598~4650 Follow-through
+
+5057~5099 Rising
+5100~5101 Release
+5102~5137 Follow-through
+
+5571~5613 Rising
+5614~5615 Release
+5616~5646 Follow-through
+
+5863~5914 Rising
+5915~5916 Release
+5917~5983 Follow-through
+

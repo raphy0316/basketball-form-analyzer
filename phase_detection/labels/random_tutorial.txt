@@ -1,0 +1,13 @@
+45~80 Rising
+81~83 Release
+84~110 Follow-through
+
+520~545 Rising
+546~546 Release
+547~561 Follow-through
+
+668~697 Rising
+698~702 Release
+703~729 Follow-through
+
+

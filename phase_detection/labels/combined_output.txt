@@ -1,0 +1,2426 @@
+62~141 Rising
+142~145 Release
+146~196 Follow-through
+
+517~519 Release
+520~560 Follow-through
+
+1171~1249 Rising
+1250~1252 Release
+1253~1275 Follow-through
+
+2059~2111 Rising
+2112~2116 Release
+2117~2150 Follow-through
+
+2551~2590 Rising
+2591~2594 Release
+2595~2648 Follow-through
+
+2920~2945 Rising
+2946~2949 Release
+2950~2975 Follow-through
+
+3405~3435 Rising
+3436~3439 Release
+3440~3477 Follow-through
+
+3869~3930 Rising
+3931~3933 Release
+3934~3970 Follow-through
+
+4573~4631 Rising
+4632~4633 Release
+4634~4710 Follow-through
+
+5056~5130 Rising
+5131~5132 Release
+5133~5155 Follow-through
+
+5462~5493 Rising
+5494~5496 Release
+5497~5540 Follow-through
+
+5871~5922 Rising
+5923~5925 Release
+5926~5935 Follow-through
+
+6165~6197 Rising
+6198~6199 Release
+6200~6264 Follow-through
+
+6621~6690 Rising
+6691~6692 Release
+6693~6724 Follow-through
+
+7003~7069 Rising
+7070~7072 Release
+7073~7093 Follow-through
+
+7531~7569 Rising
+7570~7572 Release
+7573~7640 Follow-through
+
+8049~8117 Rising
+8118~8120 Release
+8121~8170 Follow-through
+
+8440~8509 Rising
+8510~8511 Release
+8512~8540 Follow-through
+
+8939~9024 Rising
+9025~9027 Release
+9028~9049 Follow-through
+
+9540~9568 Rising
+9569~9571 Release
+9572~9617 Follow-through
+
+9849~9905 Rising
+9906~9908 Release
+9909~9952 Follow-through
+
+10184~10222 Rising
+10223~10224 Release
+10225~10510 Follow-through
+
+10723~10767 Rising
+10768~10770 Release
+10771~11056 Follow-through
+
+11310~11391 Rising
+11392~11393 Release
+11394~11672 Follow-through
+
+11704~11802 Rising
+11803~11804 Release
+11805~11870 Follow-through
+
+12370~12415 Rising
+12416~12419 Release
+12420~12630 Follow-through
+
+12645~12721 Rising
+12722~12725 Release
+12726~12930 Follow-through
+
+13005~13080 Rising
+13081~13083 Release
+13084~13159 Follow-through
+
+13530~13570 Rising
+13571~13572 Release
+13573~13870 Follow-through
+
+13926~13986 Rising
+13987~13989 Release
+13990~14015 Follow-through
+
+14317~14361 Rising
+14362~14364 Release
+14365~14375 Follow-through
+
+14631~14668 Rising
+14669~14670 Release
+14671~14761 Follow-through
+
+15011~15044 Rising
+15045~15047 Release
+15048~15240 Follow-through
+
+15305~15348 Rising
+15349~15351 Release
+15352~15438 Follow-through
+
+15747~15801 Rising
+15802~15805 Release
+15806~15870 Follow-through
+
+16137~16189 Rising
+16190~16191 Release
+16192~16250 Follow-through
+
+16523~16568 Rising
+16569~16570 Release
+16571~16880 Follow-through
+
+17037~17080 Rising
+17081~17082 Release
+17083~17119 Follow-through
+
+17484~17510 Rising
+17511~17513 Release
+17514~17737 Follow-through
+
+17776~17817 Rising
+17818~17821 Release
+17822~17850 Follow-through
+
+18169~18280 Rising
+18281~18283 Release
+18284~18509 Follow-through
+
+18646~18685 Rising
+18686~18687 Release
+18688~18771 Follow-through
+
+18957~18994 Rising
+18995~18997 Release
+18998~19030 Follow-through
+
+19303~19345 Rising
+19346~19348 Release
+19349~19555 Follow-through
+
+19721~19752 Rising
+19753~19754 Release
+19755~19994 Follow-through
+
+19997~20038 Rising
+20039~20043 Release
+20044~20070 Follow-through
+
+20260~20295 Rising
+20295~20299 Release
+20300~20360 Follow-through
+
+20561~20617 Rising
+20618~20621 Release
+20622~20700 Follow-through
+
+21020~21093 Rising
+21094~21095 Release
+21096~21295 Follow-through
+
+21327~21388 Rising
+21389~21391 Release
+21392~21423 Follow-through
+
+21655~21692 Rising
+21693~21694 Release
+21695~21890 Follow-through
+
+21950~21997 Rising
+21998~22000 Release
+22001~22036 Follow-through
+
+22301~22347 Rising
+22348~22350 Release
+22351~22563 Follow-through
+
+22596~22637 Rising
+22638~22640 Release
+22641~22700 Follow-through
+
+23068~23124 Rising
+23125~23128 Release
+23129~22333 Follow-through
+
+23409~23459 Rising
+23460~23462 Release
+23463~23500 Follow-through
+
+23749~23783 Rising
+23784~23788 Release
+23789~23820 Follow-through
+
+24136~24214 Rising
+24215~24217 Release
+24218~24285 Follow-through
+
+24439~24492 Rising
+24493~24494 Release
+24495~24685 Follow-through
+
+24760~24804 Rising
+24805~24807 Release
+24808~25021 Follow-through
+
+25403~25440 Rising
+25441~25443 Release
+25444~25666 Follow-through
+
+25754~25793 Rising
+25794~25796 Release
+25797~25984 Follow-through
+
+26046~26088 Rising
+26089~26090 Release
+26091~26150 Follow-through
+
+26568~26630 Rising
+26631~26632 Release
+26633~26664 Follow-through
+
+26886~26920 Rising
+26921~26928 Release
+26929~26973 Follow-through
+
+27330~27374 Rising
+27375~27377 Release
+27378~27500 Follow-through
+
+27779~27823 Rising
+27824~27825 Release
+27826~27895 Follow-through
+
+28173~28199 Rising
+28200~28205 Release
+28206~28270 Follow-through
+
+28493~28530 Rising
+28531~28533 Release
+28534~28560 Follow-through
+
+28797~28844 Rising
+28845~28847 Release
+28848~29065 Follow-through
+
+29143~29174 Rising
+29175~29178 Release
+29179~29365 Follow-through
+
+29622~29681 Rising
+29682~29684 Release
+29685~29700 Follow-through
+
+29953~29986 Rising
+29987~29988 Release
+29989~30050 Follow-through
+
+30315~30358 Rising
+30359~30362 Release
+30363~30385 Follow-through
+
+30756~30798 Rising
+30799~30801 Release
+30802~30988 Follow-through
+
+31038~31076 Rising
+31077~31080 Release
+31081~31084 Follow-through
+
+31310~31349 Rising
+31350~31352 Release
+31353~31402 Follow-through
+
+31580~31605 Rising
+31606~31607 Release
+31608~31680 Follow-through
+
+31972~32026 Rising
+32027~32028 Release
+32029~32090 Follow-through
+
+32253~32291 Rising
+32292~32294 Release
+32295~32300 Follow-through
+
+32594~32643 Rising
+32644~32647 Release
+32648~32819 Follow-through
+
+32880~32917 Rising
+32918~32923 Release
+32924~33098 Follow-through
+
+33160~33203 Rising
+33204~33206 Release
+33207~33410 Follow-through
+
+33627~33667 Rising
+33668~33670 Release
+33671~33695 Follow-through
+
+34198~34239 Rising
+34240~34244 Release
+34245~34275 Follow-through
+
+34486~34577 Rising
+34578~34581 Release
+34582~34760 Follow-through
+
+35049~35111 Rising
+35112~35115 Release
+35116~35289 Follow-through
+
+35445~35496 Rising
+35497~35499 Release
+35500~35730 Follow-through
+
+35750~35777 Rising
+35778~35780 Release
+35781~35989 Follow-through
+
+36161~36200 Rising
+36201~36203 Release
+36204~36280 Follow-through
+
+36447~36494 Rising
+36495~36500 Release
+36501~36647 Follow-through
+
+36690~36730 Rising
+36731~36733 Release
+36734~36985 Follow-through
+
+37121~37205 Rising
+37206~37210 Release
+37211~37276 Follow-through
+
+37442~37502 Rising
+37503~37504 Release
+37505~37579 Follow-through
+
+37786~37821 Rising
+37822~37825 Release
+37826~38145 Follow-through
+
+38285~38334 Rising
+38335~38337 Release
+38338~38394 Follow-through
+
+38748~38788 Rising
+38789~38791 Release
+38792~38860 Follow-through
+
+39051~39089 Rising
+39090~39093 Release
+39094~39310 Follow-through
+
+39664~39695 Rising
+39696~39698 Release
+39699~39895 Follow-through
+
+40239~40285 Rising
+40286~40290 Release
+40291~40487 Follow-through
+
+40517~40571 Rising
+40572~40574 Release
+40575~40757 Follow-through
+
+40794~40836 Rising
+40837~40839 Release
+40840~41016 Follow-through
+
+41146~41170 Rising
+41171~41174 Release
+41175~41204 Follow-through
+
+41596~41636 Rising
+41637~41639 Release
+41640~41820 Follow-through
+
+41923~41960 Rising
+41961~41962 Release
+41963~42163 Follow-through
+
+42268~42305 Rising
+42306~42310 Release
+42311~42335 Follow-through
+
+42572~42602 Rising
+42603~42606 Release
+42607~42780 Follow-through
+
+42841~42905 Rising
+42906~42908 Release
+42909~43100 Follow-through
+
+43245~43311 Rising
+43312~43314 Release
+43315~43667 Follow-through
+
+43846~43873 Rising
+43874~43877 Release
+43878~44050 Follow-through
+
+44136~44197 Rising
+44198~44200 Release
+44201~44378 Follow-through
+
+44506~44543 Rising
+44544~44547 Release
+44548~44584 Follow-through
+
+45072~45110 Rising
+45111~45117 Release
+45118~45320 Follow-through
+
+45377~45405 Rising
+45406~45410 Release
+45411~45591 Follow-through
+
+45850~45897 Rising
+45898~45901 Release
+45902~46120 Follow-through
+
+46152~46197 Rising
+46198~46200 Release
+46201~46380 Follow-through
+
+
+46415~46495 Rising
+46496~46500 Release
+46501~46710 Follow-through
+
+47105~47140 Rising
+47141~47144 Release
+47145~47220 Follow-through
+
+47442~47489 Rising
+47490~47493 Release
+47494~47780 Follow-through
+
+47793~47782 Rising
+47803~47807 Release
+47808~47848 Follow-through
+
+48237~48276 Rising
+48277~48278 Release
+48279~48465 Follow-through
+
+48593~48629 Rising
+48630~48632 Release
+48633~48810 Follow-through
+
+48980~49015 Rising
+49016~49017 Release
+49018~49059 Follow-through
+
+49302~49339 Rising
+49340~49342 Release
+49343~49590 Follow-through
+
+49613~49660 Rising
+49661~49663 Release
+49664~49995 Follow-through
+
+50258~50290 Rising
+50291~50294 Release
+50295~50500 Follow-through
+
+50529~50563 Rising
+50564~50566 Release
+50567~50744 Follow-through
+
+50822~50872 Rising
+50873~50874 Release
+50875~50900 Follow-through
+
+51118~51159 Rising
+51160~51162 Release
+51163~51220 Follow-through
+
+51648~51683 Rising
+51684~51686 Release
+51687~51855 Follow-through
+
+52024~52056 Rising
+52057~52059 Release
+52060~52120 Follow-through
+
+52282~52332 Rising
+52333~52335 Release
+52336~52392 Follow-through
+
+52585~52628 Rising
+52629~52632 Release
+52633~52799 Follow-through
+
+52854~52897 Rising
+52898~52900 Release
+52901~52955 Follow-through
+
+53103~53133 Rising
+53134~53137 Release
+53138~53185 Follow-through
+
+53490~53527 Rising
+53528~53530 Release
+53531~53690 Follow-through
+
+53902~53938 Rising
+53939~53941 Release
+53942~54130 Follow-through
+
+54327~54365 Rising
+54366~54367 Release
+54368~54410 Follow-through
+
+54902~54963 Rising
+54964~54965 Release
+54966~55240 Follow-through
+
+55419~55458 Rising
+55459~55461 Release
+55462~55700 Follow-through
+
+56117~56149 Rising
+56150~56152 Release
+56153~56176 Follow-through
+
+56717~56757 Rising
+56758~56760 Release
+56761~56930 Follow-through
+
+57023~57054 Rising
+57055~57056 Release
+57057~57230 Follow-through
+
+57429~57467 Rising
+57468~57471 Release
+57472~57680 Follow-through
+
+57825~57885 Rising
+57886~57889 Release
+57890~58100 Follow-through
+
+58182~58236 Rising
+58237~58239 Release
+58240~58430 Follow-through
+
+58480~58510 Rising
+58511~58515 Release
+58516~58600 Follow-through
+
+58948~58984 Rising
+58984~58986 Release
+58987~59255 Follow-through
+
+59417~59464 Rising
+59465~59467 Release
+59468~59675 Follow-through
+
+59680~59715 Rising
+59716~59719 Release
+59720~59780 Follow-through
+
+59975~60029 Rising
+60030~60031 Release
+60032~60071 Follow-through
+
+60632~60638 Rising
+60639~60641 Release
+60642~60645 Follow-through
+
+61041~61083 Rising
+61084~61085 Release
+61086~61275 Follow-through
+
+61344~61376 Rising
+61377~61379 Release
+61380~61420 Follow-through
+
+61615~61654 Rising
+61655~61656 Release
+61657~61685 Follow-through
+
+61902~61983 Rising
+61984~61987 Release
+61988~62148 Follow-through
+
+62331~62368 Rising
+62369~62371 Release
+62372~62520 Follow-through
+
+62640~62683 Rising
+62684~62686 Release
+62687~62889 Follow-through
+
+63020~63060 Rising
+63061~63065 Release
+63066~63140 Follow-through
+
+63469~63502 Rising
+63503~63505 Release
+63506~63699 Follow-through
+
+63700~63712 Rising
+63713~63715 Release
+63716~63870 Follow-through
+
+64004~64065 Rising
+64066~64068 Release
+64069~64155 Follow-through
+
+64717~64754 Rising
+64755~64759 Release
+64760~64806 Follow-through
+
+65001~65053 Rising
+65054~65057 Release
+65058~65320 Follow-through
+
+65345~65371 Rising
+65372~65374 Release
+65375~65520 Follow-through
+
+65591~65629 Rising
+65630~65633 Release
+65634~65790 Follow-through
+
+65904~65937 Rising
+65938~65940 Release
+65941~66110 Follow-through
+
+66186~66226 Rising
+66227~66230 Release
+66231~66403 Follow-through
+
+66515~66553 Rising
+66554~66557 Release
+66558~66756 Follow-through
+
+66926~66957 Rising
+66958~66960 Release
+66961~67020 Follow-through 
+
+67387~67424 Rising
+67425~67428 Release
+67429~67610 Follow-through
+
+67722~67765 Rising
+67766~67769 Release
+67770~67845 Follow-through
+
+68078~68115 Rising
+68116~68119 Release
+68120~68300 Follow-through
+
+68417~68457 Rising
+68458~68459 Release
+68460~68535 Follow-through
+
+68727~68760 Rising
+68761~68763 Release
+68764~68785 Follow-through
+
+69385~69422 Rising
+69423~69425 Release
+69426~69717 Follow-through
+
+69901~69940 Rising
+69941~69945 Release
+69946~70105 Follow-through
+
+70107~70142 Rising
+70143~70145 Release
+70146~70200 Follow-through
+
+70588~70631 Rising
+70632~70634 Release
+70635~70800 Follow-through
+
+70856~70895 Rising
+70896~70897 Release
+70898~71065 Follow-through
+
+71185~71215 Rising
+71216~71217 Release
+71218~71270 Follow-through
+
+71596~71634 Rising
+71635~71637 Release
+71638~71794 Follow-through
+
+71983~72057 Rising
+72058~72061 Release
+72062~72253 Follow-through
+
+72438~72481 Rising
+72482~72484 Release
+72485~72540 Follow-through
+
+72789~72830 Rising
+72831~72833 Release
+72834~72983 Follow-through
+
+73038~73094 Rising
+73095~73098 Release
+73099~73250 Follow-through
+
+73436~73491 Rising
+73492~73493 Release
+73494~73675 Follow-through
+
+73706~73769 Rising
+73770~73777 Release
+73778~73998 Follow-through
+
+74011~74050 Rising
+74051~74053 Release
+74054~74100 Follow-through
+
+74414~74474 Rising
+74475~74476 Release
+74477~74648 Follow-through
+
+74769~74814 Rising
+74815~74819 Release
+74820~74969 Follow-through
+
+75114~75140 Rising
+75141~75144 Release
+75145~75369 Follow-through
+
+75614~75663 Rising
+75664~75667 Release
+75668~75851 Follow-through
+
+75999~76032 Rising
+76033~76035 Release
+76036~76185 Follow-through
+
+76299~76335 Rising
+76336~76343 Release
+76344~76495 Follow-through
+
+76555~76585 Rising
+76586~76589 Release
+76590~76740 Follow-through
+
+76764~76819 Rising
+76820~76825 Release
+76826~76876 Follow-through
+
+77066~77166 Rising
+77167~77169 Release
+77170~77185 Follow-through
+
+77389~77424 Rising
+77425~77427 Release
+77428~77594 Follow-through
+
+77619~77640 Rising
+77641~77644 Release
+77645~77715 Follow-through
+
+78079~78125 Rising
+78126~78130 Release
+78131~78340 Follow-through
+
+78433~78457 Rising
+78458~78461 Release
+78462~78760 Follow-through
+
+78769~78802 Rising
+78803~78806 Release
+78807~79001 Follow-through
+
+79362~79410 Rising
+79411~79415 Release
+79416~79444 Follow-through
+
+79743~79788 Rising
+79789~79791 Release
+79792~79965 Follow-through
+
+79970~80010 Rising
+80011~80013 Release
+80014~80085 Follow-through
+
+80367~80417 Rising
+80418~80419 Release
+80420~80621 Follow-through
+
+80781~80815 Rising
+80816~80819 Release
+80820~81002 Follow-through
+
+81106~81151 Rising
+81152~81154 Release
+81155~81340 Follow-through
+
+81695~81730 Rising
+81731~81734 Release
+81735~81925 Follow-through
+
+82115~82146 Rising
+82147~82149 Release
+82150~82119 Follow-through
+
+82562~82613 Rising
+82614~82618 Release
+82619~82802 Follow-through
+
+82949~82979 Rising
+82980~82983 Release
+82984~83186 Follow-through
+
+83265~83319 Rising
+83320~83322 Release
+83323~83490 Follow-through
+
+83640~83673 Rising
+83674~83678 Release
+83679~83880 Follow-through
+
+83923~83969 Rising
+83970~83975 Release
+83976~84120 Follow-through
+
+84399~84440 Rising
+84441~84444 Release
+84445~84680 Follow-through
+
+84866~84946 Rising
+84947~84950 Release
+84951~85089 Follow-through
+
+85153~85187 Rising
+85188~85190 Release
+85191~85210 Follow-through
+
+85495~85537 Rising
+85538~85540 Release
+85541~85595 Follow-through
+
+85769~85828 Rising
+85829~85832 Release
+85833~86016 Follow-through
+
+86023~86026 Release
+86027~86185 Follow-through
+
+86776~86791 Rising
+86792~86795 Release
+86796~86845 Follow-through
+
+87030~87072 Rising
+87073~87077 Release
+87078~87239 Follow-through
+
+87468~87496 Rising
+87497~87499 Release
+87500~87642 Follow-through
+
+87645~87677 Rising
+87678~87679 Release
+87680~87865 Follow-through
+
+88108~88145 Rising
+88146~88148 Release
+88149~88320 Follow-through
+
+88449~88519 Rising
+88520~88524 Release
+88525~88713 Follow-through
+
+88784~88825 Rising
+88826~88830 Release
+88831~88971 Follow-through
+
+89180~89220 Rising
+89221~89224 Release
+89225~89575 Follow-through
+
+89751~89795 Rising
+89796~89798 Release
+89799~89826 Follow-through
+
+90018~90045 Rising
+90046~90048 Release
+90049~90087 Follow-through
+
+90303~90344 Rising
+90345~90349 Release
+90350~90410 Follow-through
+
+90663~90695 Rising
+90696~90699 Release
+90700~90764 Follow-through
+
+90987~91023 Rising
+91024~91028 Release
+91029~91268 Follow-through
+
+91403~91439 Rising
+91440~91443 Release
+91444~91486 Follow-through
+
+91674~91723 Rising
+91274~91276 Release
+91277~91748 Follow-through
+
+91973~92019 Rising
+92020~92023 Release
+92024~92200 Follow-through
+
+92338~92387 Rising
+92388~92391 Release
+92392~92605 Follow-through  
+
+92731~92759 Rising
+92760~92763 Release
+92764~92930 Follow-through
+
+93079~93116 Rising
+93117~93120 Release
+93121~93355 Follow-through
+
+93540~93567 Rising
+93568~93570 Release
+93571~93740 Follow-through
+
+93827~93882 Rising
+93883~93886 Release 
+93887~94038 Follow-through
+
+94064~94100 Rising
+94101~94103 Release
+94104~94160 Follow-through
+
+94331~94362 Rising
+94363~94366 Release
+94367~94541 Follow-through
+
+94623~94666 Rising
+94667~94669 Release
+94670~94735 Follow-through
+
+94971~94996 Rising
+94997~95000 Release
+95001~95094 Follow-through
+
+95425~95467 Rising
+95468~95470 Release
+95471~95650 Follow-through
+
+95691~95744 Rising
+95745~95747 Release
+95748~96001 Follow-through
+
+96005~96019 Rising
+96020~96024 Release
+96025~96215 Follow-through
+
+96378~96420 Rising
+96421~96423 Release
+96424~96437 Follow-through
+
+96601~96605 Release
+96606~96770 Follow-through
+
+97165~97194 Rising
+97195~97199 Release
+97200~97370 Follow-through
+
+97379~97423 Rising
+97424~97425 Release
+97426~97639 Follow-through
+
+97761~97791 Rising
+97792~97794 Release
+97795~97987 Follow-through
+
+97993~98029 Rising 
+98030~98032 Release
+98033~98300 Follow-through
+
+98364~98401 Rising
+98402~98405 Release
+98406~98421 Follow-through
+
+98606~98641 Rising
+98642~98645 Release
+98646~98991 Follow-through
+
+99000~99048 Rising 
+99049~99051 Release
+99052~99130 Follow-through
+
+99405~99445 Rising
+99446~99449 Release
+99450~99604 Follow-through
+
+99737~99772 Rising
+99773~99775 Release
+99776~99795 Follow-through
+
+99991~100051 Rising
+100052~100055 Release
+100056~100267 Follow-through
+
+100341~100374 Rising
+100375~100379 Release
+100380~100969 Follow-through
+
+101035~101068 Rising
+101069~101074 Release
+101075~101238 Follow-through
+
+101374~101416 Rising
+101417~101421 Release
+101422~101609 Follow-through
+
+101627~101665 Rising
+101666~101669 Release
+101670~101866 Follow-through
+
+101869~101920 Rising
+101921~101924 Release
+101925~102110 Follow-through
+
+102306~102350 Rising
+102351~102355 Release
+102356~102525 Follow-through
+
+102690~102762 Rising
+102763~102765 Release
+102766~102796 Follow-through
+
+103108~103153 Rising
+103154~103157 Release
+103158~103200 Follow-through
+
+103694~103747 Rising
+103748~103753 Release
+103754~103770 Follow-through
+
+104134~104167 Rising
+104168~104170 Release
+104171~104332 Follow-through
+
+104378~104438 Rising
+104439~104441 Release
+104442~104615 Follow-through
+
+104736~104778 Rising
+104779~104780 Release
+104781~104856 Follow-through
+
+105240~105302 Rising
+105303~105305 Release
+105306~105345 Follow-through
+
+105585~105614 Rising
+105615~105617 Release
+105618~105675 Follow-through
+
+105965~106100 Rising
+106101~106105 Release
+106106~106200 Follow-through
+
+106661~106698 Rising
+106699~106701 Release
+106702~106740 Follow-through
+
+107366~107405 Rising
+107406~107410 Release
+107411~107630 Follow-through
+
+107706~107743 Rising
+107744~107746 Release
+1007747~107757 Follow-through
+
+108044~108119 Rising
+108120~108121 Release
+108122~108320 Follow-through
+
+108350~108405 Rising
+108406~108408 Release
+108409~108630 Follow-through
+
+108806~108859 Rising
+108860~108863 Release
+108864~109055 Follow-through
+
+109102~109164 Rising
+109165~109167 Release
+109168~109345 Follow-through
+
+109536~109567 Rising
+109568~109571 Release
+109572~109777 Follow-through
+
+109878~109913 Rising
+109914~109915 Release
+109916~110069 Follow-through
+
+110203~110240 Rising
+110241~110243 Release
+110244~110439 Follow-through
+
+110553~110591 Rising
+110592~110594 Release
+110595~110622 Follow-through
+
+110945~110990 Rising
+110991~110994 Release
+110995~111170 Follow-through
+
+111250~111280 Rising
+111281~111284 Release
+111285~111448 Follow-through
+
+111551~111617 Rising
+111618~111620 Release
+111621~111780 Follow-through
+
+111799~111833 Rising
+111834~111836 Release
+111837~111895 Follow-through
+
+112189~112221 Rising
+112222~112224 Release
+112225~112293 Follow-through
+
+112514~112549 Rising
+112550~112554 Release
+112555~112750 Follow-through
+
+112846~112884 Rising
+112885~112888 Release
+112889~112924 Follow-through
+
+113368~113407 Rising
+113408~113411 Release
+113412~113497 Follow-through
+
+113713~113746 Rising
+113747~113750 Release
+113751~113789 Follow-through
+
+114005~114073 Rising
+114074~114076 Release
+114077~114289 Follow-through
+
+114432~114469 Rising
+114470~114472 Release
+114473~114490 Follow-through
+
+114950~114982 Rising
+114983~114986 Release
+114987~115047 Follow-through
+
+115241~115273 Rising
+115274~115277 Release
+115278~115348 Follow-through
+
+115626~115658 Rising
+115659~115662 Release
+115663~115855 Follow-through
+
+115960~115999 Rising
+116000~116002 Release
+116003~116250 Follow-through
+
+116330~116383 Rising
+116384~116387 Release
+116388~116594 Follow-through
+
+116704~116749 Rising
+116750~116751 Release
+116752~116771 Follow-through
+
+117160~117203 Rising
+117204~117205 Release
+117206~117357 Follow-through
+
+117421~117451 Rising
+117452~117455 Release
+117456~117500 Follow-through
+
+117816~117854 Rising
+117855~117856 Release
+117857~118027 Follow-through
+
+118034~118073 Rising
+118074~118077 Release
+118078~118165 Follow-through
+
+118390~118437 Rising
+118438~118440 Release
+118441~118501 Follow-through
+
+118809~118845 Rising
+118846~118849 Release
+118850~119044 Follow-through
+
+119241~119286 Rising
+119287~119291 Release
+119292~119448 Follow-through
+
+119545~119625 Rising
+119626~119627 Release
+119628~119798 Follow-through
+
+119850~119885 Rising
+119886~119889 Release
+119890~119960 Follow-through
+
+120405~120446 Rising
+120447~120450 Release
+120451~120496 Follow-through
+
+120816~120847 Rising
+120848~120850 Release
+120851~120965 Follow-through
+
+121567~121570 Rising
+121571~121575 Release
+121576~121639 Follow-through
+
+121899~121935 Rising
+121936~121939 Release
+121940~122090 Follow-through
+
+122262~122308 Rising
+122309~122311 Release
+122312~122400 Follow-through
+
+122612~122665 Rising
+122666~122669 Release
+122670~122682 Follow-through
+
+123108~123168 Rising
+123169~123172 Release
+123173~123394 Follow-through
+
+123454~123489 Rising
+123490~123492 Release
+123493~123732 Follow-through
+
+123810~123841 Rising
+123842~123844 Release
+123845~124015 Follow-through
+
+124268~124309 Rising
+124310~124312 Release
+124313~124357 Follow-through
+
+124634~124663 Rising
+124664~124666 Release
+124667~124763 Follow-through
+
+124949~124988 Rising
+124989~124990 Release
+124991~125040 Follow-through
+
+125432~125478 Rising
+125479~125482 Release
+125483~125690 Follow-through
+
+126160~126200 Rising
+126201~126204 Release
+126205~126244 Follow-through
+
+126440~126470 Rising
+126471~126472 Release
+126473~126675 Follow-through
+
+126705~126757 Rising
+126758~126760 Release
+126761~126805 Follow-through
+
+127023~127044 Rising
+127045~127047 Release
+127048~127070 Follow-through
+
+127370~127400 Rising
+127401~127403 Release
+127404~127550 Follow-through
+
+127919~127992 Rising
+127993~127994 Release
+127995~128050 Follow-through
+
+128388~128420 Rising
+128421~128424 Release
+128425~128469 Follow-through
+
+128713~128744 Rising
+128745~128746 Release
+128747~128814 Follow-through
+
+129030~129065 Rising
+129066~129068 Release
+129069~129280 Follow-through
+
+129320~129367 Rising
+129368~129370 Release
+129371~129398 Follow-through
+
+129818~129865 Rising
+129866~129870 Release
+129871~129910 Follow-through
+
+130352~130383 Rising
+130384~130386 Release
+130387~130405 Follow-through
+
+130567~130603 Rising
+130604~130605 Release
+130606~130838 Follow-through
+
+130975~131015 Rising
+131016~131019 Release
+131020~131085 Follow-through
+
+131356~131400 Rising
+131401~131402 Release
+131403~131482 Follow-through
+
+131863~131901 Rising
+131902~131904 Release
+131905~132076 Follow-through
+
+132222~132262 Rising
+132263~132265 Release
+132266~132349 Follow-through
+
+132671~132712 Rising
+132713~132716 Release
+132717~132790 Follow-through
+
+133154~133198 Rising
+133199~133201 Release
+133202~133250 Follow-through
+
+133603~133640 Rising
+133641~133642 Release
+133643~133689 Follow-through
+
+133910~133971 Rising
+133972~133975 Release
+133976~134040 Follow-through
+
+134290~134322 Rising
+134323~134325 Release
+134326~134382 Follow-through
+
+134616~134648 Rising
+134649~134651 Release
+134652~134890 Follow-through
+
+134963~134988 Rising
+134989~134992 Release
+134993~135160 Follow-through
+
+135184~135211 Rising
+135212~135214 Release
+135215~135300 Follow-through
+
+135648~135689 Rising
+135690~135693 Release
+135694~135759 Follow-through
+
+136294~136320 Rising
+136321~136322 Release
+136323~136430 Follow-through
+
+136641~136686 Rising
+136687~136691 Release
+136692~136705 Follow-through
+
+136955~137029 Rising
+137030~137032 Release
+137033~137105 Follow-through
+
+137480~137522 Rising
+137523~137525 Release
+137526~137698 Follow-through
+
+137879~137916 Rising
+137917~137920 Release
+137921~137969 Follow-through
+
+138225~138280 Rising
+138281~138283 Release
+138284~138300 Follow-through
+
+138484~138525 Rising
+138526~138529 Release
+138530~138578 Follow-through
+
+138965~138997 Rising
+138998~139000 Release
+139001~139174 Follow-through
+
+139312~139354 Rising
+139355~139397 Release
+139398~139518 Follow-through
+
+139594~139624 Rising
+139625~139627 Release
+139628~139842 Follow-through
+
+140094~140145 Rising
+140146~140148 Release
+140149~140286 Follow-through
+
+140323~140363 Rising
+140364~140366 Release
+140367~140430 Follow-through
+
+140781~140819 Rising
+140820~140821 Release
+140822~140879 Follow-through
+
+141199~141227 Rising
+141228~141229 Release
+141230~141268 Follow-through
+
+141637~141722 Rising
+141723~141726 Release
+141727~141800 Follow-through
+
+141957~141984 Rising
+141985~141987 Release
+141988~142055 Follow-through
+
+142440~242480 Rising
+142481~142483 Release
+142484~142660 Follow-through
+
+142785~142819 Rising
+142820~142822 Release
+142823~142918 Follow-through
+
+143215~143251 Rising
+143252~143254 Release
+143255~143325 Follow-through
+
+143614~143657 Rising
+143658~143659 Release
+143660~143840 Follow-through
+
+143860~143928 Rising
+143929~143931 Release
+143932~144118 Follow-through
+
+144246~144279 Rising
+144280~144282 Release
+144283~144500 Follow-through
+
+144549~144587 Rising
+144588~144589 Release
+144590~144620 Follow-through
+
+144940~144970 Rising
+144971~144974 Release
+144975~145000 Follow-through
+
+145209~145247 Rising
+145248~145250 Release
+145251~145332 Follow-through
+
+145687~145728 Rising
+145729~145730 Release
+145731~145977 Follow-through
+
+146031~146080 Rising
+146081~146082 Release
+146083~146238 Follow-through
+
+146321~146348 Rising
+146349~146353 Release
+146354~146410 Follow-through
+
+146627~146660 Rising
+146661~146662 Release
+146663~146838 Follow-through
+
+146980~147017 Rising
+147018~147020 Release
+147021~147245 Follow-through
+
+147417~147449 Rising
+147450~147453 Release
+147454~147503 Follow-through
+
+147724~147800 Rising
+147801~147804 Release
+147805~147949 Follow-through
+
+148006~148043 Rising
+148044~148046 Release
+148047~148210 Follow-through
+
+148378~148453 Rising
+148454~148459 Release
+148460~148520 Follow-through
+
+148676~148710 Rising
+148711~148714 Release
+148715~148855 Follow-through
+
+148860~148901 Rising
+148902~148904 Release
+148905~149085 Follow-through
+
+149133~149174 Rising
+149175~149177 Release
+149178~149205 Follow-through
+
+149365~149383 Rising
+149384~149386 Release
+149387~149507 Follow-through
+
+149988~150028 Rising
+150029~150031 Release
+150032~150114 Follow-through
+
+150544~150573 Rising
+150574~150576 Release
+150577~150600 Follow-through
+
+150927~150963 Rising
+150964~150966 Release
+150967~151375 Follow-through
+
+151557~151592 Rising
+151593~151596 Release
+151597~151674 Follow-through
+
+152244~152293 Rising
+152294~152297 Release
+152298~152315 Follow-through
+
+152558~152597 Rising
+152598~152600 Release
+152601~152639 Follow-through
+
+153027~153064 Rising
+153065~153066 Release
+153067~153140 Follow-through
+
+153270~153295 Rising
+153296~153299 Release
+153300~153312 Follow-through
+
+153730~153777 Rising
+153778~153780 Release
+153781~153820 Follow-through
+
+154203~154241 Rising
+154242~154245 Release
+154246~154415 Follow-through
+
+154439~154465 Rising
+154466~154468 Release
+154469~154498 Follow-through
+
+154848~154882 Rising
+154883~154885 Release
+154886~155005 Follow-through
+
+155289~155360 Rising
+155361~155365 Release
+155366~155410 Follow-through
+
+155633~155668 Rising
+155669~155671 Release
+155672~155776 Follow-through
+
+156105~156142 Rising
+156143~156145 Release
+156146~156178 Follow-through
+
+156327~156369 Rising
+156370~156372 Release
+156373~156440 Follow-through
+
+157101~157130 Rising
+157131~157134 Release
+157135~157220 Follow-through
+
+157385~157413 Rising
+157414~157418 Release
+157419~157443 Follow-through
+
+157701~157781 Rising
+157782~157784 Release
+157785~157970 Follow-through
+
+157995~158033 Rising
+158034~158036 Release
+158037~158103 Follow-through
+
+158316~158350 Rising
+158351~158353 Release
+158354~158380 Follow-through
+
+158679~158719 Rising
+158720~158721 Release
+158722~158869 Follow-through
+
+158932~158973 Rising
+158974~158976 Release
+158977~158993 Follow-through
+
+159270~159300 Rising
+159301~159304 Release
+159305~159455 Follow-through
+
+159751~159788 Rising
+159789~159790 Release
+159791~159920 Follow-through
+
+160072~160108 Rising
+160109~160110 Release
+160111~160133 Follow-through
+
+160549~160589 Rising
+160590~160591 Release
+160592~160609 Follow-through
+
+160940~160970 Rising
+160971~160972 Release
+160973~161168 Follow-through
+
+161338~161370 Rising
+161371~167373 Release
+167374~161446 Follow-through
+
+161680~161724 Rising
+161725~161728 Release
+161729~161760 Follow-through
+
+162028~162055 Rising
+162056~162057 Release
+162058~162155 Follow-through
+
+162493~162532 Rising
+162533~162534 Release
+162535~162568 Follow-through
+
+162923~162952 Rising
+162953~162955 Release
+162956~163048 Follow-through
+
+163330~163360 Rising
+163361~163363 Release
+163364~163390 Follow-through
+
+163710~163745 Rising
+163746~163748 Release
+163749~163840 Follow-through
+
+164023~164057 Rising
+164058~164061 Release
+164062~164248 Follow-through
+
+164323~164363 Rising
+164364~164365 Release
+164366~164430 Follow-through
+
+164750~164786 Rising
+164787~164788 Release
+164789~164890 Follow-through
+
+165097~165119 Rising
+165120~165121 Release
+165122~165150 Follow-through
+
+165437~165483 Rising
+165484~165488 Release
+165489~165566 Follow-through
+
+165795~165834 Rising
+165835~165839 Release
+165840~165898 Follow-through
+
+166145~166180 Rising
+166181~166183 Release
+166184~166230 Follow-through
+
+166547~166578 Rising
+166579~166580 Release
+166581~166653 Follow-through
+
+167140~167179 Rising
+167180~167181 Release
+167182~167254 Follow-through
+
+167459~167492 Rising
+167493~167495 Release
+167496~167680 Follow-through
+
+167930~167992 Rising
+167993~167998 Release
+167999~168078 Follow-through
+
+168234~168320 Rising
+168321~168322 Release
+168323~168330 Follow-through
+
+168670~168706 Rising
+168707~168708 Release
+168709~168947 Follow-through
+
+169106~169130 Rising
+169131~169134 Release
+169135~169206 Follow-through
+
+169500~169538 Rising
+169539~169540 Release
+169541~169736 Follow-through
+
+169879~169914 Rising
+169915~169918 Release
+169919~169994 Follow-through
+
+170270~170300 Rising
+170301~170303 Release
+170304~170475 Follow-through
+
+170548~170592 Rising
+170593~170595 Release
+170596~170819 Follow-through
+
+171116~171154 Rising
+171155~171157 Release
+171158~171325 Follow-through
+
+171370~171401 Rising
+171402~171405 Release
+171406~171435 Follow-through
+
+171739~171774 Rising
+171775~171777 Release
+171778~171977 Follow-through
+
+172007~172085 Rising
+172086~172090 Release
+172091~172170 Follow-through
+
+172352~172406 Rising
+172407~172409 Release
+172410~172470 Follow-through
+
+172857~172893 Rising
+172894~172898 Release
+172899~172958 Follow-through
+
+173159~173203 Rising
+173204~173205 Release
+173206~173235 Follow-through
+
+173616~173662 Rising
+173663~173666 Release
+173667~173810 Follow-through
+
+173820~173840 Rising
+173841~173843 Release
+173844~173919 Follow-through
+
+174328~174349 Rising
+174350~174352 Release
+174353~174360 Follow-through
+
+174937~174980 Rising
+174981~174982 Release
+174983~175054 Follow-through
+
+175258~175271 Rising
+175272~175275 Release
+175276~175300 Follow-through
+
+175680~175712 Rising
+175713~175716 Release
+175717~175970 Follow-through
+
+175987~176032 Rising
+176033~176036 Release
+176037~176190 Follow-through
+
+176336~176374 Rising
+176375~176378 Release
+176379~176590 Follow-through
+
+176879~176911 Rising
+176912~176915 Release
+176916~176945 Follow-through
+
+177234~177286 Rising
+177287~177289 Release
+177290~177339 Follow-through
+
+177645~177708 Rising
+177709~177712 Release
+177713~177850 Follow-through
+
+177921~177959 Rising
+177960~177962 Release
+177963~178120 Follow-through
+
+178170~178193 Rising
+178194~178195 Release
+178196~178243 Follow-through
+
+178645~178688 Rising
+178689~178692 Release
+178693~178735 Follow-through
+
+179037~179089 Rising
+179090~179092 Release
+179093~179165 Follow-through
+
+179340~179349 Rising
+179350~179351 Release
+179352~179365 Follow-through
+
+179680~179723 Rising
+179724~179725 Release
+179726~179876 Follow-through
+
+179898~179937 Rising
+179938~179940 Release
+179941~180138 Follow-through
+
+180301~180340 Rising
+180341~180341 Release
+180342~180497 Follow-through
+
+180685~180714 Rising
+180715~180716 Release
+180717~180780 Follow-through
+
+180962~181014 Rising
+181015~181018 Release
+181019~181037 Follow-through
+
+181330~181372 Rising
+181373~181375 Release
+181376~181465 Follow-through
+
+181756~181790 Rising
+181791~181794 Release
+
+182053~182103 Rising
+182104~182106 Release
+182107~182281 Follow-through
+
+182425~182460 Rising
+182461~182465 Release
+182466~182530 Follow-through
+
+183030~183070 Rising
+183071~183073 Release
+183074~183215 Follow-through
+
+183352~183389 Rising
+183390~183391 Release
+183392~183475 Follow-through
+
+183673~183710 Rising
+183711~183712 Release
+183713~183794 Follow-through
+
+183968~184000 Rising
+184001~184002 Release
+184003~184075 Follow-through
+
+184340~184384 Rising
+184385~184387 Release
+184388~184468 Follow-through
+
+184579~184632 Rising
+184633~184635 Release
+184636~184700 Follow-through
+
+184780~184805 Rising
+184086~184808 Release
+184809~184875 Follow-through
+
+185073~185110 Rising
+185111~185113 Release
+185114~185145 Follow-through
+
+185557~185598 Rising
+185599~185602 Release
+185603~185750 Follow-through
+
+185895~185936 Rising
+185937~185940 Release
+185941~186020 Follow-through
+
+186239~186265 Rising
+186266~186289 Release
+186290~186467 Follow-through
+
+186577~186617 Rising
+186618~186620 Release
+186621~186647 Follow-through
+
+186946~186979 Rising
+186980~186982 Release
+186983~187055 Follow-through
+
+187339~187380 Rising
+187381~187386 Release
+187387~187530 Follow-through
+
+187602~187632 Rising
+187633~187635 Release
+187636~187745 Follow-through
+
+187970~188000 Rising
+188001~188003 Release
+188004~188070 Follow-through
+
+188241~188279 Rising
+188280~188283 Release
+188284~188437 Follow-through
+
+188573~188633 Rising
+188634~188638 Release
+188639~188869 Follow-through
+
+189050~189098 Rising
+189099~189100 Release
+189101~189115 Follow-through
+
+189400~189452 Rising
+189453~189455 Release
+189456~189605 Follow-through
+
+189663~189702 Rising
+189703~189707 Release
+189708~189855 Follow-through
+
+189960~189999 Rising
+190000~190001 Release
+190002~190074 Follow-through
+
+190533~190573 Rising
+190574~190578 Release
+190579~190660 Follow-through
+
+190895~190963 Rising
+190964~190969 Release
+190970~191140 Follow-through
+
+191177~191223 Rising
+191224~191229 Release
+191230~191398 Follow-through
+
+191576~191615 Rising
+191616~191617 Release
+191618~191685 Follow-through
+
+191876~191910 Rising
+191911~191915 Release
+191916~192100 Follow-through
+
+192132~192225 Rising
+192226~192228 Release
+192229~192300 Follow-through
+
+192802~192842 Rising
+192843~192844 Release
+192845~192939 Follow-through
+
+193200~193228 Rising
+193229~193231 Release
+193232~193389 Follow-through
+
+193450~193499 Rising
+193500~193501 Release
+193502~193540 Follow-through
+
+193818~193854 Rising
+193855~193858 Release
+193859~193940 Follow-through
+
+194150~194202 Rising
+194203~194207 Release
+194208~194365 Follow-through
+
+194500~194546 Rising
+194547~194548 Release
+194549~194739 Follow-through
+
+194868~194897 Rising
+194898~194900 Release
+194901~194920 Follow-through
+
+195167~195194 Rising
+195195~195200 Release
+195201~195274 Follow-through
+
+195840~195909 Rising
+195910~195914 Release
+195915~195980 Follow-through
+
+196205~196220 Rising
+196221~196223 Release
+196224~196260 Follow-through
+
+196405~196443 Rising
+196444~196445 Release
+196446~196530 Follow-through
+
+196810~196861 Rising
+196862~196864 Release
+196865~197025 Follow-through
+
+197138~197197 Rising
+197198~197200 Release
+197201~197295 Follow-through
+
+197855~197916 Rising
+197917~197920 Release
+197921~197985 Follow-through
+
+198260~198289 Rising
+198290~198292 Release
+198293~198444 Follow-through
+
+198572~198622 Rising
+198623~198624 Release
+198625~198802 Follow-through
+
+199168~199231 Rising
+199232~199234 Release
+199235~199440 Follow-through
+
+199443~199455 Rising
+199456~199457 Release
+199458~199509 Follow-through
+
+199793~199834 Rising
+199835~199838 Release
+199839~199920 Follow-through
+
+200274~200312 Rising
+200313~200319 Release
+200320~200534 Follow-through
+
+200641~200685 Rising
+200686~200687 Release
+200688~200850 Follow-through
+
+200998~201026 Rising
+201027~201028 Release
+201029~201225 Follow-through
+
+201245~201285 Rising
+201286~201290 Release
+201291~201358 Follow-through
+
+201671~201832 Rising
+201833~201835 Release
+201836~202005 Follow-through
+
+202200~202231 Rising
+202232~202234 Release
+202235~202315 Follow-through
+
+202540~202576 Rising
+202577~202580 Release
+202581~202660 Follow-through
+
+203108~203139 Rising
+203140~203143 Release
+203144~203200 Follow-through
+
+203457~203493 Rising
+203494~203497 Release
+203498~203669 Follow-through
+
+203702~203738 Rising
+203739~203741 Release
+203742~203815 Follow-through
+
+204158~204191 Rising 
+204192~204196 Release
+204197~204349 Follow-through
+
+204367~204396 Rising
+204397~204398 Release
+204399~204578 Follow-through
+
+204826~204858 Rising
+204859~204862 Release
+204863~204870 Follow-through
+
+205350~205389 Rising
+205390~205392 Release
+205393~205420 Follow-through
+
+205860~205900 Rising
+205901~205904 Release
+205905~206070 Follow-through
+
+206327~206364 Rising
+206365~206367 Release
+206368~206430 Follow-through
+
+206614~206640 Rising
+206641~206644 Release
+206645~206710 Follow-through
+
+206887~206940 Rising
+206941~206944 Release
+206945~207025 Follow-through
+
+207124~207171 Rising
+207172~207174 Release
+207175~207213 Follow-through
+
+207405~207443 Rising
+207444~207446 Release
+207447~207505 Follow-through
+
+207994~208026 Rising
+208027~208029 Release
+208030~208050 Follow-through
+
+208358~208410 Rising
+208411~208416 Release
+208417~208495 Follow-through
+
+208696~208727 Rising
+208728~208729 Release
+208730~208770 Follow-through
+
+209100~209151 Rising
+209152~209154 Release
+209155~209180 Follow-through
+
+209537~209570 Rising
+209571~209574 Release
+209575~209650 Follow-through
+
+209918~209976 Rising
+209977~209978 Release
+209979~210165 Follow-through
+
+210240~210277 Rising
+210278~210280 Release
+210281~210340 Follow-through
+
+210553~210589 Rising
+210590~210593 Release
+210594~210654 Follow-through
+
+210863~210921 Rising
+210922~210924 Release
+210925~211098 Follow-through
+
+211150~211183 Rising
+211184~211187 Release
+211188~211283 Follow-through
+
+211490~211528 Rising
+211529~211530 Release
+211531~211690 Follow-through
+
+211820~211853 Rising
+211854~211855 Release
+211856~211920 Follow-through
+
+212206~212240 Rising
+212241~212245 Release
+212246~212270 Follow-through
+
+212521~212550 Rising
+212551~212552 Release
+212553~212627 Follow-through
+
+212870~212900 Rising
+212901~212903 Release
+212904~212930 Follow-through
+
+213160~213194 Rising
+213195~213196 Release
+213197~213272 Follow-through
+
+213517~213555 Rising
+213556~213559 Release
+213560~213845 Follow-through
+
+214042~214096 Rising
+214097~214099 Release
+214100~214300 Follow-through
+
+214338~214362 Rising
+214363~214366 Release
+214367~214390 Follow-through
+
+215253~215297 Rising
+215298~215300 Release
+
+216001~216044 Rising
+216045~216046 Release
+216047~216125 Follow-through
+
+216405~216450 Rising
+216451~216452 Release
+216453~216476 Follow-through
+
+216950~216987 Rising
+216988~216990 Release
+216991~217135 Follow-through
+
+217195~217219 Rising
+217220~217221 Release
+217222~217425 Follow-through
+
+217440~217476 Rising
+217477~217480 Release
+217481~217699 Follow-through
+
+217786~217824 Rising
+217825~217826 Release
+217827~217850 Follow-through
+
+217993~218029 Rising
+218030~218031 Release
+218032~218100 Follow-through
+
+218365~218402 Rising
+218403~218405 Release
+218406~218547 Follow-through
+
+218896~218927 Rising
+
+219345~219392 Rising
+219393~219394 Release
+219395~219465 Follow-through
+
+219823~219868 Rising
+219869~219870 Release
+219871~220045 Follow-through
+
+220127~220612 Rising
+220613~220615 Release
+220616~220180 Follow-through
+
+220487~220524 Rising
+220525~220527 Release
+220528~220585 Follow-through
+
+221010~221058 Rising
+221059~221062 Release
+221063~221276 Follow-through
+
+221345~221383 Rising
+221384~221386 Release
+221387~221540 Follow-through
+
+221546~221587 Rising
+221588~221589 Release
+221590~221634 Follow-through
+
+221890~221964 Rising
+221965~221966 Release
+221967~222033 Follow-through
+
+222276~222319 Rising
+222320~222322 Release
+222323~222499 Follow-through
+
+222603~222651 Rising
+222652~222656 Release
+222657~222740 Follow-through
+
+223167~223197 Rising
+223198~223199 Release
+223200~223234 Follow-through
+
+223455~223497 Rising
+223498~223499 Release
+223500~223580 Follow-through
+
+223886~223927 Rising
+223928~223931 Release
+223932~223980 Follow-through
+
+224247~224294 Rising
+224295~224296 Release
+224297~224346 Follow-through
+
+224615~224650 Rising
+224651~224652 Release
+224653~224722 Follow-through
+
+225028~225056 Rising
+225057~225058 Release
+225059~225215 Follow-through
+
+225244~225288 Rising
+225289~225291 Release
+225292~225458 Follow-through
+
+225604~225657 Rising
+225658~225660 Release
+225661~225810 Follow-through
+
+225860~225892 Rising
+225893~225895 Release
+225896~225960 Follow-through
+
+226134~226243 Rising
+226244~226246 Release
+226247~226496 Follow-through
+
+226547~226598 Rising
+226599~226600 Release
+226601~226674 Follow-through
+
+227012~227050 Rising
+227051~227054 Release
+227055~227225 Follow-through
+
+227285~227321 Rising
+227322~227324 Release
+227325~227408 Follow-through
+
+
+227620~227663 Rising
+227664~227665 Release
+227666~227740 Follow-through
+
+227960~228040 Rising
+228041~228043 Release
+228044~228114 Follow-through
+
+228318~228359 Rising
+228360~228361 Release
+228362~228384 Follow-through
+
+228896~228930 Rising
+228931~228932 Release
+228933~229013 Follow-through
+
+229400~229445 Rising
+229446~229447 Release
+229448~229527 Follow-through
+
+229800~229837 Rising
+229838~229840 Release
+229841~229894 Follow-through
+
+230105~230146 Rising
+230147~230150 Release
+230151~230330 Follow-through
+
+230454~230495 Rising
+230496~230501 Release
+230502~230725 Follow-through
+
+230889~230927 Rising
+230928~230930 Release
+230931~231012 Follow-through
+
+231193~231225 Rising
+231226~231228 Release
+231229~231310 Follow-through
+
+231621~231668 Rising
+231669~231671 Release
+231672~231834 Follow-through
+
+232041~232070 Rising
+232071~232074 Release
+232075~232229 Follow-through
+
+232230~232278 Rising
+232279~232280 Release
+232281~232350 Follow-through

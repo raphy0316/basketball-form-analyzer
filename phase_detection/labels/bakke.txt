@@ -1,0 +1,113 @@
+580~651 Rising
+652~654 Release
+655~717 Follow-through
+
+1033~1080 Rising
+1081~1083 Release
+1084~1147 Follow-through
+
+1601~1660 Rising
+1661~1663 Release
+1664~1706 Follow-through
+
+2105~2158 Rising
+2159~2161 Release
+2162~2199 Follow-through
+
+2623~2661 Rising
+2662~2664 Release
+2665~2704 Follow-through
+
+3083~3122 Rising
+3123~3124 Release
+3125~3156 Follow-through
+
+4025~4067 Rising
+4068~4070 Release
+4071~4115 Follow-through
+
+4281~4317 Rising
+4318~4319 Release
+4320~4374 Follow-through
+
+4914~4968 Rising
+4969~4970 Release
+4971~5000 Follow-through
+
+5873~5931 Rising
+5932~5933 Release
+5934~6006 Follow-through
+
+6371~6417 Rising
+6418~6420 Release
+6421~5493 Follow-through
+
+6919~6969 Rising
+6970~6971 Release
+6972~7016 Follow-through
+
+7904~7961 Rising
+7962~7963 Release
+7964~7996 Follow-through
+
+9307~9349 Rising
+9350~9351 Release
+9352~9413 Follow-through
+
+9414~20514 Erase
+
+20515~20578 Rising
+20579~20581 Release
+20582~20613 Follow-through
+
+21347~21391 Rising
+21392~21394 Release
+21395~21427 Follow-through
+
+22078~22120 Rising
+22121~22122 Release
+22123~22151 Follow-through
+
+22901~22930 Rising
+22931~22932 Release
+22933~22955 Follow-through
+
+23970~23995 Rising
+23996~23997 Release
+23998~24026 Follow-through
+
+24619~24642 Rising
+24643~24644 Release
+24645~24679 Follow-through
+
+25054~25079 Rising
+25080~25082 Release
+25083~25109 Follow-through
+
+25852~25871 Rising
+25872~25873 Release
+25874~25902 Follow-through
+
+26714~26743 Rising
+26744~26746 Release
+26747~26770 Follow-through
+
+27707~27735 Rising
+27736~27737 Release
+27738~27799 Follow-through
+
+27800~32105 Erase
+
+32106~32136 Rising
+32137~32138 Release
+32139~32174 Follow-through
+
+32568~32453 Rising
+32575~32600 Rising
+32601~32603 Release
+32604~32634 Follow-through
+
+33102~33130 Rising
+33131~33134 Release
+33135~33164 Follow-through
+
