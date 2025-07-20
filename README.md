@@ -6,9 +6,9 @@ This system analyzes basketball shooting form using MoveNet and provides integra
 
 - **Pose Extraction**: Extracts player pose data from video using MoveNet.
 - **Ball Trajectory Extraction**: Detects and tracks the basketball in video frames.
-- **Shooting Phase Segmentation**: Automatically segments the shooting motion into phases (Set-up, Loading, Rising, Release, Follow-through, Recovery) based on 2D keypoint and ball trajectory analysis.
+- **Shooting Phase Segmentation**: Automatically segments the shooting motion into phases (General, Set-up, Loading, Rising, Release, Follow-through) based on 2D keypoint and ball trajectory analysis.
 - **Visualization**: Generates side-by-side videos showing original and normalized pose/ball data with phase labels.
-- **Comparison with Reference Data**: Compare extracted data with reference datasets for advanced analysis.
+- **Reference Comparison**: Compare extracted data with reference datasets for advanced analysis.
 
 ## Installation
 
@@ -59,7 +59,7 @@ pipeline.run_full_pipeline("data/video/your_video.mp4", overwrite_mode=True)
     "video_path": "path/to/video.mp4",
     "total_frames": 300,
     "normalization_method": "ball_radius_based",
-    "phase_detection_method": "sequential_transition"
+    "phase_detection_method": "hybrid_fps"
   },
   "frames": [
     {
@@ -77,31 +77,25 @@ pipeline.run_full_pipeline("data/video/your_video.mp4", overwrite_mode=True)
 
 ## Shooting Phase Definitions
 
-| Phase           | Frame-Based Definition Summary                                 |
-|-----------------|---------------------------------------------------------------|
-| Set-up          | Stable posture before loading                                 |
-| Loading         | Maximum knee bend                                             |
-| Rising          | Jump upward while arms lift                                   |
-| Release         | Wrist and ball begin downward motion                          |
-| Follow-through  | Arm stays extended as lower body descends                     |
-| Recovery        | Motion ends and body stabilizes                               |
+| Phase           | Description                                              |
+|-----------------|---------------------------------------------------------|
+| General         | Neutral state before shooting sequence                  |
+| Set-up          | Ball is held, ready to shoot                            |
+| Loading         | Lower body bends, preparing to jump                     |
+| Rising          | Arms and body rise for the shot                         |
+| Release         | Ball is released                                        |
+| Follow-through  | Arm remains extended after release                      |
 
-## Shooting Phase Transition Table
+## Shooting Phase Transition Summary
 
-| From → To             | Condition                                                                                 |
-|----------------------|------------------------------------------------------------------------------------------|
-| General → Set-up     | The ball is held in hand based on close contact only:<br>- Close contact (0.8× radius) |
-| Set-up → Loading     | At least 2 out of 3: knee, wrist, or ball are moving downward (y-coordinate decreasing)   |
-| Loading → Rising     | Wrist, elbow, and ball are all moving upward simultaneously (y increasing)                |
-| Rising → Release     | Left or right elbow angle ≥ 120°                                                          |
-| Release → Follow-through | - Ball has left the hand with multiple distance levels:<br>  • Clearly left (4.0× radius)<br>  • Moderately away (2.5× radius)<br>  • Slightly away (1.5× radius)<br>- Knee or hip begins to descend (y starts decreasing) |
-| Follow-through → Recovery | - Knee starts rising again after descending<br>- Elbow angle ≤ 80° (arm begins to fold) |
-| Recovery → General   | Knee, wrist, and hip movement becomes minimal for several frames (abs(Δy) < threshold)    |
+- **General → Set-up**: Ball is held in hand (close contact)
+- **Set-up → Loading**: Hip and/or shoulder move downward
+- **Loading → Rising**: Wrist and elbow move upward relative to hip
+- **Rising → Release**: Ball is released (distance from wrist increases, proper form)
+- **Release → Follow-through**: Ball has fully left the hand (distance > threshold)
+- **Follow-through → General**: Wrist drops below eyes relative to hip, or ball is caught
 
-**Note:**
-- All phase transition conditions are now fully implemented according to the specifications.
-- The system uses normalized coordinates and ball trajectory data for accurate phase detection.
-- Phase transitions are based on sequential movement patterns and anatomical angles.
+All transition logic is implemented in the HybridFPSPhaseDetector and matches the latest research and codebase.
 
 ## Keypoints
 
@@ -111,8 +105,7 @@ MoveNet detects 17 keypoints:
 - left_wrist, right_wrist, left_hip, right_hip
 - left_knee, right_knee, left_ankle, right_ankle
 
-
-## Download Required Model File (YOLOv8 .pt)
+## Model Files
 
 **Note:** The YOLOv8 model file (`yolov8n736-customContinue.pt`) required for ball detection is not included in this repository due to its large size.
 
@@ -120,18 +113,20 @@ To use the shooting analysis model, please download the `.pt` file from the foll
 
 [Download yolov8n736-customContinue.pt from Google Drive](https://drive.google.com/file/d/1ndN5pBUZ4IDE31kZioMTKsHTJu2x2_IK/view)
 
-After downloading, place the file in the `ball_extraction` folder:
+After downloading, place the file in the `ball_extraction/models` folder:
 
 ```
-ball_extraction/yolov8n736-customContinue.pt
+ball_extraction/models/yolov8n736-customContinue.pt
 ```
 
 Without this file, ball detection and full shooting analysis will not work.
 
-
 ## Video Preparation
 
-- **Place the video you want to analyze in the `data/video` folder.**
+- Place the video you want to analyze in the `data/video` folder.
 - The program will only show videos located in this folder for selection.
 
-If the 'data/visualized_video' folder is not auto-created by the code, add a note instructing users to create it manually. If it is auto-created, no note is needed. 
+## Notes
+- All code, logs, and comments are now in English.
+- For best results, use the HybridFPSPhaseDetector (default in the integrated pipeline).
+- If you encounter issues with large files, use Git LFS and check your .gitignore settings. 
