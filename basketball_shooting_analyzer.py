@@ -31,7 +31,7 @@ class BasketballShootingAnalyzer:
         self.extracted_data_dir = os.path.join(self.references_dir, "extracted_data")
         self.results_dir = os.path.join(self.references_dir, "results")
         self.visualized_video_dir = os.path.join(self.references_dir, "visualized_video")
-        
+        self.aspect_ratio = 1
         # Create directories
         for dir_path in [self.video_dir, self.standard_video_dir, self.edgecase_video_dir, 
                         self.extracted_data_dir, self.results_dir, self.visualized_video_dir]:
@@ -46,13 +46,13 @@ class BasketballShootingAnalyzer:
         self.phase_statistics = {}
         self.selected_video = None
         self.available_videos = []
-        
+        self.frame_height = None
+        self.frame_width = None
         # Initialize phase detectors
         self.ball_detector = BallBasedPhaseDetector()
         self.torso_detector = TorsoBasedPhaseDetector()
         self.resolution_detector = ResolutionBasedPhaseDetector()
         self.hybrid_fps_detector = HybridFPSPhaseDetector()
-        
         # Default to ball-based detector
         self.current_detector = self.ball_detector
 
@@ -240,7 +240,7 @@ class BasketballShootingAnalyzer:
             choice = input("Overwrite and extract new data? (y/n): ").strip().lower()
             if choice != 'y':
                 print("Using existing original extraction data.")
-            else:
+            else:   
                 print("Overwrite existing data and extract new data.")
                 overwrite_mode = True
         
@@ -307,8 +307,15 @@ class BasketballShootingAnalyzer:
             if cap.isOpened():
                 self.video_fps = cap.get(cv2.CAP_PROP_FPS)
                 print(f"✅ Video FPS: {self.video_fps:.2f}")
+                self.frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                self.frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                self.aspect_ratio = self.frame_width / self.frame_height
+                print(f"✅ Video resolution: {self.frame_width}x{self.frame_height}")
+                self.hybrid_fps_detector.set_frame_dimensions(self.frame_width, self.frame_height)
+
             else:
                 self.video_fps = 30.0  # Default FPS
+                self.aspect_ratio = 1
                 print(f"⚠️ Could not read video FPS, using default: {self.video_fps}")
             cap.release()
         except Exception as e:
@@ -614,7 +621,7 @@ class BasketballShootingAnalyzer:
         
         for i, frame_data in enumerate(self.normalized_data):
             pose = frame_data.get('normalized_pose', {})
-            
+         
             # Extract necessary keypoints from normalized data
             left_knee = pose.get('left_knee', {'y': 0})
             right_knee = pose.get('right_knee', {'y': 0})
@@ -740,7 +747,10 @@ class BasketballShootingAnalyzer:
             fps = 30.0  # Default FPS
             if hasattr(self, 'video_fps'):
                 fps = self.video_fps
-                
+            
+            # normalized_pose_data = self.normalized_data
+            # normalized_ball_data = [frame["normalized_ball"] for frame in self.normalized_data]
+            # print(normalized_pose_data, normalized_ball_data)
             next_phase = self.current_detector.check_phase_transition(
                 current_phase, i, self.pose_data, self.ball_data, fps=fps
             )
@@ -971,14 +981,14 @@ class BasketballShootingAnalyzer:
                 if ball_released:
                     # Calculate angles
                     left_angle = self._calculate_angle(
-                        left_shoulder.get('x', 0), left_shoulder.get('y', 0),
-                        left_elbow.get('x', 0), left_elbow.get('y', 0),
-                        left_wrist.get('x', 0), left_wrist.get('y', 0)
+                        left_shoulder.get('x', 0) * self.aspect_ratio * self.frame_width, left_shoulder.get('y', 0) * self.frame_height,
+                        left_elbow.get('x', 0) * self.aspect_ratio * self.frame_width, left_elbow.get('y', 0) * self.frame_height,
+                        left_wrist.get('x', 0) * self.aspect_ratio * self.frame_width, left_wrist.get('y', 0) * self.frame_height
                     )
                     right_angle = self._calculate_angle(
-                        right_shoulder.get('x', 0), right_shoulder.get('y', 0),
-                        right_elbow.get('x', 0), right_elbow.get('y', 0),
-                        right_wrist.get('x', 0), right_wrist.get('y', 0)
+                        right_shoulder.get('x', 0) * self.aspect_ratio * self.frame_width, right_shoulder.get('y', 0) * self.frame_height,
+                        right_elbow.get('x', 0) * self.aspect_ratio * self.frame_width, right_elbow.get('y', 0) * self.frame_height,
+                        right_wrist.get('x', 0) * self.aspect_ratio * self.frame_width, right_wrist.get('y', 0) * self.frame_height
                     )
                     
                     wrist_above_shoulder = wrist_y < shoulder_y
@@ -1093,21 +1103,21 @@ class BasketballShootingAnalyzer:
         left_wrist = pose.get('left_wrist', {'x': 0, 'y': 0})
         right_wrist = pose.get('right_wrist', {'x': 0, 'y': 0})
         
-        # Calculate shoulder position
+        # Calculate shoulder 
         left_shoulder_y = left_shoulder.get('y', 0)
         right_shoulder_y = right_shoulder.get('y', 0)
         shoulder_y = (left_shoulder_y + right_shoulder_y) / 2
         
         # Calculate elbow angles
         left_angle = self._calculate_angle(
-            left_shoulder.get('x', 0), left_shoulder.get('y', 0),
-            left_elbow.get('x', 0), left_elbow.get('y', 0),
-            left_wrist.get('x', 0), left_wrist.get('y', 0)
+            left_shoulder.get('x', 0) * self.aspect_ratio * self.frame_width, left_shoulder.get('y', 0) * self.frame_height,
+            left_elbow.get('x', 0) * self.aspect_ratio * self.frame_width, left_elbow.get('y', 0) * self.frame_height,
+            left_wrist.get('x', 0) * self.aspect_ratio * self.frame_width, left_wrist.get('y', 0 * self.frame_height)
         )
         right_angle = self._calculate_angle(
-            right_shoulder.get('x', 0), right_shoulder.get('y', 0),
-            right_elbow.get('x', 0), right_elbow.get('y', 0),
-            right_wrist.get('x', 0), right_wrist.get('y', 0)
+            right_shoulder.get('x', 0) * self.aspect_ratio * self.frame_width, right_shoulder.get('y', 0) * self.frame_height,
+            right_elbow.get('x', 0) * self.aspect_ratio * self.frame_width, right_elbow.get('y', 0) * self.frame_height,
+            right_wrist.get('x', 0) * self.aspect_ratio * self.frame_width, right_wrist.get('y', 0) * self.frame_height
         )
         
         # Calculate wrist position (closest to ball)
@@ -1654,18 +1664,30 @@ class BasketballShootingAnalyzer:
         
         try:
             # Load original data only
-            original_pose_data = self.pose_data  # Already loaded original data
-            original_ball_data = self.ball_data  # Already loaded original data
+            original_pose_data = self.pose_data 
+            original_ball_data = self.ball_data  
             original_rim_data = self.rim_data
             
-            self.create_original_analysis_video(
-                video_path=video_path,
-                output_path=output_video,
-                original_pose_data=original_pose_data,
-                original_ball_data=original_ball_data,
-                original_rim_data=original_rim_data,
-                shooting_phases=self.phases
-            )
+            # self.create_original_analysis_video(
+            #     video_path, output_video, original_pose_data, original_ball_data, original_rim_data, self.phases
+            # )
+            original_pose_data = self.pose_data
+            normalized_pose_data = self.normalized_data 
+            normalized_ball_data = [frame['normalized_ball'] for frame in self.normalized_data]
+            original_ball_data = self.ball_data  # Already loaded original data
+            original_rim_data = self.rim_data
+            base_name = os.path.splitext(os.path.basename(video_path))[0]
+            output_video = os.path.join(self.visualized_video_dir, f"{base_name}_analyzed.mp4")
+            self.create_dual_analysis_video(
+                    video_path=video_path,
+                    output_path= output_video,
+                    original_pose_data=original_pose_data,
+                    normalized_pose_data=normalized_pose_data,
+                    original_ball_data=original_ball_data,
+                    normalized_ball_data=normalized_ball_data,
+                    original_rim_data=original_rim_data,
+                    shooting_phases=self.phases
+                )
             print(f"✅ Visualization video generated: {os.path.basename(output_video)}")
             return True
         except Exception as e:
@@ -1839,7 +1861,6 @@ class BasketballShootingAnalyzer:
         
         h, w = frame.shape[:2]
         aspect_ratio = w / h
-        
         # Define keypoint connections
         connections = [
             ('left_shoulder', 'right_shoulder'),
@@ -1921,9 +1942,9 @@ class BasketballShootingAnalyzer:
                 left_elbow.get('confidence', 0) > 0.3 and 
                 left_wrist.get('confidence', 0) > 0.3):
                 left_angle = self._calculate_angle(
-                    left_shoulder['x'], left_shoulder['y'],
-                    left_elbow['x'], left_elbow['y'],
-                    left_wrist['x'], left_wrist['y']
+                    left_shoulder['x'] * aspect_ratio * w, left_shoulder['y'] * h,
+                    left_elbow['x'] * aspect_ratio * w, left_elbow['y'] * h,
+                    left_wrist['x'] * aspect_ratio * w, left_wrist['y'] * h
                 )
                 # Convert aspect ratio corrected relative coordinates to pixel coordinates
                 elbow_x = int(left_elbow['x'] * aspect_ratio * w)
@@ -1962,9 +1983,9 @@ class BasketballShootingAnalyzer:
                 right_elbow.get('confidence', 0) > 0.3 and 
                 right_wrist.get('confidence', 0) > 0.3):
                 right_angle = self._calculate_angle(
-                    right_shoulder['x'], right_shoulder['y'],
-                    right_elbow['x'], right_elbow['y'],
-                    right_wrist['x'], right_wrist['y']
+                    right_shoulder['x'] * aspect_ratio * w, right_shoulder['y'] * h,
+                    right_elbow['x'] * aspect_ratio * w, right_elbow['y'] * h,
+                    right_wrist['x'] * aspect_ratio * w, right_wrist['y'] * h
                 )
                 # Convert aspect ratio corrected relative coordinates to pixel coordinates
                 elbow_x = int(right_elbow['x'] * aspect_ratio * w)
@@ -2111,13 +2132,13 @@ class BasketballShootingAnalyzer:
             ('left_knee', 'left_ankle'),
             ('right_knee', 'right_ankle')
         ]
-        
+        scale_factor = 18
         # Draw keypoints (use normalized coordinates to display on screen)
         for key, kp in pose.items():
             if isinstance(kp, dict) and 'x' in kp and 'y' in kp:
                 # Convert normalized coordinates to screen coordinates
                 # Scale factor is adjusted to fit screen
-                scale_factor = min(w, h) / 12
+                # scale_factor = min(w, h) / 12
                 x = int(center_x + kp['x'] * scale_factor)
                 y = int(center_y + kp['y'] * scale_factor)
                 
@@ -2326,68 +2347,84 @@ class BasketballShootingAnalyzer:
         
         return frame
     
-    def run_analysis(self):
-        """Run entire analysis pipeline"""
-        print("🏀 Basketball shooting motion analysis pipeline")
-        print("=" * 60)
+    # def run_analysis(self):
+    #     """Run entire analysis pipeline"""
+    #     print("🏀 Basketball shooting motion analysis pipeline")
+    #     print("=" * 60)
         
-        # STEP 0: Select video
-        video_path = self.prompt_video_selection()
-        if not video_path:
-            return
+    #     # STEP 0: Select video
+    #     video_path = self.prompt_video_selection()
+    #     if not video_path:
+    #         return
         
-        self.selected_video = video_path
+    #     self.selected_video = video_path
         
-        # STEP 0.5: Overwrite existing file option
-        print(f"\n📁 Overwrite file option")
-        print("=" * 50)
-        print("If existing extraction data or analysis result files exist:")
-        print("1. Overwrite (delete existing files and create new)")
-        print("2. Skip (skip if existing files exist)")
-        print("3. Cancel")
+    #     # STEP 0.5: Overwrite existing file option
+    #     print(f"\n📁 Overwrite file option")
+    #     print("=" * 50)
+    #     print("If existing extraction data or analysis result files exist:")
+    #     print("1. Overwrite (delete existing files and create new)")
+    #     print("2. Skip (skip if existing files exist)")
+    #     print("3. Cancel")
         
-        overwrite_choice = input("Select (1/2/3): ").strip()
-        if overwrite_choice == "3":
-            print("Analysis canceled.")
-            return
-        elif overwrite_choice not in ["1", "2"]:
-            print("Invalid selection. Proceeding with default (skip) option.")
-            overwrite_choice = "2"
+    #     overwrite_choice = input("Select (1/2/3): ").strip()
+    #     if overwrite_choice == "3":
+    #         print("Analysis canceled.")
+    #         return
+    #     elif overwrite_choice not in ["1", "2"]:
+    #         print("Invalid selection. Proceeding with default (skip) option.")
+    #         overwrite_choice = "2"
         
-        overwrite_mode = overwrite_choice == "1"
+    #     overwrite_mode = overwrite_choice == "1"
         
-        # STEP 1: Load data
-        if not self.load_associated_data(video_path, overwrite_mode):
-            return
+    #     # STEP 1: Load data
+    #     if not self.load_associated_data(video_path, overwrite_mode):
+    #         return
         
-        # STEP 2: Normalize
-        self.normalize_pose_data()
+    #     # STEP 2: Normalize
+    #     self.normalize_pose_data()
         
-        # STEP 3: Segment phases
-        self.segment_shooting_phases()
+    #     # STEP 3: Segment phases
+    #     self.segment_shooting_phases()
         
-        # STEP 4: Save results
-        self.save_results(video_path, overwrite_mode)
+    #     # STEP 4: Save results
+    #     self.save_results(video_path, overwrite_mode)
         
-        # STEP 5: Visualize (optional)
-        self.generate_visualization(video_path, overwrite_mode)
-        
-        print("\n✅ Analysis completed!")
-        print("=" * 60)
+    #     # STEP 5: Visualize (optional)
+    #     # self.generate_visualization(video_path, overwrite_mode)
+    #     original_pose_data = self.pose_data
+    #     normalized_pose_data = [frame['normalized_pose'] for frame in self.normalized_data] 
+    #     normalized_ball_data = [frame['normalized_ball'] for frame in self.normalized_data]
+    #     original_ball_data = self.ball_data  # Already loaded original data
+    #     original_rim_data = self.rim_data
+    #     base_name = os.path.splitext(os.path.basename(video_path))[0]
+    #     output_video = os.path.join(self.visualized_video_dir, f"{base_name}_analyzed.mp4")
+    #     self.create_dual_analysis_video(
+    #             video_path=video_path,
+    #             output_path= output_video,
+    #             original_pose_data=original_pose_data,
+    #             normalized_pose_data=normalized_pose_data,
+    #             original_ball_data=original_ball_data,
+    #             normalized_ball_data=normalized_ball_data,
+    #             original_rim_data=original_rim_data,
+    #             shooting_phases=self.phases
+    #         )
+    #     print("\n✅ Analysis completed!")
+    #     print("=" * 60)
 
     def _calculate_angle(self, ax, ay, bx, by, cx, cy):
         """Return angle between three points (ax,ay)-(bx,by)-(cx,cy) in degrees"""
-        import numpy as np
+      
         ba = np.array([ax - bx, ay - by])
         bc = np.array([cx - bx, cy - by])
         cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc) + 1e-8)
         angle = np.arccos(np.clip(cosine_angle, -1.0, 1.0))
         return np.degrees(angle)
 
-def main():
-    """Main execution function"""
-    analyzer = BasketballShootingAnalyzer()
-    analyzer.run_analysis()
+# def main():
+#     """Main execution function"""
+#     analyzer = BasketballShootingAnalyzer()
+#     analyzer.run_analysis()
 
-if __name__ == "__main__":
-    main() 
+# if __name__ == "__main__":
+#     main() 

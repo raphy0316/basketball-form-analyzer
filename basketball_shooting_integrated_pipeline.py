@@ -165,61 +165,6 @@ class BasketballShootingIntegratedPipeline:
                 return folder_name
         return "unknown"
 
-    def generate_visualization(self, video_path: str, overwrite_mode: bool = False) -> bool:
-        """Generate visualization with folder-specific output directory and FPS in filename"""
-        try:
-            base_name = os.path.splitext(os.path.basename(video_path))[0]
-            
-            # Get video FPS for filename
-            cap = cv2.VideoCapture(video_path)
-            fps = cap.get(cv2.CAP_PROP_FPS)
-            cap.release()
-            fps_str = f"{fps:.1f}fps" if fps else "unknown_fps"
-            
-            # Get folder name from video path
-            folder_name = self.get_folder_name_from_path(video_path)
-            output_dir = os.path.join("data", "visualized_video", folder_name)
-            os.makedirs(output_dir, exist_ok=True)
-            
-            # Include FPS in filename
-            output_path = os.path.join(output_dir, f"{base_name}_{fps_str}_analyzed.avi")
-            
-            if not overwrite_mode and os.path.exists(output_path):
-                print(f"⚠️ Visualization already exists: {os.path.basename(output_path)}")
-                choice = input("Overwrite? (y/n): ").lower().strip()
-                if choice != 'y':
-                    print("⏭️ Skipping visualization generation.")
-                    return True
-            
-            print(f"🎬 Generating visualization: {os.path.basename(output_path)}")
-            
-            # Call the analyzer's visualization method
-            success = self.analyzer.generate_visualization(video_path, overwrite_mode)
-            
-            if success:
-                # Move file to correct location with FPS in filename
-                old_output_path = os.path.join("data", "visualized_video", f"{base_name}_analyzed.avi")
-                if os.path.exists(old_output_path):
-                    import shutil
-                    shutil.move(old_output_path, output_path)
-                    print(f"✅ Visualization video generated: {os.path.basename(output_path)}")
-                    print(f"📁 Saved to: {output_path}")
-                    return True
-                elif os.path.exists(output_path):
-                    print(f"✅ Visualization video generated: {os.path.basename(output_path)}")
-                    print(f"📁 Saved to: {output_path}")
-                    return True
-                else:
-                    print(f"❌ Visualization file was not created. Please check codec settings.")
-                    return False
-            else:
-                print(f"❌ Failed to generate visualization for {os.path.basename(video_path)}")
-                return False
-            
-        except Exception as e:
-            print(f"❌ Error generating visualization: {e}")
-            return False
-
     def prompt_video_selection(self) -> Optional[List[str]]:
         """Prompt user to select processing mode with multiple selection support"""
         # Get available videos from analyzer
