@@ -1,5 +1,8 @@
-*.pt
-*.mp4
-*.mov
 *.json
 *.png
+*.csv
+
+data/visualized_video/
+data/video/Unused/
+data/video/test/
+data/video/Full_Video/

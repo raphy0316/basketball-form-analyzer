@@ -85,8 +85,55 @@ class PoseModelLayer:
         input_frame = np.expand_dims(resized_frame, axis=0).astype(np.int32)
         return input_frame
 
+    def _transform_crop_to_full_frame(self, crop_x: float, crop_y: float, crop_region: Dict, 
+                                    original_h: int, original_w: int) -> Tuple[float, float]:
+        """
+        Transform crop coordinates to full frame relative coordinates (0~1)
+        
+        Args:
+            crop_x: x coordinate in crop (0~1)
+            crop_y: y coordinate in crop (0~1)
+            crop_region: crop region info (relative coordinates 0~1)
+            original_h: original frame height
+            original_w: original frame width
+            
+        Returns:
+            Tuple of (full_frame_relative_x, full_frame_relative_y) in relative coordinates (0~1)
+        """
+        # Transform from crop coordinates (0~1) to full frame relative coordinates (0~1)
+        full_frame_relative_x = crop_region['x_min'] + (crop_x * (crop_region['x_max'] - crop_region['x_min']))
+        full_frame_relative_y = crop_region['y_min'] + (crop_y * (crop_region['y_max'] - crop_region['y_min']))
+        
+        return full_frame_relative_x, full_frame_relative_y
+
+    def _apply_aspect_ratio_correction(self, x: float, y: float, frame_h: int, frame_w: int) -> Tuple[float, float]:
+        """
+        Apply aspect ratio correction to ensure same relative coordinate change
+        corresponds to same pixel distance change in both x and y axes.
+        
+        Args:
+            x: x coordinate (0~1 relative)
+            y: y coordinate (0~1 relative)
+            frame_h: frame height
+            frame_w: frame width
+            
+        Returns:
+            Tuple of (corrected_x, y) where x is normalized for aspect ratio, y remains 0~1
+        """
+        # Calculate aspect ratio
+        aspect_ratio = frame_w / frame_h
+        
+        # Normalize x coordinate so that same relative change corresponds to same pixel change
+        # We want: delta_x * frame_w = delta_y * frame_h
+        # So: corrected_x * frame_w = y * frame_h
+        # Therefore: corrected_x = y * frame_h / frame_w = y / aspect_ratio
+        corrected_x = x / aspect_ratio
+        corrected_y = y
+        
+        return corrected_x, corrected_y
+
     def detect_pose(self, frame: np.ndarray, output_images: List[np.ndarray]) -> Dict:
-        """Detect pose from single frame (convert to pixel coordinates)"""
+        """Detect pose from single frame (return normalized coordinates with aspect ratio correction on x-axis)"""
         input_frame = self.preprocess_frame(frame)
         # results = self.model(input=input_frame)
         # keypoints = results["output_0"].numpy()
@@ -94,6 +141,7 @@ class PoseModelLayer:
 
         # Original frame size
         h, w = frame.shape[:2]
+        aspect_ratio = w / h  # Calculate aspect ratio
         self.crop_region = self.init_crop_region(h, w) if self.crop_region is None else self.crop_region
         keypoints_with_scores = self.run_inference(self.model, frame, self.crop_region, crop_size=[256, 256])
         
@@ -104,13 +152,13 @@ class PoseModelLayer:
             # Ensure proper indexing of keypoints
             y, x, confidence = keypoints_with_scores[0, 0][i]
             
-            # Convert normalized coordinates (0~1) to pixel coordinates
-            pixel_x = int(x * w)
-            pixel_y = int(y * h)
+            # Apply aspect ratio correction to x-axis only
+            # Apply aspect ratio correction only to x-axis: same pixel distance change corresponds to same relative coordinate change
+            corrected_x = x / aspect_ratio
             
             pose_data[name] = {
-                "x": pixel_x,  # Pixel coordinates
-                "y": pixel_y,  # Pixel coordinates
+                "x": float(corrected_x),  # Aspect ratio corrected 0~1 relative coordinates
+                "y": float(y),            # 0~1 relative coordinates
                 "confidence": float(confidence)
             }
         return pose_data
@@ -220,15 +268,19 @@ class PoseModelLayer:
         the crop region from the previous frame.
         """
         if image_width > image_height:
-            box_height = image_width / image_height
+            # Width > Height: pad height to make square
+            box_height = image_width / image_height  # > 1.0
             box_width = 1.0
-            y_min = (image_height / 2 - image_width / 2) / image_height
+            # Center the crop region vertically
+            y_min = max(0.0, (1.0 - box_height) / 2)  # Ensure non-negative
             x_min = 0.0
         else:
+            # Height >= Width: pad width to make square
             box_height = 1.0
-            box_width = image_height / image_width
+            box_width = image_height / image_width  # >= 1.0
             y_min = 0.0
-            x_min = (image_width / 2 - image_height / 2) / image_width
+            # Center the crop region horizontally
+            x_min = max(0.0, (1.0 - box_width) / 2)  # Ensure non-negative
 
         return {
             'y_min': y_min,
@@ -302,9 +354,11 @@ class PoseModelLayer:
         """
         target_keypoints = {}
         for joint in self.KEYPOINT_DICT.keys():
+            # MoveNet output: [y, x, confidence] order
+            y, x, confidence = keypoints[0, 0, self.KEYPOINT_DICT[joint]]
             target_keypoints[joint] = [
-            keypoints[0, 0, self.KEYPOINT_DICT[joint], 0] * image_height,
-            keypoints[0, 0, self.KEYPOINT_DICT[joint], 1] * image_width
+                y * image_height,  # Y coordinate
+                x * image_width    # X coordinate
             ]
 
         if self.torso_visible(keypoints):

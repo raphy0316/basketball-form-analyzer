@@ -66,7 +66,7 @@ class PoseStorageLayer:
                 "total_frames": len(original_pose_data),
                 "extraction_time": datetime.now().isoformat(),
                 "keypoint_count": len(original_pose_data[0]['pose']) if original_pose_data else 0,
-                "coordinate_system": "original_pixel_coordinates"
+                "coordinate_system": "relative_coordinates_with_aspect_ratio_correction"
             },
             "pose_data": original_pose_data
         }

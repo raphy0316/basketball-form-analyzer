@@ -9,21 +9,25 @@ import json
 import numpy as np
 from datetime import datetime
 from typing import List, Dict, Optional
+import cv2 # Added for FPS extraction
+import traceback
 
-# 기존 분석 파이프라인 import
+# Import existing analysis pipeline
 from basketball_shooting_analyzer import BasketballShootingAnalyzer
-# 추출 파이프라인 import
+# Import extraction pipeline
 from pose_extraction.pose_extraction_pipeline import PoseExtractionPipeline
 from ball_extraction.ball_extraction_pipeline import BallExtractionPipeline
 
-class BasketballShootingIntegratedPipeline(BasketballShootingAnalyzer):
+class BasketballShootingIntegratedPipeline:
     def __init__(self):
-        super().__init__()
         self.references_dir = "data"
         self.video_dir = os.path.join(self.references_dir, "video")
         self.extracted_data_dir = os.path.join(self.references_dir, "extracted_data")
         self.pose_pipeline = PoseExtractionPipeline(output_dir=self.extracted_data_dir)
         self.ball_pipeline = BallExtractionPipeline(output_dir=self.extracted_data_dir)
+        
+        # Create analyzer instance
+        self.analyzer = BasketballShootingAnalyzer()
         
         print("🏀 Basketball Shooting Integrated Pipeline Initialized")
         print("=" * 50)
@@ -43,6 +47,9 @@ class BasketballShootingIntegratedPipeline(BasketballShootingAnalyzer):
         print("=" * 50)
         
         try:
+            # Set current video path for analyzer
+            self.analyzer.current_video_path = video_path
+            
             # STEP 1: Extract original data
             print("\n🔍 STEP 1: Extract original data")
             print("-" * 30)
@@ -55,33 +62,41 @@ class BasketballShootingIntegratedPipeline(BasketballShootingAnalyzer):
             print("\n📂 STEP 2: Load original data")
             print("-" * 30)
             
-            if not self.load_associated_data(video_path, overwrite_mode):
+            if not self.analyzer.load_associated_data(video_path, overwrite_mode):
                 print("❌ Failed to load original data")
                 return False
             
             # STEP 3: Normalize and save data
             print("\n🔄 STEP 3: Normalize and save data")
             print("-" * 30)
+            print("  - Torso-based scaling normalization")
+            print("  - Consistent scaling across different video resolutions")
             
-            self.normalize_pose_data(video_path)
+            self.analyzer.normalize_pose_data(video_path)
             
             # STEP 4: Segment shooting phases
             print("\n🎯 STEP 4: Segment shooting phases")
             print("-" * 30)
             
-            self.segment_shooting_phases()
+            self.analyzer.segment_shooting_phases("hybrid_fps")
+            print("✅ Phase segmentation completed (using hybrid FPS-based detector)")
             
             # STEP 5: Save analysis results
             print("\n💾 STEP 5: Save analysis results")
             print("-" * 30)
             
-            self.save_results(video_path, overwrite_mode)
+            self.analyzer.save_results(video_path, overwrite_mode)
+            print("✅ Analysis results saved successfully")
             
             # STEP 6: Generate visualization
             print("\n🎨 STEP 6: Generate visualization")
             print("-" * 30)
             
-            self.generate_visualization(video_path, overwrite_mode)
+            success = self.analyzer.generate_visualization(video_path, overwrite_mode)
+            if success:
+                print("✅ Visualization generated successfully")
+            else:
+                print("❌ Failed to generate visualization")
             
             print("\n🎉 Full pipeline completed!")
             print("=" * 50)
@@ -89,10 +104,11 @@ class BasketballShootingIntegratedPipeline(BasketballShootingAnalyzer):
             
         except Exception as e:
             print(f"❌ Error occurred during pipeline execution: {e}")
+            traceback.print_exc()  # Print full error stack trace
             return False
 
     def _extract_original_data(self, video_path: str, overwrite_mode: bool = False) -> bool:
-        """Extract original data (pose + ball)"""
+        """Extract original data with coordinate transformation (pose + ball)"""
         base_name = os.path.splitext(os.path.basename(video_path))[0]
         
         # Check for existing original data files
@@ -111,13 +127,17 @@ class BasketballShootingIntegratedPipeline(BasketballShootingAnalyzer):
                 return True
         
         try:
-            # Extract pose data
-            print("🔍 Extracting pose data...")
+            # Extract pose data with coordinate transformation
+            print("🔍 Extracting pose data with coordinate transformation...")
+            print("  - MoveNet crop coordinates → Full frame coordinates")
+            print("  - Aspect ratio correction applied to x-axis")
             pose_file = self.pose_pipeline.extract_poses(video_path, confidence_threshold=0.3)
             print(f"✅ Pose extraction completed: {os.path.basename(pose_file)}")
             
-            # Extract ball data
-            print("🔍 Extracting ball data...")
+            # Extract ball data with normalized coordinates
+            print("🔍 Extracting ball data with normalized coordinates...")
+            print("  - YOLO using 0~1 normalized coordinates")
+            print("  - Aspect ratio correction applied to x-axis")
             ball_file = self.ball_pipeline.extract_ball_trajectory(
                 video_path, conf_threshold=0.15, min_confidence=0.3, min_ball_size=10.0
             )
@@ -131,73 +151,79 @@ class BasketballShootingIntegratedPipeline(BasketballShootingAnalyzer):
 
     def get_folder_name_from_path(self, video_path: str) -> str:
         """비디오 경로에서 폴더 이름을 추출합니다."""
-        # video_path에서 폴더 이름 추출
-        # 예: data/video/Standard/video1.mp4 -> Standard
-        # 예: data/video/test/clips/video1.mov -> test
+        # Extract folder name from video_path
+        # Example: data/video/Standard/video1.mp4 -> Standard
+        # Example: data/video/test/clips/video1.mov -> test
         path_parts = video_path.replace('\\', '/').split('/')
         if 'video' in path_parts:
             video_index = path_parts.index('video')
             if video_index + 1 < len(path_parts):
                 folder_name = path_parts[video_index + 1]
-                # test/clips 폴더의 경우 test로 반환
+                # For test/clips folder, return test
                 if folder_name == 'test' and video_index + 2 < len(path_parts) and path_parts[video_index + 2] == 'clips':
                     return 'test'
                 return folder_name
         return "unknown"
 
-    def generate_visualization(self, video_path: str, overwrite_mode: bool = False, force_demo: bool = False) -> bool:
-        """Generate visualization with folder-specific output directory, demo 모드 지원"""
+    def generate_visualization(self, video_path: str, overwrite_mode: bool = False) -> bool:
+        """Generate visualization with folder-specific output directory and FPS in filename"""
         try:
             base_name = os.path.splitext(os.path.basename(video_path))[0]
             
-            # demo 모드면 demo 폴더로 강제 저장
-            if force_demo:
-                output_dir = os.path.join("data", "visualized_video", "demo")
-            else:
-                folder_name = self.get_folder_name_from_path(video_path)
-                output_dir = os.path.join("data", "visualized_video", folder_name)
+            # Get video FPS for filename
+            cap = cv2.VideoCapture(video_path)
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            cap.release()
+            fps_str = f"{fps:.1f}fps" if fps else "unknown_fps"
+            
+            # Get folder name from video path
+            folder_name = self.get_folder_name_from_path(video_path)
+            output_dir = os.path.join("data", "visualized_video", folder_name)
             os.makedirs(output_dir, exist_ok=True)
             
-            output_path = os.path.join(output_dir, f"{base_name}_analyzed.mp4")
+            # Include FPS in filename
+            output_path = os.path.join(output_dir, f"{base_name}_{fps_str}_analyzed.avi")
             
             if not overwrite_mode and os.path.exists(output_path):
                 print(f"⚠️ Visualization already exists: {os.path.basename(output_path)}")
-                choice = input("Overwrite? (y/n): ").strip().lower()
+                choice = input("Overwrite? (y/n): ").lower().strip()
                 if choice != 'y':
-                    print("Skipping visualization generation.")
+                    print("⏭️ Skipping visualization generation.")
                     return True
             
-            print(f"🎨 Generating visualization: {os.path.basename(output_path)}")
-            print(f"📁 Output directory: {output_dir}")
+            print(f"🎬 Generating visualization: {os.path.basename(output_path)}")
             
-            # 기존 generate_visualization 메서드 호출
-            result = super().generate_visualization(video_path, overwrite_mode)
+            # Call the analyzer's visualization method
+            success = self.analyzer.generate_visualization(video_path, overwrite_mode)
             
-            if result:
-                # 파일을 올바른 위치로 이동
-                old_output_path = os.path.join("data", "visualized_video", f"{base_name}_analyzed.mp4")
-                if os.path.exists(old_output_path) and not force_demo:
+            if success:
+                # Move file to correct location with FPS in filename
+                old_output_path = os.path.join("data", "visualized_video", f"{base_name}_analyzed.avi")
+                if os.path.exists(old_output_path):
                     import shutil
                     shutil.move(old_output_path, output_path)
-                    print(f"✅ Visualization saved to: {output_path}")
+                    print(f"✅ Visualization video generated: {os.path.basename(output_path)}")
+                    print(f"📁 Saved to: {output_path}")
                     return True
                 elif os.path.exists(output_path):
-                    print(f"✅ Visualization saved to: {output_path}")
+                    print(f"✅ Visualization video generated: {os.path.basename(output_path)}")
+                    print(f"📁 Saved to: {output_path}")
                     return True
                 else:
                     print(f"❌ Visualization file was not created. Please check codec settings.")
                     return False
             else:
-                print(f"❌ Visualization failed.")
+                print(f"❌ Failed to generate visualization for {os.path.basename(video_path)}")
                 return False
             
         except Exception as e:
-            print(f"❌ Failed to generate visualization: {e}")
+            print(f"❌ Error generating visualization: {e}")
             return False
 
-    def prompt_video_selection(self) -> Optional[str]:
-        """Prompt user to select processing mode (test, bakke 폴더 추가)"""
-        self.available_videos = self.list_available_videos()
+    def prompt_video_selection(self) -> Optional[List[str]]:
+        """Prompt user to select processing mode with multiple selection support"""
+        # Get available videos from analyzer
+        self.available_videos = self.analyzer.list_available_videos()
         standard_videos = [v for v in self.available_videos if 'Standard' in v]
         edgecase_videos = [v for v in self.available_videos if 'EdgeCase' in v]
         bakke_videos = [v for v in self.available_videos if 'Bakke' in v]
@@ -212,80 +238,101 @@ class BasketballShootingIntegratedPipeline(BasketballShootingAnalyzer):
         print(f"[4] Process all Bakke videos ({len(bakke_videos)} videos)")
         print(f"[5] Process all Test videos ({len(test_videos)} videos)")
         print(f"[6] Process all videos ({len(self.available_videos)} videos)")
-        print("[7] Demo 작성 (Standard → EdgeCase → Bakke 순서로 demo 폴더에 저장)")
-        print("[8] Cancel")
+        print("[7] Cancel")
+        print("\n💡 Tip: You can select multiple options (e.g., '2,1,3' to process Standard → Single → EdgeCase)")
         
         while True:
             try:
-                choice = input("\nEnter your choice (1-8): ").strip()
+                choice = input("\nEnter your choice(s) (e.g., 1 or 2,1,3): ").strip()
                 
-                if choice == "1":
-                    # Single video selection
-                    print("\nAvailable videos:")
-                    for i, video in enumerate(self.available_videos, 1):
-                        print(f"  [{i}] {os.path.basename(video)}")
-                    video_choice = input("Enter the number or file name: ").strip()
-                    if video_choice.isdigit():
-                        idx = int(video_choice) - 1
-                        if 0 <= idx < len(self.available_videos):
-                            return self.available_videos[idx]
-                        else:
-                            print("❌ Invalid number.")
-                            continue
-                    for video in self.available_videos:
-                        if os.path.basename(video) == video_choice:
-                            return video
-                    print("❌ Invalid selection. Please try again.")
-                elif choice == "2":
-                    if standard_videos:
-                        print(f"✅ Selected: Process all Standard videos ({len(standard_videos)} videos)")
-                        return "standard_all"
-                    else:
-                        print("❌ No videos found in Standard folder.")
-                        continue
-                elif choice == "3":
-                    if edgecase_videos:
-                        print(f"✅ Selected: Process all EdgeCase videos ({len(edgecase_videos)} videos)")
-                        return "edgecase_all"
-                    else:
-                        print("❌ No videos found in EdgeCase folder.")
-                        continue
-                elif choice == "4":
-                    if bakke_videos:
-                        print(f"✅ Selected: Process all Bakke videos ({len(bakke_videos)} videos)")
-                        return "bakke_all"
-                    else:
-                        print("❌ No videos found in Bakke folder.")
-                        continue
-                elif choice == "5":
-                    # test 폴더 선택 시 바로 test_video_selection 호출
-                    test_selection = self.prompt_test_video_selection()
-                    if test_selection:
-                        if test_selection.startswith("test_clips_"):
-                            print(f"✅ Selected: Process all clips in test folder")
-                            return "test_all"
-                        else:
-                            print(f"✅ Selected: Process combined_output.mov")
-                            return test_selection
-                    else:
-                        print("❌ Test selection canceled.")
-                        continue
-                elif choice == "6":
-                    if self.available_videos:
-                        print(f"✅ Selected: Process all videos ({len(self.available_videos)} videos)")
-                        return "all_videos"
-                    else:
-                        print("❌ No videos found.")
-                        continue
-                elif choice == "7":
-                    print("✅ Selected: Demo 작성 (Standard → EdgeCase → Bakke)")
-                    return "demo_mode"
-                elif choice == "8":
+                if choice == "7":
                     print("❌ Analysis canceled.")
                     return None
+                
+                # Parse multiple selections
+                selections = [s.strip() for s in choice.split(',')]
+                selected_modes = []
+                
+                for selection in selections:
+                    if selection == "1":
+                        print(f"\n📹 Single video selection:")
+                        print("Available videos:")
+                        for i, video in enumerate(self.available_videos, 1):
+                            print(f"  [{i}] {os.path.basename(video)}")
+                        
+                        video_choice = input("Enter the number or file name: ").strip()
+                        if video_choice.isdigit():
+                            idx = int(video_choice) - 1
+                            if 0 <= idx < len(self.available_videos):
+                                selected_modes.append(self.available_videos[idx])
+                            else:
+                                print("❌ Invalid number.")
+                                continue
+                        else:
+                            for video in self.available_videos:
+                                if os.path.basename(video) == video_choice:
+                                    selected_modes.append(video)
+                                    break
+                            else:
+                                print("❌ Invalid selection.")
+                                continue
+                    elif selection == "2":
+                        if standard_videos:
+                            selected_modes.append("standard_all")
+                            print(f"✅ Added: Process all Standard videos ({len(standard_videos)} videos)")
+                        else:
+                            print("❌ No videos found in Standard folder.")
+                            continue
+                    elif selection == "3":
+                        if edgecase_videos:
+                            selected_modes.append("edgecase_all")
+                            print(f"✅ Added: Process all EdgeCase videos ({len(edgecase_videos)} videos)")
+                        else:
+                            print("❌ No videos found in EdgeCase folder.")
+                            continue
+                    elif selection == "4":
+                        if bakke_videos:
+                            selected_modes.append("bakke_all")
+                            print(f"✅ Added: Process all Bakke videos ({len(bakke_videos)} videos)")
+                        else:
+                            print("❌ No videos found in Bakke folder.")
+                            continue
+                    elif selection == "5":
+                        # When test folder is selected, directly call test_video_selection
+                        test_selection = self.prompt_test_video_selection()
+                        if test_selection:
+                            if test_selection.startswith("test_clips_"):
+                                selected_modes.append("test_all")
+                                print(f"✅ Added: Process all clips in test folder")
+                            else:
+                                selected_modes.append(test_selection)
+                                print(f"✅ Added: Process combined_output.mov")
+                        else:
+                            print("❌ Test selection canceled.")
+                            continue
+                    elif selection == "6":
+                        if self.available_videos:
+                            selected_modes.append("all_videos")
+                            print(f"✅ Added: Process all videos ({len(self.available_videos)} videos)")
+                        else:
+                            print("❌ No videos found.")
+                            continue
+                    else:
+                        print(f"❌ Invalid choice: {selection}")
+                        continue
+                
+                if selected_modes:
+                    print(f"\n🎯 Selected processing order:")
+                    for i, mode in enumerate(selected_modes, 1):
+                        if isinstance(mode, str) and mode.endswith("_all"):
+                            print(f"  {i}. {mode}")
+                        else:
+                            print(f"  {i}. {os.path.basename(mode) if isinstance(mode, str) else mode}")
+                    return selected_modes
                 else:
-                    print("❌ Invalid choice. Please enter 1-8.")
+                    print("❌ No valid selections made.")
                     continue
+                    
             except KeyboardInterrupt:
                 print("\n❌ Analysis canceled.")
                 return None
@@ -321,7 +368,7 @@ class BasketballShootingIntegratedPipeline(BasketballShootingAnalyzer):
                         continue
                 elif choice == "2":
                     if os.path.exists(clips_dir):
-                        # clips 폴더의 모든 비디오 파일 찾기
+                        # Find all video files in clips folder
                         video_extensions = ['.mp4', '.mov', '.avi', '.mkv']
                         clips_videos = []
                         for ext in video_extensions:
@@ -372,186 +419,80 @@ def main():
     print("🏀 Basketball Shooting Integrated Pipeline")
     print("=" * 50)
     
-    # Initialize pipeline
     pipeline = BasketballShootingIntegratedPipeline()
     
-    # Video selection
-    selected_video = pipeline.prompt_video_selection()
-    if not selected_video:
-        print("❌ Video selection canceled.")
+    # Get video selection
+    video_selections = pipeline.prompt_video_selection()
+    if not video_selections:
+        print("❌ No videos selected. Exiting.")
         return
     
-    # Overwrite mode selection
+    # Get overwrite mode
     overwrite_mode = pipeline.prompt_overwrite_mode()
     if overwrite_mode is None:
-        print("❌ Analysis canceled.")
+        print("❌ Overwrite mode selection canceled. Exiting.")
         return
     
-    # Handle special keywords for batch processing
-    if selected_video in ["standard_all", "edgecase_all", "bakke_all", "test_all", "all_videos"]:
-        # Get video list based on selection
-        available_videos = pipeline.list_available_videos()
-        
-        if selected_video == "standard_all":
-            videos_to_process = [v for v in available_videos if 'Standard' in v]
-        elif selected_video == "edgecase_all":
-            videos_to_process = [v for v in available_videos if 'EdgeCase' in v]
-        elif selected_video == "bakke_all":
-            videos_to_process = [v for v in available_videos if 'Bakke' in v]
-        elif selected_video == "test_all":
-            # clips 폴더의 모든 비디오를 개별적으로 처리
-            clips_dir = os.path.join("data", "video", "test", "clips")
-            video_extensions = ['.mp4', '.mov', '.avi', '.mkv']
-            videos_to_process = []
-            for ext in video_extensions:
-                videos_to_process.extend(glob.glob(os.path.join(clips_dir, f"*{ext}")))
-                videos_to_process.extend(glob.glob(os.path.join(clips_dir, f"*{ext.upper()}")))
-            
-            print(f"\n🔄 Processing {len(videos_to_process)} clips individually...")
-            print("=" * 50)
-            
-            success_count = 0
-            error_summary = []
-            
-            for i, video_path in enumerate(videos_to_process, 1):
-                print(f"\n📹 Processing clip {i}/{len(videos_to_process)}: {os.path.basename(video_path)}")
-                print("-" * 40)
-                
-                try:
-                    success = pipeline.run_full_pipeline(video_path, overwrite_mode)
-                    if success:
-                        success_count += 1
-                        print(f"✅ Successfully processed: {os.path.basename(video_path)}")
-                    else:
-                        error_msg = f"Failed to process: {os.path.basename(video_path)}"
-                        print(f"❌ {error_msg}")
-                        error_summary.append(error_msg)
-                except Exception as e:
-                    error_msg = f"Error processing {os.path.basename(video_path)}: {e}"
-                    print(f"❌ {error_msg}")
-                    error_summary.append(error_msg)
-            
-            print(f"\n🎉 Clips processing completed!")
-            print(f"Successfully processed: {success_count}/{len(videos_to_process)} clips")
-            
-            if error_summary:
-                print(f"\n❌ Errors occurred during processing:")
-                for error in error_summary:
-                    print(f"  - {error}")
-            
-            return  # clips 처리는 여기서 완료되므로 main 함수 종료
-        else:  # all_videos
-            videos_to_process = available_videos
-        
-        # 배치 처리 (clips 제외)
-        print(f"\n🔄 Processing {len(videos_to_process)} videos in batch mode...")
+    # Process videos
+    success_count = 0
+    total_count = len(video_selections)
+    
+    for i, selection in enumerate(video_selections, 1):
+        print(f"\n🎬 Processing {i}/{total_count}: {selection}")
         print("=" * 50)
         
-        success_count = 0
-        error_summary = []
-        
-        for i, video_path in enumerate(videos_to_process, 1):
-            print(f"\n📹 Processing video {i}/{len(videos_to_process)}: {os.path.basename(video_path)}")
-            print("-" * 40)
+        if isinstance(selection, str) and selection.endswith("_all"):
+            # Process all videos in category
+            if selection == "standard_all":
+                videos = [v for v in pipeline.available_videos if 'Standard' in v]
+            elif selection == "edgecase_all":
+                videos = [v for v in pipeline.available_videos if 'EdgeCase' in v]
+            elif selection == "bakke_all":
+                videos = [v for v in pipeline.available_videos if 'Bakke' in v]
+            elif selection == "test_all":
+                test_dir = os.path.join(pipeline.video_dir, "test", "clips")
+                video_extensions = ['.mp4', '.mov', '.avi', '.mkv']
+                videos = []
+                for ext in video_extensions:
+                    videos.extend(glob.glob(os.path.join(test_dir, f"*{ext}")))
+                    videos.extend(glob.glob(os.path.join(test_dir, f"*{ext.upper()}")))
+            elif selection == "all_videos":
+                videos = pipeline.available_videos
+            else:
+                print(f"❌ Unknown selection: {selection}")
+                continue
             
-            try:
-                success = pipeline.run_full_pipeline(video_path, overwrite_mode)
-                if success:
+            print(f"📁 Processing {len(videos)} videos in {selection}")
+            
+            for video in videos:
+                print(f"\n🎬 Processing: {os.path.basename(video)}")
+                if pipeline.run_full_pipeline(video, overwrite_mode):
                     success_count += 1
-                    print(f"✅ Successfully processed: {os.path.basename(video_path)}")
+                    print(f"✅ Successfully processed: {os.path.basename(video)}")
                 else:
-                    error_msg = f"Failed to process: {os.path.basename(video_path)}"
-                    print(f"❌ {error_msg}")
-                    error_summary.append(error_msg)
-            except Exception as e:
-                error_msg = f"Error processing {os.path.basename(video_path)}: {e}"
-                print(f"❌ {error_msg}")
-                error_summary.append(error_msg)
-        
-        print(f"\n🎉 Batch processing completed!")
-        print(f"Successfully processed: {success_count}/{len(videos_to_process)} videos")
-        
-        if error_summary:
-            print(f"\n❌ Errors occurred during processing:")
-            for error in error_summary:
-                print(f"  - {error}")
-        
-    elif selected_video == "demo_mode":
-        # Demo 작성 모드
-        print("\n🎬 Starting Demo Writing Mode")
-        print("=" * 50)
-        
-        # 순서대로 처리할 폴더 목록
-        folders_to_process = ["Standard", "EdgeCase", "Bakke"]
-        output_dir = os.path.join("data", "visualized_video", "demo")
-        os.makedirs(output_dir, exist_ok=True)
-        
-        for folder_name in folders_to_process:
-            print(f"\n📁 Processing {folder_name} folder...")
-            print("-" * 30)
-            
-            folder_path = os.path.join(pipeline.video_dir, folder_name)
-            if not os.path.exists(folder_path):
-                print(f"❌ {folder_name} folder not found. Skipping.")
-                continue
-            
-            video_extensions = ['.mp4', '.mov', '.avi', '.mkv']
-            videos_in_folder = []
-            for ext in video_extensions:
-                videos_in_folder.extend(glob.glob(os.path.join(folder_path, f"*{ext}")))
-                videos_in_folder.extend(glob.glob(os.path.join(folder_path, f"*{ext.upper()}")))
-            
-            if not videos_in_folder:
-                print(f"❌ No video files found in {folder_name} folder.")
-                continue
-            
-            print(f"✅ Found {len(videos_in_folder)} videos in {folder_name} folder.")
-            
-            for i, video_path in enumerate(videos_in_folder, 1):
-                print(f"  [{i}] {os.path.basename(video_path)}")
-                video_name = os.path.splitext(os.path.basename(video_path))[0]
-                
-                # 이미 처리된 파일인지 확인
-                if not overwrite_mode:
-                    pose_original_file = os.path.join(pipeline.extracted_data_dir, f"{video_name}_pose_original.json")
-                    ball_original_file = os.path.join(pipeline.extracted_data_dir, f"{video_name}_ball_original.json")
-                    if os.path.exists(pose_original_file) and os.path.exists(ball_original_file):
-                        print(f"  ⚠️ Skipping {video_name} (already processed)")
-                        continue
-                
-                print(f"  🔄 Processing {video_name}...")
-                try:
-                    # demo 모드로 비주얼라이즈 저장
-                    success = pipeline.run_full_pipeline(video_path, overwrite_mode)
-                    if success:
-                        # demo 폴더에 강제 저장
-                        pipeline.generate_visualization(video_path, overwrite_mode, force_demo=True)
-                        print(f"    ✅ Successfully processed: {video_name}")
-                    else:
-                        print(f"    ❌ Failed to process: {video_name}")
-                except Exception as e:
-                    print(f"    ❌ Error processing {video_name}: {e}")
-            
-            print(f"\n🎉 {folder_name} folder processing completed!")
-        
-        print("\n🎉 Demo writing completed!")
-        print("All videos from Standard, EdgeCase, and Bakke folders have been processed.")
-        print(f"Processed files are saved in: {output_dir}")
-
-    else:
-        # Single video processing (including test mov files)
-        success = pipeline.run_full_pipeline(selected_video, overwrite_mode)
-        
-        if success:
-            folder_name = pipeline.get_folder_name_from_path(selected_video)
-            print("\n🎉 Pipeline execution completed!")
-            print("Generated files:")
-            print(f"  • Original data: data/extracted_data/{os.path.splitext(os.path.basename(selected_video))[0]}_*_original.json")
-            print(f"  • Normalized data: data/extracted_data/{os.path.splitext(os.path.basename(selected_video))[0]}_*_normalized.json")
-            print(f"  • Analysis result: data/results/{os.path.splitext(os.path.basename(selected_video))[0]}_analysis.json")
-            print(f"  • Visualization video: data/visualized_video/{folder_name}/{os.path.splitext(os.path.basename(selected_video))[0]}_analyzed.mp4")
+                    print(f"❌ Failed to process: {os.path.basename(video)}")
         else:
-            print("\n❌ Pipeline execution failed!")
+            # Process single video
+            if pipeline.run_full_pipeline(selection, overwrite_mode):
+                success_count += 1
+                print(f"✅ Successfully processed: {os.path.basename(selection)}")
+            else:
+                print(f"❌ Failed to process: {os.path.basename(selection)}")
+    
+    print(f"\n🎉 Batch processing completed!")
+    print(f"Successfully processed: {success_count}/{total_count} videos")
+    
+    if success_count < total_count:
+        print(f"❌ Errors occurred during processing:")
+        for selection in video_selections:
+            if isinstance(selection, str) and selection.endswith("_all"):
+                # Check if any videos in this category failed
+                pass
+            else:
+                # Check if this single video failed
+                pass
+    
+    print(f"\n🎉 All selected processing completed!")
 
 if __name__ == "__main__":
     main() 

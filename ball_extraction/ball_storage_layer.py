@@ -45,7 +45,7 @@ class BallStorageLayer:
                 "extraction_time": datetime.now().isoformat(),
                 "frames_with_ball": sum(1 for frame in ball_trajectory if frame['ball_count'] > 0),
                 "total_balls_detected": sum(frame['ball_count'] for frame in ball_trajectory),
-                "coordinate_system": "original_pixel_coordinates"
+                "coordinate_system": "relative_coordinates_with_aspect_ratio_correction"
             },
             "ball_trajectory": ball_trajectory
         }
@@ -73,7 +73,7 @@ class BallStorageLayer:
                 "extraction_time": datetime.now().isoformat(),
                 "frames_with_rim": sum(1 for frame in rim_info if frame['rim_count'] > 0),
                 "total_rims_detected": sum(frame['rim_count'] for frame in rim_info),
-                "coordinate_system": "original_pixel_coordinates"
+                "coordinate_system": "relative_coordinates_with_aspect_ratio_correction"
             },
             "rim_info": rim_info
         }
