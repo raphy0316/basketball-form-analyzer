@@ -6,3 +6,8 @@ data/visualized_video/
 data/video/Unused/
 data/video/test/
 data/video/Full_Video/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
