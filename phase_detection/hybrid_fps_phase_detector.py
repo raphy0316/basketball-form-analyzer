@@ -8,6 +8,9 @@ import numpy as np
 from typing import Dict, List, Optional, Tuple
 from .base_phase_detector import BasePhaseDetector
 
+SHOOTING_FORM_DEGREE = 110 # Minimum angle for proper shooting form
+
+
 class HybridFPSPhaseDetector(BasePhaseDetector):
     """
     Hybrid phase detector using original data with:
@@ -116,7 +119,7 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         
         Args:
             pose: Pose data
-            threshold_type: Type of threshold ("movement", "relative", "ball_distance")
+            threshold_type: Type of threshold ("movement", "relative", "ball_distance", "release_distance")
             
         Returns:
             Hybrid threshold value
@@ -127,8 +130,9 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         # Base thresholds
         base_thresholds = {
             "movement": 0.001,      # 1% of torso length for Set-up→Loading (hip/shoulder movement)
-            "relative": 0.003,     # 0.5% of torso length for Loading→Rising (wrist/elbow relative movement)
-            "ball_distance": 0.003, # Fixed distance for ball-wrist separation (not relative to torso)
+            "relative": 0.005,     # 0.5% of torso length for Loading→Rising (wrist/elbow relative movement)
+            "ball_distance": 0.0003, # Fixed distance for ball-wrist separation (not relative to torso)
+            "release_distance": 0.05 # Fixed distance for ball-wrist separation during Release
         }
         
         # Get base threshold
@@ -172,13 +176,14 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         
         # Check for cancellation conditions first (like original)
         if self._is_cancellation_condition(current_phase, frame_idx, pose_data, ball_data):
+            print(f"Cancellation condition met for phase {current_phase} at frame {frame_idx}")
             return "Set-up"  # Always return to Set-up for cancellations
         
         # Calculate hybrid thresholds
         movement_threshold = self.calculate_hybrid_threshold(pose, "movement")
         relative_threshold = self.calculate_hybrid_threshold(pose, "relative")
         ball_distance_threshold = self.calculate_hybrid_threshold(pose, "ball_distance")
-        
+        release_distance_threshold = self.calculate_hybrid_threshold(pose, "release_distance")
         # Extract keypoints
         left_shoulder = pose.get('left_shoulder', {'x': 0, 'y': 0})
         right_shoulder = pose.get('right_shoulder', {'x': 0, 'y': 0})
@@ -192,7 +197,6 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         right_shoulder_y = right_shoulder.get('y', 0)
         shoulder_y = (left_shoulder_y + right_shoulder_y) / 2
         aspect_ratio = self.get_aspect_ratio()
-        print(aspect_ratio)
         # Calculate elbow angles
         left_angle = self.calculate_angle(
             left_shoulder.get('x', 0) * aspect_ratio, left_shoulder.get('y', 0),
@@ -406,20 +410,21 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                 ball_y = ball_info.get('center_y', 0)
                 
                 distance = abs(ball_y - wrist_y)
+                print(distance)
                 wrist_above_shoulder = wrist_y < shoulder_y
                 ball_released = distance > ball_distance_threshold
                 
                 if ball_released:
                     ball_above_shoulder = ball_y < shoulder_y
                     
-                    if (left_angle >= 110 or right_angle >= 110) and wrist_above_shoulder and ball_above_shoulder:
+                    # if (left_angle >= 110 or right_angle >= 110) and wrist_above_shoulder and ball_above_shoulder:
+                    if (right_angle >= 110) and wrist_above_shoulder and ball_above_shoulder:
                         return "Release"
-                    else:
-                        return "Set-up"
                 else:
                     ball_above_shoulder = ball_y < shoulder_y
                     
-                    if (left_angle >= 110 or right_angle >= 110) and distance > ball_distance_threshold and ball_above_shoulder:
+                    # if (left_angle >= 110 or right_angle >= 110) and distance > ball_distance_threshold and ball_above_shoulder:
+                    if (right_angle >= 110) and wrist_above_shoulder and ball_above_shoulder:
                         return "Release"
         
         # 5. Release → Follow-through: Ball has fully left the hand
@@ -429,11 +434,9 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                 ball_y = ball_info.get('center_y', 0)
                 
                 ball_wrist_distance = ((ball_x - wrist_x)**2 + (ball_y - wrist_y)**2)**0.5
-                
-                # Use ball_distance threshold for Release→Follow-through
-                ball_distance_threshold = self.calculate_hybrid_threshold(pose, "ball_distance")
-                
-                if ball_wrist_distance > ball_distance_threshold:
+                print(ball_wrist_distance)
+                                
+                if ball_wrist_distance > release_distance_threshold:
                     return "Follow-through"
         
         # 6. Follow-through → General: Wrist below eyes relative to hip
@@ -444,9 +447,6 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                 ball_y = ball_info.get('center_y', 0)
                 
                 ball_wrist_distance = ((ball_x - wrist_x)**2 + (ball_y - wrist_y)**2)**0.5
-                
-                # Use ball_distance threshold for ball catch detection
-                ball_distance_threshold = self.calculate_hybrid_threshold(pose, "ball_distance")
                 
                 if ball_wrist_distance <= ball_distance_threshold:
                     return "Set-up"
@@ -471,6 +471,7 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                         return current_phase
         
         # If no conditions are met, keep current phase
+        print(f"current phase: {current_phase} at frame {frame_idx}")
         return current_phase 
     
     def _is_cancellation_condition(self, current_phase: str, frame_idx: int, pose_data: List[Dict], ball_data: List[Dict]) -> bool:
@@ -575,7 +576,7 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                 
                 # Calculate hybrid threshold for relative movement
                 relative_threshold = self.calculate_hybrid_threshold(pose, "relative")
-                
+                print(f"Rising cancelation Relative Threshold: {relative_threshold}, d_wrist_relative: {d_wrist_relative}, d_elbow_relative: {d_elbow_relative}, d_ball_relative: {d_ball_relative}")  
                 wrist_moving_down_relative = d_wrist_relative > relative_threshold
                 elbow_moving_down_relative = d_elbow_relative > relative_threshold
                 
