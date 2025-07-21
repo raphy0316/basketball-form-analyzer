@@ -118,7 +118,7 @@ class ResolutionBasedPhaseDetector(BasePhaseDetector):
         
         # Calculate elbow angles
         left_angle = self.calculate_angle(
-            left_shoulder.get('x', 0), left_shoulder.get('y', 0),
+            left_shoulder.get('x', 0) , left_shoulder.get('y', 0),
             left_elbow.get('x', 0), left_elbow.get('y', 0),
             left_wrist.get('x', 0), left_wrist.get('y', 0)
         )

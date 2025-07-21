@@ -141,7 +141,7 @@ class PoseModelLayer:
 
         # Original frame size
         h, w = frame.shape[:2]
-        aspect_ratio = w / h  # Calculate aspect ratio
+
         self.crop_region = self.init_crop_region(h, w) if self.crop_region is None else self.crop_region
         keypoints_with_scores = self.run_inference(self.model, frame, self.crop_region, crop_size=[256, 256])
         
@@ -152,9 +152,7 @@ class PoseModelLayer:
             # Ensure proper indexing of keypoints
             y, x, confidence = keypoints_with_scores[0, 0][i]
             
-            # Apply aspect ratio correction to x-axis only
-            # Apply aspect ratio correction only to x-axis: same pixel distance change corresponds to same relative coordinate change
-            corrected_x = x / aspect_ratio
+            corrected_x, y  = self._apply_aspect_ratio_correction(x, y, h, w)
             
             pose_data[name] = {
                 "x": float(corrected_x),  # Aspect ratio corrected 0~1 relative coordinates

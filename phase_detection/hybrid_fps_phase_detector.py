@@ -26,7 +26,18 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         super().__init__(min_phase_duration, noise_threshold)
         self.fps = 30.0  # Default FPS, will be updated during detection
         self.torso_length = 1.0  # Default torso length, will be updated during detection
-        
+        self.frame_width = None
+        self.frame_height = None
+
+    def set_frame_dimensions(self, width: int, height: int):
+        self.frame_width = width
+        self.frame_height = height
+
+    def get_aspect_ratio(self) -> Optional[float]:
+        if self.frame_width and self.frame_height:
+            return self.frame_width / self.frame_height
+        return 1
+
     def set_fps(self, fps: float):
         """Set FPS for threshold calculations"""
         self.fps = fps
@@ -180,19 +191,22 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         left_shoulder_y = left_shoulder.get('y', 0)
         right_shoulder_y = right_shoulder.get('y', 0)
         shoulder_y = (left_shoulder_y + right_shoulder_y) / 2
-        
+        aspect_ratio = self.get_aspect_ratio()
+        print(aspect_ratio)
         # Calculate elbow angles
         left_angle = self.calculate_angle(
-            left_shoulder.get('x', 0), left_shoulder.get('y', 0),
-            left_elbow.get('x', 0), left_elbow.get('y', 0),
-            left_wrist.get('x', 0), left_wrist.get('y', 0)
+            left_shoulder.get('x', 0) * aspect_ratio, left_shoulder.get('y', 0),
+            left_elbow.get('x', 0) * aspect_ratio, left_elbow.get('y', 0),
+            left_wrist.get('x', 0) * aspect_ratio, left_wrist.get('y', 0)
         )
         right_angle = self.calculate_angle(
-            right_shoulder.get('x', 0), right_shoulder.get('y', 0),
-            right_elbow.get('x', 0), right_elbow.get('y', 0),
-            right_wrist.get('x', 0), right_wrist.get('y', 0)
+            right_shoulder.get('x', 0) * aspect_ratio * self.frame_width, right_shoulder.get('y', 0) * self.frame_height,
+            right_elbow.get('x', 0) * aspect_ratio  * self.frame_width, right_elbow.get('y', 0) * self.frame_height,
+            right_wrist.get('x', 0) * aspect_ratio * self.frame_width , right_wrist.get('y', 0) * self.frame_height
         )
-        
+    
+        print(f"Frame Idx: {frame_idx}, Left angle: {left_angle}, Right angle: {right_angle}")
+        # print(f"right shoulder: {right_shoulder}, right elbow: {right_elbow}, right wrist: {right_wrist}")
         # Select closest wrist to ball
         wrist_x, wrist_y, selected_wrist = self.select_closest_wrist_to_ball(pose, ball_info)
         
@@ -587,20 +601,20 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                 
                 distance = abs(ball_y - wrist_y)
                 ball_released = distance > close_threshold
-                
+                aspect_ratio = self.get_aspect_ratio()
                 if ball_released:
                     # Calculate angles
                     left_angle = self.calculate_angle(
-                        left_shoulder.get('x', 0), left_shoulder.get('y', 0),
-                        left_elbow.get('x', 0), left_elbow.get('y', 0),
-                        left_wrist.get('x', 0), left_wrist.get('y', 0)
+                        left_shoulder.get('x', 0) * aspect_ratio, left_shoulder.get('y', 0),
+                        left_elbow.get('x', 0) * aspect_ratio, left_elbow.get('y', 0),
+                        left_wrist.get('x', 0) * aspect_ratio, left_wrist.get('y', 0)
                     )
                     right_angle = self.calculate_angle(
-                        right_shoulder.get('x', 0), right_shoulder.get('y', 0),
-                        right_elbow.get('x', 0), right_elbow.get('y', 0),
-                        right_wrist.get('x', 0), right_wrist.get('y', 0)
+                        right_shoulder.get('x', 0) * aspect_ratio * self.frame_width, right_shoulder.get('y', 0) * self.frame_height,
+                        right_elbow.get('x', 0) * aspect_ratio  * self.frame_width, right_elbow.get('y', 0) * self.frame_height,
+                        right_wrist.get('x', 0) * aspect_ratio * self.frame_width , right_wrist.get('y', 0) * self.frame_height
                     )
-                    
+    
                     wrist_above_shoulder = wrist_y < shoulder_y
                     ball_above_shoulder = ball_y < shoulder_y
                     
