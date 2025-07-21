@@ -117,7 +117,7 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         base_thresholds = {
             "movement": 0.001,      # 1% of torso length for Set-up→Loading (hip/shoulder movement)
             "relative": 0.003,     # 0.5% of torso length for Loading→Rising (wrist/elbow relative movement)
-            "ball_distance": 0.003, # Fixed distance for ball-wrist separation (not relative to torso)
+            "ball_distance": 0.0003, # Fixed distance for ball-wrist separation (not relative to torso)
         }
         
         # Get base threshold
