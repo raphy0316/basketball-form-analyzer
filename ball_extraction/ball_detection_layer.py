@@ -77,67 +77,55 @@ class BallDetectionLayer:
         
         # Get frame dimensions for normalization
         h, w = frame.shape[:2]
+        aspect_ratio = w / h
         
         for result in results:
             boxes = result.boxes
             if boxes is not None:
                 for box in boxes:
-                    # Extract box coordinates (use pixel coordinates like original)
                     x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
                     confidence = box.conf[0].cpu().numpy()
                     class_id = int(box.cls[0].cpu().numpy())
                     
-                    # Process only basketball class (0)
+                    # Normalize to 0~1 without padding correction
+                    x1_rel = np.clip(x1 / w, 0, 1)
+                    y1_rel = np.clip(y1 / h, 0, 1)
+                    x2_rel = np.clip(x2 / w, 0, 1)
+                    y2_rel = np.clip(y2 / h, 0, 1)
+
+                    # movenet과 동일하게 x축에 aspect ratio 보정(곱하기)
+                    x1_rel_corr = x1_rel * aspect_ratio
+                    x2_rel_corr = x2_rel * aspect_ratio
+                    center_x_rel_corr = (x1_rel_corr + x2_rel_corr) / 2
+                    width_rel_corr = x2_rel_corr - x1_rel_corr
+
+                    center_y_rel = (y1_rel + y2_rel) / 2
+                    height_rel = y2_rel - y1_rel
+
                     if class_id == 0:
-                        # Convert pixel coordinates to normalized coordinates with aspect ratio correction
-                        center_x_pixel = (x1 + x2) / 2
-                        center_y_pixel = (y1 + y2) / 2
-                        
-                        # Convert to normalized coordinates (0~1)
-                        center_x_norm = center_x_pixel / w
-                        center_y_norm = center_y_pixel / h
-                        
-                        # Apply aspect ratio correction to normalized coordinates
-                        corrected_center_x, center_y = self._apply_aspect_ratio_correction(
-                            center_x_norm, center_y_norm, h, w
-                        )
-                        
                         ball_info = {
-                            'bbox': [float(x1), float(y1), float(x2), float(y2)],
+                            'bbox': [float(x1_rel_corr), float(y1_rel), float(x2_rel_corr), float(y2_rel)],
                             'confidence': float(confidence),
                             'class_id': class_id,
-                            'center_x': float(corrected_center_x),  # Aspect ratio corrected relative coordinate (0~1)
-                            'center_y': float(center_y),            # Relative coordinate (0~1)
-                            'width': float(x2 - x1),               # Pixel width
-                            'height': float(y2 - y1),              # Pixel height
-                            'normalized_width': float((x2 - x1) / w),   # Normalized width (0~1)
-                            'normalized_height': float((y2 - y1) / h)   # Normalized height (0~1)
+                            'center_x': float(center_x_rel_corr),
+                            'center_y': float(center_y_rel),
+                            'width': float(width_rel_corr),
+                            'height': float(height_rel),
+                            'pixel_width': float(x2 - x1),
+                            'pixel_height': float(y2 - y1)
                         }
                         ball_detections.append(ball_info)
                     elif class_id == 2:
-                        # Convert pixel coordinates to normalized coordinates with aspect ratio correction
-                        center_x_pixel = (x1 + x2) / 2
-                        center_y_pixel = (y1 + y2) / 2
-                        
-                        # Convert to normalized coordinates (0~1)
-                        center_x_norm = center_x_pixel / w
-                        center_y_norm = center_y_pixel / h
-                        
-                        # Apply aspect ratio correction to normalized coordinates
-                        corrected_center_x, center_y = self._apply_aspect_ratio_correction(
-                            center_x_norm, center_y_norm, h, w
-                        )
-                        
                         rim_info = {
-                            'bbox': [float(x1), float(y1), float(x2), float(y2)],
+                            'bbox': [float(x1_rel_corr), float(y1_rel), float(x2_rel_corr), float(y2_rel)],
                             'confidence': float(confidence),
                             'class_id': class_id,
-                            'center_x': float(corrected_center_x),  # Aspect ratio corrected relative coordinate (0~1)
-                            'center_y': float(center_y),            # Relative coordinate (0~1)
-                            'width': float(x2 - x1),               # Pixel width
-                            'height': float(y2 - y1),              # Pixel height
-                            'normalized_width': float((x2 - x1) / w),   # Normalized width (0~1)
-                            'normalized_height': float((y2 - y1) / h)   # Normalized height (0~1)
+                            'center_x': float(center_x_rel_corr),
+                            'center_y': float(center_y_rel),
+                            'width': float(width_rel_corr),
+                            'height': float(height_rel),
+                            'pixel_width': float(x2 - x1),
+                            'pixel_height': float(y2 - y1)
                         }  
                         rim_detections.append(rim_info)
         return ball_detections, rim_detections

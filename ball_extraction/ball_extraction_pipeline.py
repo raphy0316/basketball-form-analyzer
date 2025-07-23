@@ -24,7 +24,7 @@ class BallExtractionPipeline:
 
     def extract_ball_trajectory(self, video_path: str, conf_threshold: float = 0.15,
                                classes: List[int] = [0, 1, 2], iou_threshold: float = 0.1,
-                               min_confidence: float = 0.3, min_ball_size: float = 10.0) -> str:
+                               min_confidence: float = 0.3, min_ball_size: float = 0.01) -> str:
         """
         Run ball extraction pipeline for original absolute coordinates
         
@@ -126,7 +126,7 @@ def main():
             classes=[0, 1, 2],
             iou_threshold=0.1,
             min_confidence=0.3,
-            min_ball_size=10.0
+            min_ball_size=0.01
         )
         
         print("\n🎉 Ball trajectory extraction pipeline complete!")

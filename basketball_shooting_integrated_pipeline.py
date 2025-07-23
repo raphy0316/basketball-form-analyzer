@@ -32,29 +32,42 @@ class BasketballShootingIntegratedPipeline:
         print("🏀 Basketball Shooting Integrated Pipeline Initialized")
         print("=" * 50)
 
-    def run_full_pipeline(self, video_path: str, overwrite_mode: bool = False) -> bool:
+    def prompt_extraction_mode(self) -> Optional[bool]:
+        """Choose whether to use existing extraction data or extract new data"""
+        print("\n⚙️ Extraction data mode selection")
+        print("-" * 30)
+        print("[1] Use existing extraction data (fast, for experiment repetition)")
+        print("[2] New extraction (model re-execution)")
+        print("[3] Cancel")
+        while True:
+            choice = input("\nSelection (1/2/3): ").strip()
+            if choice == "1":
+                return True  # Use existing data
+            elif choice == "2":
+                return False  # New extraction
+            elif choice == "3":
+                return None
+            else:
+                print("❌ Please enter a valid number (1, 2, 3)")
+
+    def run_full_pipeline(self, video_path: str, overwrite_mode: bool = False, use_existing_extraction: bool = True) -> bool:
         """
         Run the full pipeline: extraction → normalization → visualization
-        
         Args:
             video_path: Path to the video file
             overwrite_mode: Overwrite mode
-        
+            use_existing_extraction: Whether to use existing extraction data
         Returns:
             Success status
         """
         print(f"🎬 Starting Full Pipeline: {os.path.basename(video_path)}")
         print("=" * 50)
-        
         try:
-            # Set current video path for analyzer
             self.analyzer.current_video_path = video_path
-            
             # STEP 1: Extract original data
             print("\n🔍 STEP 1: Extract original data")
             print("-" * 30)
-            
-            if not self._extract_original_data(video_path, overwrite_mode):
+            if not self._extract_original_data(video_path, overwrite_mode, use_existing_extraction):
                 print("❌ Failed to extract original data")
                 return False
             
@@ -107,23 +120,26 @@ class BasketballShootingIntegratedPipeline:
             traceback.print_exc()  # Print full error stack trace
             return False
 
-    def _extract_original_data(self, video_path: str, overwrite_mode: bool = False) -> bool:
+    def _extract_original_data(self, video_path: str, overwrite_mode: bool = False, use_existing_extraction: bool = True) -> bool:
         """Extract original data with coordinate transformation (pose + ball)"""
         base_name = os.path.splitext(os.path.basename(video_path))[0]
         
-        # Check for existing original data files
         pose_original_file = os.path.join(self.extracted_data_dir, f"{base_name}_pose_original.json")
         ball_original_file = os.path.join(self.extracted_data_dir, f"{base_name}_ball_original.json")
         
-        if not overwrite_mode and (os.path.exists(pose_original_file) or os.path.exists(ball_original_file)):
-            print(f"⚠️ Existing original extraction data found:")
+        if use_existing_extraction and (os.path.exists(pose_original_file) or os.path.exists(ball_original_file)):
+            print(f"⚠️ Using existing extraction data:")
             if os.path.exists(pose_original_file):
                 print(f"  - Pose data: {os.path.basename(pose_original_file)}")
             if os.path.exists(ball_original_file):
                 print(f"  - Ball data: {os.path.basename(ball_original_file)}")
+            return True
+        
+        # If overwrite_mode is True, always extract new data
+        if not use_existing_extraction and not overwrite_mode and (os.path.exists(pose_original_file) or os.path.exists(ball_original_file)):
             choice = input("Overwrite and extract new data? (y/n): ").strip().lower()
             if choice != 'y':
-                print("Using existing original extraction data.")
+                print("Using existing data.")
                 return True
         
         try:
@@ -139,7 +155,7 @@ class BasketballShootingIntegratedPipeline:
             print("  - YOLO using 0~1 normalized coordinates")
             print("  - Aspect ratio correction applied to x-axis")
             ball_file = self.ball_pipeline.extract_ball_trajectory(
-                video_path, conf_threshold=0.15, min_confidence=0.3, min_ball_size=10.0
+                video_path, conf_threshold=0.15, min_confidence=0.3, min_ball_size=0.01
             )
             print(f"✅ Ball extraction completed: {os.path.basename(ball_file)}")
             
@@ -433,6 +449,12 @@ def main():
         print("❌ Overwrite mode selection canceled. Exiting.")
         return
     
+    # Get extraction mode
+    extraction_mode = pipeline.prompt_extraction_mode()
+    if extraction_mode is None:
+        print("❌ Extraction mode selection canceled. Exiting.")
+        return
+    
     # Process videos
     success_count = 0
     total_count = len(video_selections)
@@ -466,20 +488,20 @@ def main():
             
             for video in videos:
                 print(f"\n🎬 Processing: {os.path.basename(video)}")
-                if pipeline.run_full_pipeline(video, overwrite_mode):
+                if pipeline.run_full_pipeline(video, overwrite_mode, extraction_mode):
                     success_count += 1
                     print(f"✅ Successfully processed: {os.path.basename(video)}")
                 else:
                     print(f"❌ Failed to process: {os.path.basename(video)}")
         else:
             # Process single video
-            if pipeline.run_full_pipeline(selection, overwrite_mode):
+            if pipeline.run_full_pipeline(selection, overwrite_mode, extraction_mode):
                 success_count += 1
                 print(f"✅ Successfully processed: {os.path.basename(selection)}")
             else:
                 print(f"❌ Failed to process: {os.path.basename(selection)}")
-    
-    print(f"\n🎉 Batch processing completed!")
+        
+        print(f"\n🎉 Batch processing completed!")
     print(f"Successfully processed: {success_count}/{total_count} videos")
     
     if success_count < total_count:

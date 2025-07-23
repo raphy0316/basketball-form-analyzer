@@ -4,6 +4,7 @@ Basketball shooting motion analysis pipeline
 Integrate pose data and ball data to analyze shooting movements and visualize
 """
 
+from re import T
 import cv2
 import numpy as np
 import json
@@ -23,19 +24,13 @@ from phase_detection.hybrid_fps_phase_detector import HybridFPSPhaseDetector
 
 class BasketballShootingAnalyzer:
     def __init__(self):
-        """Initialize basketball shooting analyzer"""
-        self.references_dir = "data"
-        self.video_dir = os.path.join(self.references_dir, "video")
+        """Initialize the analyzer"""
+        self.video_dir = "data/video"
         self.standard_video_dir = os.path.join(self.video_dir, "Standard")
         self.edgecase_video_dir = os.path.join(self.video_dir, "EdgeCase")
-        self.extracted_data_dir = os.path.join(self.references_dir, "extracted_data")
-        self.results_dir = os.path.join(self.references_dir, "results")
-        self.visualized_video_dir = os.path.join(self.references_dir, "visualized_video")
-        
-        # Create directories
-        for dir_path in [self.video_dir, self.standard_video_dir, self.edgecase_video_dir, 
-                        self.extracted_data_dir, self.results_dir, self.visualized_video_dir]:
-            os.makedirs(dir_path, exist_ok=True)
+        self.extracted_data_dir = "data/extracted_data"
+        self.results_dir = "data/results"
+        self.visualized_video_dir = "data/visualized_video"
         
         # Data storage
         self.pose_data = []
@@ -43,18 +38,21 @@ class BasketballShootingAnalyzer:
         self.rim_data = []
         self.normalized_data = []
         self.phases = []
-        self.phase_statistics = {}
-        self.selected_video = None
-        self.available_videos = []
+        self.video_fps = 30.0
         
-        # Initialize phase detectors
+        # Detectors
         self.ball_detector = BallBasedPhaseDetector()
         self.torso_detector = TorsoBasedPhaseDetector()
-        self.resolution_detector = ResolutionBasedPhaseDetector()
         self.hybrid_fps_detector = HybridFPSPhaseDetector()
-        
-        # Default to ball-based detector
+        self.resolution_detector = ResolutionBasedPhaseDetector()
         self.current_detector = self.ball_detector
+        
+        # Hand selection settings
+        self.hand_selection_threshold = 0.3  # More relaxed threshold for hand selection (vs 0.2 for phase detection)
+        self.hand_selection_min_frames = 10   # Minimum frames to consider a hand as "stable"
+        self.hand_selection_stability_bonus = 20  # Bonus points for stable detection
+        self.selected_hand = None  # "left" or "right"
+        self.selected_hand_confidence = 0.0   # Confidence score for selected hand
 
     def list_available_videos(self) -> List[str]:
         """Return a list of available video files from Standard, EdgeCase, Bakke, and test folders"""
@@ -587,6 +585,9 @@ class BasketballShootingAnalyzer:
             print("❌ Original pose or ball data not found.")
             return
         
+        # Select primary hand before phase detection
+        self.selected_hand, self.selected_hand_confidence = self.select_primary_hand(self.normalized_data)
+        
         # Set detector based on type
         if detector_type == "ball":
             self.current_detector = self.ball_detector
@@ -615,125 +616,74 @@ class BasketballShootingAnalyzer:
         for i, frame_data in enumerate(self.normalized_data):
             pose = frame_data.get('normalized_pose', {})
             
-            # Extract necessary keypoints from normalized data
-            left_knee = pose.get('left_knee', {'y': 0})
-            right_knee = pose.get('right_knee', {'y': 0})
-            left_wrist = pose.get('left_wrist', {'y': 0})
-            right_wrist = pose.get('right_wrist', {'y': 0})
+            # Get selected hand keypoints
+            selected_shoulder, selected_elbow, selected_wrist = self.get_selected_hand_keypoints(pose)
+            
+            # Extract necessary keypoints from normalized data (using selected hand)
+            wrist_x = selected_wrist.get('x', 0)
+            wrist_y = selected_wrist.get('y', 0)
+            elbow_x = selected_elbow.get('x', 0)
+            elbow_y = selected_elbow.get('y', 0)
+            shoulder_x = selected_shoulder.get('x', 0)
+            shoulder_y = selected_shoulder.get('y', 0)
+            
+            # Get hip data (still need both for torso calculations)
             left_hip = pose.get('left_hip', {'y': 0})
             right_hip = pose.get('right_hip', {'y': 0})
-            left_ankle = pose.get('left_ankle', {'y': 0})
-            right_ankle = pose.get('right_ankle', {'y': 0})
-            
-            # Calculate average values using normalized coordinates
-            knee_y = (left_knee.get('y', 0) + right_knee.get('y', 0)) / 2
-            ankle_y = (left_ankle.get('y', 0) + right_ankle.get('y', 0)) / 2
-            
-            # Use the lower hip (higher y value = lower position)
             left_hip_y = left_hip.get('y', None)
             right_hip_y = right_hip.get('y', None)
             
             if left_hip_y is not None and right_hip_y is not None:
-                # Both found, use the lower one
                 hip_y = max(left_hip_y, right_hip_y)
             elif left_hip_y is not None:
-                # Only left hip found
                 hip_y = left_hip_y
             elif right_hip_y is not None:
-                # Only right hip found
                 hip_y = right_hip_y
             else:
-                # No hip found, use default value
                 hip_y = 0
             
-            # Get ball position for wrist selection from normalized data
+            # Get ball position for calculations
             ball_info = None
             if i < len(self.normalized_data):
                 normalized_frame = self.normalized_data[i]
                 if normalized_frame.get('ball_detected', False):
                     ball_info = normalized_frame.get('normalized_ball', {})
             
+            ball_x = ball_info.get('center_x', 0) if ball_info else 0
             ball_y = ball_info.get('center_y', 0) if ball_info else 0
             
-            # Select the closest wrist to the ball
-            left_wrist_x = left_wrist.get('x', 0)
-            left_wrist_y = left_wrist['y']
-            right_wrist_x = right_wrist.get('x', 0)
-            right_wrist_y = right_wrist['y']
-            
-            # Calculate Euclidean distances to ball
-            ball_x = ball_info.get('center_x', 0) if ball_info else 0
-            left_distance = ((ball_x - left_wrist_x)**2 + (ball_y - left_wrist_y)**2)**0.5 if ball_info else float('inf')
-            right_distance = ((ball_x - right_wrist_x)**2 + (ball_y - right_wrist_y)**2)**0.5 if ball_info else float('inf')
-            
-            # Use the wrist closer to the ball
-            if left_distance <= right_distance:
-                wrist_x = left_wrist_x
-                wrist_y = left_wrist_y
-                selected_wrist = "left"
-            else:
-                wrist_x = right_wrist_x
-                wrist_y = right_wrist_y
-                selected_wrist = "right"
-            
-            # Calculate change amounts compared to previous frames
-            if i > 0:
-                prev_frame = self.normalized_data[i-1]
-                prev_pose = prev_frame.get('normalized_pose', {})
+            # Calculate movement deltas using selected hand
+            if i > 0 and i-1 < len(self.normalized_data):
+                prev_frame_data = self.normalized_data[i-1]
+                prev_pose = prev_frame_data.get('normalized_pose', {})
                 
-                prev_knee_y = (prev_pose.get('left_knee', {'y': 0}).get('y', 0) + 
-                              prev_pose.get('right_knee', {'y': 0}).get('y', 0)) / 2
+                # Get previous selected hand position
+                prev_selected_shoulder, prev_selected_elbow, prev_selected_wrist = self.get_selected_hand_keypoints(prev_pose)
+                prev_wrist_x = prev_selected_wrist.get('x', 0)
+                prev_wrist_y = prev_selected_wrist.get('y', 0)
+                prev_elbow_x = prev_selected_elbow.get('x', 0)
+                prev_elbow_y = prev_selected_elbow.get('y', 0)
                 
-                # Use the lower hip for previous frame
-                prev_left_hip_y = prev_pose.get('left_hip', {}).get('y', None)
-                prev_right_hip_y = prev_pose.get('right_hip', {}).get('y', None)
+                # Get previous hip position
+                prev_left_hip = prev_pose.get('left_hip', {'y': None})
+                prev_right_hip = prev_pose.get('right_hip', {'y': None})
+                prev_left_hip_y = prev_left_hip.get('y', None)
+                prev_right_hip_y = prev_right_hip.get('y', None)
                 
                 if prev_left_hip_y is not None and prev_right_hip_y is not None:
-                    # Both found, use the lower one
                     prev_hip_y = max(prev_left_hip_y, prev_right_hip_y)
                 elif prev_left_hip_y is not None:
-                    # Only left hip found
                     prev_hip_y = prev_left_hip_y
                 elif prev_right_hip_y is not None:
-                    # Only right hip found
                     prev_hip_y = prev_right_hip_y
                 else:
-                    # No hip found in previous frame, use current hip_y
                     prev_hip_y = hip_y
                 
-                # Get previous ball position for wrist selection
-                prev_ball_info = None
-                if i-1 < len(self.normalized_data):
-                    prev_normalized_frame = self.normalized_data[i-1]
-                    if prev_normalized_frame.get('ball_detected', False):
-                        prev_ball_info = prev_normalized_frame.get('normalized_ball', {})
-                
-                prev_ball_y = prev_ball_info.get('center_y', 0) if prev_ball_info else 0
-                
-                # Select the closest wrist to the ball in previous frame
-                prev_left_wrist_x = prev_pose.get('left_wrist', {'x': 0, 'y': 0})['x']
-                prev_left_wrist_y = prev_pose.get('left_wrist', {'x': 0, 'y': 0})['y']
-                prev_right_wrist_x = prev_pose.get('right_wrist', {'x': 0, 'y': 0})['x']
-                prev_right_wrist_y = prev_pose.get('right_wrist', {'x': 0, 'y': 0})['y']
-                
-                # Calculate Euclidean distances to ball in previous frame
-                prev_ball_x = prev_ball_info.get('center_x', 0) if prev_ball_info else 0
-                prev_left_distance = ((prev_ball_x - prev_left_wrist_x)**2 + (prev_ball_y - prev_left_wrist_y)**2)**0.5 if prev_ball_info else float('inf')
-                prev_right_distance = ((prev_ball_x - prev_right_wrist_x)**2 + (prev_ball_y - prev_right_wrist_y)**2)**0.5 if prev_ball_info else float('inf')
-                
-                # Use the wrist closer to the ball in previous frame
-                if prev_left_distance <= prev_right_distance:
-                    prev_wrist_x = prev_left_wrist_x
-                    prev_wrist_y = prev_left_wrist_y
-                else:
-                    prev_wrist_x = prev_right_wrist_x
-                    prev_wrist_y = prev_right_wrist_y
-                
-                d_knee_y = knee_y - prev_knee_y
                 d_wrist_y = wrist_y - prev_wrist_y
+                d_elbow_y = elbow_y - prev_elbow_y
                 d_hip_y = hip_y - prev_hip_y
             else:
-                d_knee_y = d_wrist_y = d_hip_y = 0
+                d_wrist_y = d_elbow_y = d_hip_y = 0
             
             # Check if current phase transitions to next phase using current detector
             # Get FPS from video if available
@@ -742,16 +692,12 @@ class BasketballShootingAnalyzer:
                 fps = self.video_fps
                 
             next_phase = self.current_detector.check_phase_transition(
-                current_phase, i, self.pose_data, self.ball_data, fps=fps
+                current_phase, i, self.pose_data, self.ball_data, 
+                fps=fps, selected_hand=self.selected_hand
             )
             
-            # Check minimum phase duration (except for Release and later phases)
+            # Minimum phase duration disabled - transition immediately when conditions are met
             if next_phase != current_phase:
-                # Apply minimum duration only for phases before Rising
-                if current_phase in ["General", "Set-up", "Loading"]:
-                    # Need minimum duration for early phases
-                    if (i - phase_start_frame) >= min_phase_duration:
-                        if self._is_trend_based_transition(i, current_phase, next_phase, noise_threshold):
                             # Record current phase in history before changing
                             if current_phase != "General":
                                 phase_history.append((current_phase, current_phase_start, i))
@@ -760,31 +706,8 @@ class BasketballShootingAnalyzer:
                             phase_start_frame = i
                             current_phase_start = i
                             print(f"Frame {i}: {current_phase} phase started")
-                        else:
-                            if i % 10 == 0:
-                                print(f"Frame {i}: Noise detected, {current_phase} maintained")
-                else:
-                    # No minimum duration for Release and later phases
-                    if self._is_trend_based_transition(i, current_phase, next_phase, noise_threshold):
-                        # Record current phase in history before changing
-                        if current_phase != "General":
-                            phase_history.append((current_phase, current_phase_start, i))
-                        
-                        current_phase = next_phase
-                        phase_start_frame = i
-                        current_phase_start = i
-                        print(f"Frame {i}: {current_phase} phase started")
-                    else:
-                        if i % 10 == 0:
-                            print(f"Frame {i}: Noise detected, {current_phase} maintained")
             
             self.phases.append(current_phase)
-        
-        # Final trend-based organization
-        self._finalize_phases_by_trend(noise_threshold)
-        
-        # Process cancellations: Replace cancelled phases with Set-up
-        self._process_cancellations()
         
         # Print phase-by-frame statistics
         phase_counts = {}
@@ -794,6 +717,9 @@ class BasketballShootingAnalyzer:
         print("\nPhase-by-frame count:")
         for phase, count in phase_counts.items():
             print(f"  {phase}: {count} frames")
+        
+        # Process cancellations (Phase Filling enabled)
+        self._process_cancellations()
     
     def _is_trend_based_transition(self, frame_idx: int, current_phase: str, next_phase: str, noise_threshold: int) -> bool:
         """Trend-based transition determination (always returns True)"""
@@ -806,27 +732,8 @@ class BasketballShootingAnalyzer:
         
         print("\n🔄 Finalizing phases by trend...")
         
-        # Apply minimum frame duration for early phases
-        min_phase_duration = 3
-        
-        # Find phases that are too short and extend them
-        for i in range(1, len(self.phases)):
-            if self.phases[i] in ["General", "Set-up", "Loading"]:
-                # Count consecutive frames of the same phase
-                phase_start = i
-                while phase_start > 0 and self.phases[phase_start - 1] == self.phases[i]:
-                    phase_start -= 1
-                
-                phase_duration = i - phase_start + 1
-                
-                # If phase is too short, extend it
-                if phase_duration < min_phase_duration:
-                    # Extend the phase by keeping the previous phase longer
-                    for j in range(phase_start, min(phase_start + min_phase_duration, len(self.phases))):
-                        if j < len(self.phases):
-                            self.phases[j] = self.phases[phase_start - 1] if phase_start > 0 else "General"
-        
-        print("  Phase duration enforcement completed.")
+        # Minimum frame duration disabled - no phase post-processing
+        print("  Phase duration enforcement disabled.")
     
     def _is_cancellation_condition(self, current_phase: str, frame_idx: int, knee_y: float, 
                                wrist_y: float, hip_y: float, ankle_y: float,
@@ -898,6 +805,24 @@ class BasketballShootingAnalyzer:
                     return True
         
         elif current_phase == "Rising":
+            # Apply minimum frame when ball drops from hand in Rising phase
+            if ball_detected:
+                ball_width = ball_info.get('width', 0)
+                ball_height = ball_info.get('height', 0)
+                ball_radius = (ball_width + ball_height) / 4
+                close_threshold = ball_radius * 1.3
+                if not hasattr(self, 'rising_ball_drop_frames'):
+                    self.rising_ball_drop_frames = 0
+                if ball_wrist_distance > close_threshold:
+                    self.rising_ball_drop_frames += 1
+                else:
+                    self.rising_ball_drop_frames = 0
+                if self.rising_ball_drop_frames >= 3:
+                    self.rising_ball_drop_frames = 0
+                    if frame_idx % 10 == 0:
+                        print(f"Frame {frame_idx}: Rising→General: Ball missed for minimum frames (cancellation)")
+                    return "General"
+
             # Rising cancellation: Hand moving down relative to hip
             if frame_idx > 0:
                 prev_pose = self.pose_data[frame_idx-1].get('pose', {})
@@ -908,7 +833,6 @@ class BasketballShootingAnalyzer:
                 # Use the lower hip for previous frame
                 prev_left_hip_y = prev_left_hip.get('y', None)
                 prev_right_hip_y = prev_right_hip.get('y', None)
-                
                 if prev_left_hip_y is not None and prev_right_hip_y is not None:
                     prev_hip_y = max(prev_left_hip_y, prev_right_hip_y)
                 elif prev_left_hip_y is not None:
@@ -918,10 +842,8 @@ class BasketballShootingAnalyzer:
                 else:
                     prev_hip_y = 0  # Default value if no hip found
                 prev_elbow_y = (prev_left_elbow['y'] + prev_right_elbow['y']) / 2
-                
                 # Calculate elbow position for current frame
                 elbow_y = (left_elbow['y'] + right_elbow['y']) / 2
-                
                 # Calculate relative movement (compared to hip)
                 d_wrist_relative = d_wrist_y - (hip_y - prev_hip_y)
                 d_elbow_relative = (elbow_y - prev_elbow_y) - (hip_y - prev_hip_y)
@@ -937,15 +859,12 @@ class BasketballShootingAnalyzer:
                     if prev_ball_info:
                         prev_ball_y = prev_ball_info.get('center_y', 0)
                         d_ball_relative = ball_y - prev_ball_y - (hip_y - prev_hip_y)
-                
                 wrist_moving_down_relative = d_wrist_relative > 2.0  # Wrist moving down relative to hip
                 elbow_moving_down_relative = d_elbow_relative > 2.0  # Elbow moving down relative to hip
-                
                 # Rising cancellation: Hand moving down relative to hip
                 if ball_detected:
                     # When ball is detected: if ball, wrist, and elbow are all moving down relative to hip, return to Set-up
                     ball_moving_down_relative = d_ball_relative > 2.0  # Ball moving down relative to hip
-                    
                     if wrist_moving_down_relative and elbow_moving_down_relative and ball_moving_down_relative:
                         if frame_idx % 10 == 0:
                             print(f"Frame {frame_idx}: Rising→Set-up: All moving down relative to hip (cancellation)")
@@ -993,50 +912,53 @@ class BasketballShootingAnalyzer:
         return False
     
     def _process_cancellations(self):
-        """Process cancellations by replacing cancelled phases with Set-up"""
+        """Process cancellations by replacing abnormal transitions with Set-up"""
         if not self.phases:
             return
         
         print("\n🔄 Processing cancellations...")
         
-        # Find cancellation points (transitions to Set-up from other phases)
-        cancellation_points = []
-        for i in range(1, len(self.phases)):
-            if self.phases[i] == "Set-up" and self.phases[i-1] in ["Loading", "Rising", "Release"]:
-                cancellation_points.append(i)
+        # Define normal phase transitions (same phase transitions are also normal)
+        cancel_transitions = {
+            "Loading": ["Set-up", "General"],
+            "Rising": ["Set-up", "General"],
+        }
         
-        if not cancellation_points:
-            print("  No cancellations found.")
+        # Find abnormal transitions
+        abnormal_points = []
+        for i in range(1, len(self.phases)):
+            current_phase = self.phases[i-1]
+            next_phase = self.phases[i]
+            
+            # Check if this transition is normal
+            is_normal = True
+            if current_phase in cancel_transitions:
+                if next_phase in cancel_transitions[current_phase]:
+                    is_normal = False
+            
+            # If transition is abnormal, mark it
+            if not is_normal:
+                abnormal_points.append(i)
+                print(f"    Abnormal transition at frame {i}: {current_phase} → {next_phase}")
+        
+        if not abnormal_points:
+            print("  No abnormal transitions found.")
             return
         
-        print(f"  Found {len(cancellation_points)} cancellation points.")
+        print(f"  Found {len(abnormal_points)} abnormal transition points.")
         
-        # Process each cancellation point
-        for cancel_point in cancellation_points:
-            # Find the start of the cancelled sequence (look backwards for consecutive cancelled phases)
-            start_point = cancel_point - 1
-            while start_point >= 0 and self.phases[start_point] in ["Loading", "Rising", "Release"]:
+        # Process each abnormal transition point
+        for abnormal_point in abnormal_points:
+            # Find the start of the sequence to replace (look backwards for consecutive phases)
+            start_point = abnormal_point - 1
+            while start_point >= 0 and self.phases[start_point] not in ["General", "Set-up"]:
                 start_point -= 1
             
-            # Replace the entire cancelled sequence with Set-up
-            for i in range(start_point + 1, cancel_point):
-                if self.phases[i] in ["Loading", "Rising", "Release"]:
+            # Replace the entire sequence with Set-up
+            for i in range(start_point + 1, abnormal_point):
+                if self.phases[i] in ["Loading", "Rising", "Release", "Follow-through"]:
                     self.phases[i] = "Set-up"
-                    print(f"    Frame {i}: {self.phases[i]} → Set-up (cancelled)")
-        
-        # Additional processing: Handle multiple consecutive cancellations
-        # If there are multiple cancellation points close to each other, fill gaps with Set-up
-        if len(cancellation_points) > 1:
-            for i in range(len(cancellation_points) - 1):
-                current_cancel = cancellation_points[i]
-                next_cancel = cancellation_points[i + 1]
-                
-                # If there's a gap between cancellation points, fill with Set-up
-                if next_cancel - current_cancel > 1:
-                    for j in range(current_cancel + 1, next_cancel):
-                        if self.phases[j] not in ["Set-up", "General"]:
-                            self.phases[j] = "Set-up"
-                            print(f"    Frame {j}: {self.phases[j]} → Set-up (gap fill)")
+                    print(f"    Frame {i}: {self.phases[i]} → Set-up (abnormal transition)")
         
         print("  Cancellation processing completed.")
     
@@ -1387,11 +1309,8 @@ class BasketballShootingAnalyzer:
                 
                 if distance > close_threshold:
                     print(f"Frame {frame_idx}: Missed Ball: Close contact (distance={distance:.1f}, threshold={close_threshold:.1f})")
-                    # Check minimum frame duration for General transition
-                    if frame_idx >= min_phase_duration:
-                        return "General"
-                    else:
-                        return current_phase
+                    # Minimum frame duration disabled - transition immediately when conditions are met
+                    return "General"
 
 
         # 4. Rising → Release: Ball is released with proper form
@@ -1578,10 +1497,8 @@ class BasketballShootingAnalyzer:
                     if frame_idx % 10 == 0:
                         print(f"Frame {frame_idx}: Follow-through→General: Wrist below eyes relative to hip (wrist_rel={wrist_relative_to_hip:.1f}, eye_rel={eye_relative_to_hip:.1f})")
                     # Check minimum frame duration for General transition
-                    if frame_idx >= min_phase_duration:
+                    # Minimum frame duration disabled - transition immediately when conditions are met
                         return "General"
-                    else:
-                        return current_phase
         
         # If no conditions are met, keep current phase
         return current_phase
@@ -1729,6 +1646,9 @@ class BasketballShootingAnalyzer:
                 if shooting_phases and frame_count < len(shooting_phases):
                     original_frame = self._draw_phase_label(original_frame, frame_count, "Original", shooting_phases)
                 
+                # Add selected hand label to original frame
+                original_frame = self._draw_selected_hand_label(original_frame, self.selected_hand, self.selected_hand_confidence)
+                
                 # Right: Normalized data
                 if frame_count < len(normalized_pose_data):
                     normalized_frame = self._draw_pose_skeleton_normalized(normalized_frame, frame_count, normalized_pose_data)
@@ -1736,6 +1656,9 @@ class BasketballShootingAnalyzer:
                 
                 if shooting_phases and frame_count < len(shooting_phases):
                     normalized_frame = self._draw_phase_label(normalized_frame, frame_count, "Normalized", shooting_phases)
+                
+                # Add selected hand label to normalized frame
+                normalized_frame = self._draw_selected_hand_label(normalized_frame, self.selected_hand, self.selected_hand_confidence)
                 
                 # Stack two frames side by side
                 combined_frame = np.hstack([original_frame, normalized_frame])
@@ -1806,6 +1729,9 @@ class BasketballShootingAnalyzer:
                 if shooting_phases and frame_count < len(shooting_phases):
                     frame = self._draw_phase_label(frame, frame_count, "Original", shooting_phases)
                 
+                # Add selected hand label
+                frame = self._draw_selected_hand_label(frame, self.selected_hand, self.selected_hand_confidence)
+                
                 out.write(frame)
                 frame_count += 1
                 
@@ -1859,24 +1785,18 @@ class BasketballShootingAnalyzer:
         # Draw keypoints (convert aspect ratio corrected relative coordinates to pixel coordinates)
         for key, kp in pose.items():
             if isinstance(kp, dict) and 'x' in kp and 'y' in kp:
-                # Convert aspect ratio corrected relative coordinates to pixel coordinates
-                # For pose: x was divided by aspect_ratio during storage, so multiply by aspect_ratio to restore
-                # But since we want to show the original aspect ratio, we need to multiply by aspect_ratio again
-                x = int(kp['x'] * aspect_ratio * w)
+                # x: (rel_x / aspect_ratio) * w
+                x = int(kp['x'] / aspect_ratio * w)
                 y = int(kp['y'] * h)
-                
-                # Coordinate range restriction
                 x = max(0, min(w-1, x))
                 y = max(0, min(h-1, y))
-                
-                # Change color based on confidence
                 confidence = kp.get('confidence', 0)
                 if confidence > 0.7:
-                    color = (0, 255, 0)  # Green (high confidence)
+                    color = (0, 255, 0)
                 elif confidence > 0.4:
-                    color = (0, 255, 255)  # Yellow (medium confidence)
+                    color = (0, 255, 255)
                 else:
-                    color = (0, 0, 255)  # Red (low confidence)
+                    color = (0, 0, 255)
                 cv2.circle(frame, (x, y), 4, color, -1)
         
         # Draw connections (convert aspect ratio corrected relative coordinates to pixel coordinates)
@@ -1884,22 +1804,15 @@ class BasketballShootingAnalyzer:
             if start_key in pose and end_key in pose:
                 start_kp = pose[start_key]
                 end_kp = pose[end_key]
-                
-                # Convert aspect ratio corrected relative coordinates to pixel coordinates
-                start_x = int(start_kp['x'] * aspect_ratio * w)
+                start_x = int(start_kp['x'] / aspect_ratio * w)
                 start_y = int(start_kp['y'] * h)
-                end_x = int(end_kp['x'] * aspect_ratio * w)
+                end_x = int(end_kp['x'] / aspect_ratio * w)
                 end_y = int(end_kp['y'] * h)
-                
-                # Coordinate range restriction
                 start_x = max(0, min(w-1, start_x))
                 start_y = max(0, min(h-1, start_y))
                 end_x = max(0, min(w-1, end_x))
                 end_y = max(0, min(h-1, end_y))
-                
-                # Draw only high-confidence connections
-                if (start_kp.get('confidence', 0) > 0.3 and 
-                    end_kp.get('confidence', 0) > 0.3):
+                if (start_kp.get('confidence', 0) > 0.3 and end_kp.get('confidence', 0) > 0.3):
                     cv2.line(frame, (start_x, start_y), (end_x, end_y), (255, 0, 0), 2)
         
         # Draw arm angles
@@ -1908,27 +1821,22 @@ class BasketballShootingAnalyzer:
         return frame
 
     def _draw_arm_angles_original(self, frame: np.ndarray, pose: Dict, w: int, h: int):
-        font_scale = 1.0  # Adjust font size
-        thickness = 2      # Reduce thickness
+        font_scale = 1.0
+        thickness = 2
         aspect_ratio = w / h
-        
-        # Calculate left arm angle
         if all(key in pose for key in ['left_shoulder', 'left_elbow', 'left_wrist']):
             left_shoulder = pose['left_shoulder']
             left_elbow = pose['left_elbow']
             left_wrist = pose['left_wrist']
-            if (left_shoulder.get('confidence', 0) > 0.3 and 
-                left_elbow.get('confidence', 0) > 0.3 and 
-                left_wrist.get('confidence', 0) > 0.3):
+            if (left_shoulder.get('confidence', 0) > 0.3 and left_elbow.get('confidence', 0) > 0.3 and left_wrist.get('confidence', 0) > 0.3):
                 left_angle = self._calculate_angle(
                     left_shoulder['x'], left_shoulder['y'],
                     left_elbow['x'], left_elbow['y'],
                     left_wrist['x'], left_wrist['y']
                 )
-                # Convert aspect ratio corrected relative coordinates to pixel coordinates
-                elbow_x = int(left_elbow['x'] * aspect_ratio * w)
+                elbow_x = int(left_elbow['x'] / aspect_ratio * w)
                 elbow_y = int(left_elbow['y'] * h)
-                wrist_x = int(left_wrist['x'] * aspect_ratio * w)
+                wrist_x = int(left_wrist['x'] / aspect_ratio * w)
                 wrist_y = int(left_wrist['y'] * h)
                 elbow_x = max(0, min(w-1, elbow_x))
                 elbow_y = max(0, min(h-1, elbow_y))
@@ -1941,7 +1849,6 @@ class BasketballShootingAnalyzer:
                 else:
                     color = (0, 0, 255)
                 text = f"L:{left_angle:.0f}"
-                # 팔꿈치→손목 벡터 방향으로 40픽셀 이동 (거리 줄임)
                 vec_x = wrist_x - elbow_x
                 vec_y = wrist_y - elbow_y
                 norm = (vec_x**2 + vec_y**2)**0.5
@@ -1949,27 +1856,23 @@ class BasketballShootingAnalyzer:
                     offset_x = int(vec_x / norm * 40)
                     offset_y = int(vec_y / norm * 40)
                 else:
-                    offset_x = 30
-                    offset_y = 30
+                    offset_x = -40
+                    offset_y = 20
                 text_pos = (elbow_x + offset_x, elbow_y + offset_y)
                 cv2.putText(frame, text, text_pos, cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
-        # Calculate right arm angle
         if all(key in pose for key in ['right_shoulder', 'right_elbow', 'right_wrist']):
             right_shoulder = pose['right_shoulder']
             right_elbow = pose['right_elbow']
             right_wrist = pose['right_wrist']
-            if (right_shoulder.get('confidence', 0) > 0.3 and 
-                right_elbow.get('confidence', 0) > 0.3 and 
-                right_wrist.get('confidence', 0) > 0.3):
+            if (right_shoulder.get('confidence', 0) > 0.3 and right_elbow.get('confidence', 0) > 0.3 and right_wrist.get('confidence', 0) > 0.3):
                 right_angle = self._calculate_angle(
                     right_shoulder['x'], right_shoulder['y'],
                     right_elbow['x'], right_elbow['y'],
                     right_wrist['x'], right_wrist['y']
                 )
-                # Convert aspect ratio corrected relative coordinates to pixel coordinates
-                elbow_x = int(right_elbow['x'] * aspect_ratio * w)
+                elbow_x = int(right_elbow['x'] / aspect_ratio * w)
                 elbow_y = int(right_elbow['y'] * h)
-                wrist_x = int(right_wrist['x'] * aspect_ratio * w)
+                wrist_x = int(right_wrist['x'] / aspect_ratio * w)
                 wrist_y = int(right_wrist['y'] * h)
                 elbow_x = max(0, min(w-1, elbow_x))
                 elbow_y = max(0, min(h-1, elbow_y))
@@ -1982,7 +1885,6 @@ class BasketballShootingAnalyzer:
                 else:
                     color = (0, 0, 255)
                 text = f"R:{right_angle:.0f}"
-                # 팔꿈치→손목 벡터 방향으로 60픽셀 이동 (오른쪽은 더 멀리)
                 vec_x = wrist_x - elbow_x
                 vec_y = wrist_y - elbow_y
                 norm = (vec_x**2 + vec_y**2)**0.5
@@ -1996,92 +1898,58 @@ class BasketballShootingAnalyzer:
                 cv2.putText(frame, text, text_pos, cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
 
     def _draw_ball_original(self, frame: np.ndarray, frame_idx: int, ball_data: List[Dict]) -> np.ndarray:
-        """Draw original absolute coordinates ball"""
         if frame_idx >= len(ball_data):
             return frame
-        
-        # Check data structure and extract ball data
         frame_data = ball_data[frame_idx]
         if isinstance(frame_data, dict):
             ball_detections = frame_data.get('ball_detections', [])
         else:
             ball_detections = []
-        
         h, w = frame.shape[:2]
         aspect_ratio = w / h
-        
         for ball in ball_detections:
             if isinstance(ball, dict):
-                # Convert aspect ratio corrected relative coordinates to pixel coordinates
-                # Ball coordinates are already 0~1 normalized with aspect ratio correction applied
-                # Need to reverse the aspect ratio correction for pixel coordinates
-                aspect_ratio = w / h
-                center_x = int(ball.get('center_x', 0) * aspect_ratio * w)  # Reverse aspect ratio correction
-                center_y = int(ball.get('center_y', 0) * h)  # Convert 0~1 to pixel coordinates
-                width = int(ball.get('width', 0.01))  # Already in pixel units
-                height = int(ball.get('height', 0.01))  # Already in pixel units
+                center_x = int(ball.get('center_x', 0) / aspect_ratio * w)
+                center_y = int(ball.get('center_y', 0) * h)
+                width = int(ball.get('width', 0.01))
+                height = int(ball.get('height', 0.01))
                 confidence = ball.get('confidence', 0)
-                
-                # Change color based on confidence
                 if confidence > 0.7:
-                    color = (0, 255, 0)  # Green
+                    color = (0, 255, 0)
                 elif confidence > 0.4:
-                    color = (0, 255, 255)  # Yellow
+                    color = (0, 255, 255)
                 else:
-                    color = (0, 0, 255)  # Red
-                
-                # Draw ball
+                    color = (0, 0, 255)
                 cv2.circle(frame, (center_x, center_y), 8, color, -1)
                 cv2.circle(frame, (center_x, center_y), 10, (255, 255, 255), 2)
-                
-                # Confidence text
-                cv2.putText(frame, f"{confidence:.2f}", 
-                           (center_x + 15, center_y), cv2.FONT_HERSHEY_SIMPLEX, 
-                           0.5, color, 1)
-        
+                cv2.putText(frame, f"{confidence:.2f}", (center_x + 15, center_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
         return frame
     
     def _draw_rim_original(self, frame: np.ndarray, frame_idx: int, rim_data: List[Dict]) -> np.ndarray:
-        """Draw original absolute coordinates rim"""
         if(frame_idx >= len(rim_data)):
             return frame
-        # Check data structure and extract rim data
         frame_data = rim_data[frame_idx]
         if isinstance(frame_data, dict):
             rim_detections = frame_data.get('rim_detections', [])
         else:
             rim_detections = []
-        
         h, w = frame.shape[:2]
         aspect_ratio = w / h
-        
         for rim in rim_detections:
             if isinstance(rim, dict):
-                # Convert aspect ratio corrected relative coordinates to pixel coordinates
-                # Rim coordinates are already 0~1 normalized with aspect ratio correction applied
-                # Need to reverse the aspect ratio correction for pixel coordinates
-                aspect_ratio = w / h
-                center_x = int(rim.get('center_x', 0) * aspect_ratio * w)  # Reverse aspect ratio correction
-                center_y = int(rim.get('center_y', 0) * h)  # Convert 0~1 to pixel coordinates
-                width = int(rim.get('width', 0.01))  # Already in pixel units
-                height = int(rim.get('height', 0.01))  # Already in pixel units
+                center_x = int(rim.get('center_x', 0) / aspect_ratio * w)
+                center_y = int(rim.get('center_y', 0) * h)
+                width = int(rim.get('width', 0.01))
+                height = int(rim.get('height', 0.01))
                 confidence = rim.get('confidence', 0)
-                
-                # Change color based on confidence
                 if confidence > 0.7:
-                    color = (0, 255, 0)  # Green
+                    color = (0, 255, 0)
                 elif confidence > 0.4:
-                    color = (0, 255, 255)  # Yellow
+                    color = (0, 255, 255)
                 else:
-                    color = (0, 0, 255)  # Red
-                # Draw rim
-                cv2.rectangle(frame, 
-                              (center_x - width // 2, center_y - height // 2), 
-                              (center_x + width // 2, center_y + height // 2), 
-                              color, 2)
-                cv2.putText(frame, f"{confidence:.2f}", 
-                            (center_x + 15, center_y), cv2.FONT_HERSHEY_SIMPLEX, 
-                            0.5, color, 1)
+                    color = (0, 0, 255)
+                cv2.rectangle(frame, (center_x - width // 2, center_y - height // 2), (center_x + width // 2, center_y + height // 2), color, 2)
+                cv2.putText(frame, f"{confidence:.2f}", (center_x + 15, center_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
         return frame
 
     def _draw_pose_skeleton_normalized(self, frame: np.ndarray, frame_idx: int, pose_data: List[Dict]) -> np.ndarray:
@@ -2197,7 +2065,7 @@ class BasketballShootingAnalyzer:
                 else:
                     color = (0, 0, 255)
                 text = f"L:{left_angle:.0f}"
-                # 팔꿈치→손목 벡터 방향으로 40픽셀 이동 (거리 줄임)
+                # Move 40 pixels in elbow→wrist vector direction (reduced distance)
                 vec_x = wrist_x - elbow_x
                 vec_y = wrist_y - elbow_y
                 norm = (vec_x**2 + vec_y**2)**0.5
@@ -2237,7 +2105,7 @@ class BasketballShootingAnalyzer:
                 else:
                     color = (0, 0, 255)
                 text = f"R:{right_angle:.0f}"
-                # 팔꿈치→손목 벡터 방향으로 60픽셀 이동 (오른쪽은 더 멀리)
+                # Move 60 pixels in elbow→wrist vector direction (right side further)
                 vec_x = wrist_x - elbow_x
                 vec_y = wrist_y - elbow_y
                 norm = (vec_x**2 + vec_y**2)**0.5
@@ -2326,6 +2194,43 @@ class BasketballShootingAnalyzer:
         
         return frame
     
+    def _draw_selected_hand_label(self, frame: np.ndarray, selected_hand: str = None, confidence: float = 0.0) -> np.ndarray:
+        """Draw selected hand label in top-right corner"""
+        if selected_hand is None:
+            return frame
+        
+        # Get frame dimensions
+        h, w = frame.shape[:2]
+        
+        # Create label text
+        hand_text = f"Hand: {selected_hand.upper()}"
+        confidence_text = f"Conf: {confidence:.1f}%"
+        
+        # Calculate text sizes
+        (hand_width, hand_height), _ = cv2.getTextSize(hand_text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
+        (conf_width, conf_height), _ = cv2.getTextSize(confidence_text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+        
+        # Calculate background rectangle size
+        bg_width = max(hand_width, conf_width) + 20
+        bg_height = hand_height + conf_height + 20
+        
+        # Position in top-right corner
+        bg_x = w - bg_width - 10
+        bg_y = 10
+        
+        # Draw background rectangle
+        cv2.rectangle(frame, (bg_x, bg_y), (bg_x + bg_width, bg_y + bg_height), (0, 0, 0), -1)
+        
+        # Draw hand text
+        cv2.putText(frame, hand_text, (bg_x + 10, bg_y + hand_height + 5), 
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        
+        # Draw confidence text
+        cv2.putText(frame, confidence_text, (bg_x + 10, bg_y + hand_height + conf_height + 10), 
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
+        
+        return frame
+    
     def run_analysis(self):
         """Run entire analysis pipeline"""
         print("🏀 Basketball shooting motion analysis pipeline")
@@ -2378,11 +2283,184 @@ class BasketballShootingAnalyzer:
     def _calculate_angle(self, ax, ay, bx, by, cx, cy):
         """Return angle between three points (ax,ay)-(bx,by)-(cx,cy) in degrees"""
         import numpy as np
-        ba = np.array([ax - bx, ay - by])
-        bc = np.array([cx - bx, cy - by])
-        cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc) + 1e-8)
-        angle = np.arccos(np.clip(cosine_angle, -1.0, 1.0))
-        return np.degrees(angle)
+        
+        # Vector AB
+        ab_x = ax - bx
+        ab_y = ay - by
+        
+        # Vector CB
+        cb_x = cx - bx
+        cb_y = cy - by
+        
+        # Dot product
+        dot_product = ab_x * cb_x + ab_y * cb_y
+        
+        # Magnitudes
+        ab_magnitude = np.sqrt(ab_x**2 + ab_y**2)
+        cb_magnitude = np.sqrt(cb_x**2 + cb_y**2)
+        
+        # Avoid division by zero
+        if ab_magnitude == 0 or cb_magnitude == 0:
+            return 0.0
+        
+        # Cosine of angle
+        cos_angle = dot_product / (ab_magnitude * cb_magnitude)
+        
+        # Clamp to valid range
+        cos_angle = np.clip(cos_angle, -1.0, 1.0)
+        
+        # Convert to degrees
+        angle = np.arccos(cos_angle) * 180 / np.pi
+        
+        return angle
+
+    def select_primary_hand(self, normalized_data: List[Dict]) -> Tuple[str, float]:
+        """
+        Select the primary hand based on 2-stage algorithm:
+        1. Proximity to ball (primary criterion)
+        2. Detection stability (secondary criterion when proximity is similar)
+        
+        Args:
+            normalized_data: List of normalized frame data
+            
+        Returns:
+            Tuple of (selected_hand, confidence_score)
+        """
+        print(f"\n🤚 Selecting primary hand for phase detection...")
+        print(f"  Hand selection threshold: {self.hand_selection_threshold}")
+        print(f"  Minimum stable frames: {self.hand_selection_min_frames}")
+        
+        left_hand_stats = {"close_frames": 0, "total_detected": 0, "wrist_detected": 0, "elbow_detected": 0}
+        right_hand_stats = {"close_frames": 0, "total_detected": 0, "wrist_detected": 0, "elbow_detected": 0}
+        
+        # Stage 1: Collect proximity and detection statistics
+        for i, frame_data in enumerate(normalized_data):
+            pose = frame_data.get('normalized_pose', {})
+            ball_info = frame_data.get('normalized_ball', {})
+            
+            if not ball_info or not pose:
+                continue
+            
+            # Get ball position
+            ball_x = ball_info.get('center_x', 0)
+            ball_y = ball_info.get('center_y', 0)
+            
+            # Check left hand
+            left_wrist = pose.get('left_wrist')
+            left_elbow = pose.get('left_elbow')
+            if left_wrist:
+                left_wrist_x = left_wrist.get('x', 0)
+                left_wrist_y = left_wrist.get('y', 0)
+                left_distance = ((ball_x - left_wrist_x)**2 + (ball_y - left_wrist_y)**2)**0.5
+                
+                if left_distance < self.hand_selection_threshold:
+                    left_hand_stats["close_frames"] += 1
+                    # Stability calculated only from frames where ball was close
+                    if left_wrist and isinstance(left_wrist, dict) and 'x' in left_wrist and 'y' in left_wrist:
+                        left_hand_stats["wrist_detected"] += 1
+                    if left_elbow and isinstance(left_elbow, dict) and 'x' in left_elbow and 'y' in left_elbow:
+                        left_hand_stats["elbow_detected"] += 1
+                left_hand_stats["total_detected"] += 1
+            
+            # Check right hand
+            right_wrist = pose.get('right_wrist')
+            right_elbow = pose.get('right_elbow')
+            if right_wrist:
+                right_wrist_x = right_wrist.get('x', 0)
+                right_wrist_y = right_wrist.get('y', 0)
+                right_distance = ((ball_x - right_wrist_x)**2 + (ball_y - right_wrist_y)**2)**0.5
+                
+                if right_distance < self.hand_selection_threshold:
+                    right_hand_stats["close_frames"] += 1
+                    # Stability calculated only from frames where ball was close
+                    if right_wrist and isinstance(right_wrist, dict) and 'x' in right_wrist and 'y' in right_wrist:
+                        right_hand_stats["wrist_detected"] += 1
+                    if right_elbow and isinstance(right_elbow, dict) and 'x' in right_elbow and 'y' in right_elbow:
+                        right_hand_stats["elbow_detected"] += 1
+                right_hand_stats["total_detected"] += 1
+        
+        # Calculate proximity ratios
+        left_proximity_ratio = 0.0
+        right_proximity_ratio = 0.0
+        
+        if left_hand_stats["total_detected"] > 0:
+            left_proximity_ratio = left_hand_stats["close_frames"] / left_hand_stats["total_detected"]
+        if right_hand_stats["total_detected"] > 0:
+            right_proximity_ratio = right_hand_stats["close_frames"] / right_hand_stats["total_detected"]
+        
+        # Calculate detection stability scores
+        left_stability_score = 0.0
+        right_stability_score = 0.0
+        
+        if left_hand_stats["close_frames"] > 0:
+            wrist_ratio = left_hand_stats["wrist_detected"] / left_hand_stats["close_frames"]
+            elbow_ratio = left_hand_stats["elbow_detected"] / left_hand_stats["close_frames"]
+            left_stability_score = (wrist_ratio + elbow_ratio) / 2  # Average of wrist and elbow detection
+        
+        if right_hand_stats["close_frames"] > 0:
+            wrist_ratio = right_hand_stats["wrist_detected"] / right_hand_stats["close_frames"]
+            elbow_ratio = right_hand_stats["elbow_detected"] / right_hand_stats["close_frames"]
+            right_stability_score = (wrist_ratio + elbow_ratio) / 2  # Average of wrist and elbow detection
+        
+        print(f"  Left hand - Proximity: {left_proximity_ratio:.3f}, Stability: {left_stability_score:.3f}")
+        print(f"  Right hand - Proximity: {right_proximity_ratio:.3f}, Stability: {right_stability_score:.3f}")
+        
+        # Stage 1: Check if proximity difference is significant
+        proximity_difference = abs(left_proximity_ratio - right_proximity_ratio)
+        proximity_threshold = 0.1  # 10% difference threshold
+        
+        if proximity_difference > proximity_threshold:
+            # Significant difference in proximity - use proximity as primary criterion
+            selected_hand = "left" if left_proximity_ratio > right_proximity_ratio else "right"
+            confidence = max(left_proximity_ratio, right_proximity_ratio) * 100
+            print(f"  Stage 1 decision: {selected_hand} (proximity difference: {proximity_difference:.3f})")
+        else:
+            # Similar proximity - use detection stability as secondary criterion
+            selected_hand = "left" if left_stability_score > right_stability_score else "right"
+            confidence = max(left_stability_score, right_stability_score) * 100
+            print(f"  Stage 2 decision: {selected_hand} (similar proximity, using stability)")
+        
+        print(f"  Selected hand: {selected_hand} (confidence: {confidence:.1f}%)")
+        
+        return selected_hand, confidence
+    
+    def get_selected_hand_keypoints(self, pose: Dict) -> Tuple[Dict, Dict, Dict]:
+        """
+        Get keypoints for the selected hand.
+        
+        Args:
+            pose: Pose data for current frame
+            
+        Returns:
+            Tuple of (shoulder, elbow, wrist) for selected hand
+        """
+        if self.selected_hand == "left":
+            shoulder = pose.get('left_shoulder', {})
+            elbow = pose.get('left_elbow', {})
+            wrist = pose.get('left_wrist', {})
+        else:  # right
+            shoulder = pose.get('right_shoulder', {})
+            elbow = pose.get('right_elbow', {})
+            wrist = pose.get('right_wrist', {})
+        
+        return shoulder, elbow, wrist
+    
+    def get_selected_hand_position(self, pose: Dict) -> Tuple[float, float]:
+        """
+        Get position of the selected hand.
+        
+        Args:
+            pose: Pose data for current frame
+            
+        Returns:
+            Tuple of (x, y) coordinates for selected hand wrist
+        """
+        if self.selected_hand == "left":
+            wrist = pose.get('left_wrist', {})
+        else:  # right
+            wrist = pose.get('right_wrist', {})
+        
+        return wrist.get('x', 0), wrist.get('y', 0)
 
 def main():
     """Main execution function"""

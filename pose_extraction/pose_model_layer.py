@@ -124,10 +124,8 @@ class PoseModelLayer:
         aspect_ratio = frame_w / frame_h
         
         # Normalize x coordinate so that same relative change corresponds to same pixel change
-        # We want: delta_x * frame_w = delta_y * frame_h
-        # So: corrected_x * frame_w = y * frame_h
-        # Therefore: corrected_x = y * frame_h / frame_w = y / aspect_ratio
-        corrected_x = x / aspect_ratio
+        # 곱하기로 보정
+        corrected_x = x * aspect_ratio
         corrected_y = y
         
         return corrected_x, corrected_y
@@ -152,9 +150,8 @@ class PoseModelLayer:
             # Ensure proper indexing of keypoints
             y, x, confidence = keypoints_with_scores[0, 0][i]
             
-            # Apply aspect ratio correction to x-axis only
-            # Apply aspect ratio correction only to x-axis: same pixel distance change corresponds to same relative coordinate change
-            corrected_x = x / aspect_ratio
+            # 곱하기로 보정
+            corrected_x = x * aspect_ratio
             
             pose_data[name] = {
                 "x": float(corrected_x),  # Aspect ratio corrected 0~1 relative coordinates

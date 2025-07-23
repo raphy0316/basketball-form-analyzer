@@ -143,8 +143,13 @@ class BasePhaseDetector(ABC):
             left_key = f"left_{keypoint_pair}"
             right_key = f"right_{keypoint_pair}"
             
-            left_pos = pose.get(left_key, {'x': 0, 'y': 0})
-            right_pos = pose.get(right_key, {'x': 0, 'y': 0})
+            left_pos = pose.get(left_key)
+            right_pos = pose.get(right_key)
+            
+            # Check if both keypoints exist
+            if not left_pos or not right_pos:
+                # Skip this keypoint pair if either is missing
+                continue
             
             avg_x = (left_pos.get('x', 0) + right_pos.get('x', 0)) / 2
             avg_y = (left_pos.get('y', 0) + right_pos.get('y', 0)) / 2
@@ -153,36 +158,60 @@ class BasePhaseDetector(ABC):
         
         return averages
     
-    def select_closest_wrist_to_ball(self, pose: Dict, ball_info: Optional[Dict]) -> Tuple[float, float, str]:
+    def get_selected_hand_keypoints(self, pose: Dict, selected_hand: str = "left") -> Tuple[Dict, Dict, Dict]:
         """
-        Select the wrist closest to the ball.
+        Get keypoints for the selected hand.
+        
+        Args:
+            pose: Pose data for current frame
+            selected_hand: "left" or "right"
+            
+        Returns:
+            Tuple of (shoulder, elbow, wrist) for selected hand
+        """
+        if selected_hand == "left":
+            shoulder = pose.get('left_shoulder', {})
+            elbow = pose.get('left_elbow', {})
+            wrist = pose.get('left_wrist', {})
+        else:  # right
+            shoulder = pose.get('right_shoulder', {})
+            elbow = pose.get('right_elbow', {})
+            wrist = pose.get('right_wrist', {})
+        
+        return shoulder, elbow, wrist
+    
+    def get_selected_hand_position(self, pose: Dict, selected_hand: str = "left") -> Tuple[float, float]:
+        """
+        Get position of the selected hand.
+        
+        Args:
+            pose: Pose data for current frame
+            selected_hand: "left" or "right"
+            
+        Returns:
+            Tuple of (x, y) coordinates for selected hand wrist
+        """
+        if selected_hand == "left":
+            wrist = pose.get('left_wrist', {})
+        else:  # right
+            wrist = pose.get('right_wrist', {})
+        
+        return wrist.get('x', 0), wrist.get('y', 0)
+    
+    def select_closest_wrist_to_ball(self, pose: Dict, ball_info: Optional[Dict], selected_hand: str = "left") -> Tuple[float, float, str]:
+        """
+        Get the selected hand position (overrides the original method).
         
         Args:
             pose: Pose data
-            ball_info: Ball information
+            ball_info: Ball information (not used in this version)
+            selected_hand: "left" or "right"
             
         Returns:
-            Tuple of (wrist_x, wrist_y, selected_side)
+            Tuple of (wrist_x, wrist_y, selected_hand)
         """
-        left_wrist = pose.get('left_wrist', {'x': 0, 'y': 0})
-        right_wrist = pose.get('right_wrist', {'x': 0, 'y': 0})
-        
-        if ball_info is None:
-            # Default to left wrist if no ball info
-            return left_wrist.get('x', 0), left_wrist.get('y', 0), "left"
-        
-        ball_x = ball_info.get('center_x', 0)
-        ball_y = ball_info.get('center_y', 0)
-        
-        left_distance = ((ball_x - left_wrist.get('x', 0))**2 + 
-                       (ball_y - left_wrist.get('y', 0))**2)**0.5
-        right_distance = ((ball_x - right_wrist.get('x', 0))**2 + 
-                         (ball_y - right_wrist.get('y', 0))**2)**0.5
-        
-        if left_distance <= right_distance:
-            return left_wrist.get('x', 0), left_wrist.get('y', 0), "left"
-        else:
-            return right_wrist.get('x', 0), right_wrist.get('y', 0), "right"
+        wrist_x, wrist_y = self.get_selected_hand_position(pose, selected_hand)
+        return wrist_x, wrist_y, selected_hand
     
     def is_trend_based_transition(self, frame_idx: int, current_phase: str, next_phase: str) -> bool:
         """
