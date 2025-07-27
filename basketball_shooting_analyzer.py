@@ -1532,6 +1532,7 @@ class BasketballShootingAnalyzer:
                 "normalization_method": "ball_radius_based",
                 "phase_detection_method": "sequential_transition",
                 "hand": self.selected_hand,
+                "fps" : self.video_fps,
             },
             "frames": []
         }
