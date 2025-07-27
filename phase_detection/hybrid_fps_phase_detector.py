@@ -17,12 +17,12 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
     BASE_THRESHOLDS = {
         "movement": 0.040,      # 2% of torso length for Set-up→Loading (hip/shoulder movement)
         "elbow_relative": 0.015, # 1% of torso length for elbow relative movement
-        "wrist_relative": 0.040, # 1.5% of torso length for wrist relative movement
+        "wrist_relative": 0.020, # 1.5% of torso length for wrist relative movement
         "ball_relative": 0.045,  # 1.8% of torso length for ball relative movement
         "ball_size_multiplier": 1.6,  # Ball radius multiplier for threshold
         "min_elbow_angle": 110,  # Minimum elbow angle (degrees)
-        "wrist_absolute": 0.065, # 2% of torso length for wrist absolute movement (Rising detection)
-        "rise_cancellation": 0.010, # 1.5% of torso length for shoulder/hip rising cancellation (optimized)
+        "wrist_absolute": 0.025, # 2% of torso length for wrist absolute movement (Rising detection)
+        "rise_cancellation": 0.030, # 1.5% of torso length for shoulder/hip rising cancellation (optimized)
         "rising_cancel_relative": 0.025, # 0.75% of torso length for rising cancellation relative movement
         "rising_cancel_absolute": 0.040, # 1.5% of torso length for rising cancellation absolute movement
         "ball_cancel_relative": 0.030, # 1% of torso length for ball rising cancellation relative movement
@@ -244,11 +244,12 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         
         # Get selected hand keypoints
         selected_shoulder, selected_elbow, selected_wrist = self.get_selected_hand_keypoints(pose, selected_hand)
-        
+       
         # Check if required keypoints exist
         if not all([selected_shoulder, selected_elbow, selected_wrist]):
             return current_phase
         
+        # print(selected_shoulder, selected_elbow, selected_wrist)
         # Calculate shoulder position
         shoulder_y = selected_shoulder.get('y', 0)
         
@@ -381,8 +382,12 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                             prev_hip_y = 0
                         
                         prev_shoulder_data = self.calculate_keypoint_averages(prev_pose, ['shoulder'])
-                        prev_shoulder_y = prev_shoulder_data['shoulder']['y']
-                        
+                        if(prev_shoulder_data is not None and
+                           'shoulder' in prev_shoulder_data and
+                           'y' in prev_shoulder_data['shoulder']):
+                            prev_shoulder_y = prev_shoulder_data['shoulder']['y']
+                        else :
+                            prev_shoulder_y = shoulder_y
                         d_hip_y = hip_y - prev_hip_y
                         d_shoulder_y = shoulder_y - prev_shoulder_y
                         
@@ -671,7 +676,12 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                     self.ball_drop_frames = 0
                     self.shoulder_hip_rise_frames = 0
                     return "Follow-through"
-        
+            elif ball_info is None:
+                # If no ball info, cancel to General
+                self.ball_drop_frames = 0
+                self.shoulder_hip_rise_frames = 0
+                return "Follow-through"  # Maintain phase if no ball info
+            
         # 6. Follow-through → General: Transition to General when wrist goes below eyes
         if current_phase == "Follow-through":
             # Check only required values: selected wrist, both eyes
@@ -750,7 +760,7 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
             # 2. Shoulder/hip rising -> Set-up
             
             # Calculate minimum frames based on FPS (3 frames for 30fps)
-            min_frames = max(1, round(self.fps * 4 / 30))
+            min_frames = max(1, round(self.fps * 7 / 30))
             
             # Condition 1: Ball dropped (minimum N frames)
             if (ball_detected and 

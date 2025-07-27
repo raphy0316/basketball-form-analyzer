@@ -11,6 +11,8 @@ from datetime import datetime
 from typing import List, Dict, Optional
 import cv2 # Added for FPS extraction
 import traceback
+import threading
+import concurrent.futures
 
 # Import existing analysis pipeline
 from basketball_shooting_analyzer import BasketballShootingAnalyzer
@@ -120,6 +122,25 @@ class BasketballShootingIntegratedPipeline:
             traceback.print_exc()  # Print full error stack trace
             return False
 
+     # Define extraction functions for threading
+    def _extract_pose(self, video_path: str) -> str:
+        print("🔍 Extracting pose data with coordinate transformation...")
+        print("  - MoveNet crop coordinates → Full frame coordinates")
+        print("  - Aspect ratio correction applied to x-axis")
+        pose_file = self.pose_pipeline.extract_poses(video_path, confidence_threshold=0.3)
+        print(f"✅ Pose extraction completed: {os.path.basename(pose_file)}")
+        return pose_file
+    
+    def _extract_ball(self, video_path: str) -> str:
+        print("🔍 Extracting ball data with normalized coordinates...")
+        print("  - YOLO using 0~1 normalized coordinates")
+        print("  - Aspect ratio correction applied to x-axis")
+        ball_file = self.ball_pipeline.extract_ball_trajectory(
+            video_path, conf_threshold=0.15, min_confidence=0.3, min_ball_size=0.01
+        )
+        print(f"✅ Ball extraction completed: {os.path.basename(ball_file)}")
+        return ball_file
+    
     def _extract_original_data(self, video_path: str, overwrite_mode: bool = False, use_existing_extraction: bool = True) -> bool:
         """Extract original data with coordinate transformation (pose + ball)"""
         base_name = os.path.splitext(os.path.basename(video_path))[0]
@@ -143,24 +164,20 @@ class BasketballShootingIntegratedPipeline:
                 return True
         
         try:
-            # Extract pose data with coordinate transformation
-            print("🔍 Extracting pose data with coordinate transformation...")
-            print("  - MoveNet crop coordinates → Full frame coordinates")
-            print("  - Aspect ratio correction applied to x-axis")
-            pose_file = self.pose_pipeline.extract_poses(video_path, confidence_threshold=0.3)
-            print(f"✅ Pose extraction completed: {os.path.basename(pose_file)}")
-            
-            # Extract ball data with normalized coordinates
-            print("🔍 Extracting ball data with normalized coordinates...")
-            print("  - YOLO using 0~1 normalized coordinates")
-            print("  - Aspect ratio correction applied to x-axis")
-            ball_file = self.ball_pipeline.extract_ball_trajectory(
-                video_path, conf_threshold=0.15, min_confidence=0.3, min_ball_size=0.01
-            )
-            print(f"✅ Ball extraction completed: {os.path.basename(ball_file)}")
+                # Use ThreadPoolExecutor for parallel execution
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+                # Submit both extraction tasks
+                pose_future = executor.submit(self._extract_pose, video_path)
+                ball_future = executor.submit(self._extract_ball, video_path)
+                
+                # Wait for both to complete and get results
+                pose_file = pose_future.result()
+                ball_file = ball_future.result()
+                
+                print("🔄 Both pose and ball extraction completed in parallel")
             
             return True
-            
+    
         except Exception as e:
             print(f"❌ Failed to extract data: {e}")
             return False
