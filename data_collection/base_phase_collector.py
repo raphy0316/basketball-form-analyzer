@@ -60,6 +60,20 @@ class BasePhaseCollector:
 
         return 180 - angle
 
+    def calculate_ball_vertical_distance(self, ball, point):
+        """
+        Calculate the vertical distance between the ball and the eyes.
+        
+        Args:
+            ball: Dictionary with 'center_x' and 'center_y' coordinates of the ball
+            eyes: Dictionary with 'x' and 'y' coordinates of the eyes
+        Returns:
+            Vertical distance between the ball and the eyes
+        """
+        if not ball or not point:
+            return 0.0
+        return -(ball['center_y'] - point['y'])
+
     def calculate_ball_distance(self, ball, eyes):
         """
         Calculate the distance between the ball and the eyes.
