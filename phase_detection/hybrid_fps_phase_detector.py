@@ -45,6 +45,10 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         self.ball_drop_frames = 0  # Track consecutive frames where ball is dropped
         self.shoulder_hip_rise_frames = 0  # Track consecutive frames where shoulder/hip rise
         
+        # Follow-through transition tracking variables
+        self.ball_not_detected_frames = 0  # Track consecutive frames where ball is not detected
+        self.ball_far_frames = 0  # Track consecutive frames where ball is far from wrist
+        
     def set_fps(self, fps: float):
         """Set FPS for threshold calculations"""
         self.fps = fps
@@ -236,6 +240,8 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
             # Reset tracking variables when phase changes
             self.ball_drop_frames = 0
             self.shoulder_hip_rise_frames = 0
+            self.ball_not_detected_frames = 0
+            self.ball_far_frames = 0
             return cancellation_result
         
         # Calculate hybrid thresholds
@@ -330,6 +336,8 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                     # Reset tracking variables when phase changes
                     self.ball_drop_frames = 0
                     self.shoulder_hip_rise_frames = 0
+                    self.ball_not_detected_frames = 0
+                    self.ball_far_frames = 0
                     return "Set-up"
         
         # 2. Set-up → Loading: Hip AND shoulder moving downward
@@ -450,6 +458,8 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                             # Reset tracking variables when phase changes
                             self.ball_drop_frames = 0
                             self.shoulder_hip_rise_frames = 0
+                            self.ball_not_detected_frames = 0
+                            self.ball_far_frames = 0
                             return "Loading"
         
         # 2.5. Set-up → Rising: Skip Loading if Rising conditions met directly
@@ -536,6 +546,8 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                             # Reset tracking variables when phase changes
                             self.ball_drop_frames = 0
                             self.shoulder_hip_rise_frames = 0
+                            self.ball_not_detected_frames = 0
+                            self.ball_far_frames = 0
                             return "Rising"
         
         # 3. Loading → Rising: Wrist and elbow moving upward (relative to torso)
@@ -646,19 +658,24 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                         # Reset tracking variables when phase changes
                         self.ball_drop_frames = 0
                         self.shoulder_hip_rise_frames = 0
+                        self.ball_not_detected_frames = 0
+                        self.ball_far_frames = 0
                         return "Release"
                     else:
                         # Reset tracking variables when phase changes
                         self.ball_drop_frames = 0
                         self.shoulder_hip_rise_frames = 0
+                        self.ball_not_detected_frames = 0
+                        self.ball_far_frames = 0
                         return "General"  # Cancel to General if conditions not met
         
         # 5. Release → Follow-through: Ball is released and wrist is above shoulder
         if current_phase == "Release":
-            # Check only required values: ball info and selected hand keypoints
-            if (ball_info is not None and 
-                selected_wrist and 'x' in selected_wrist and 'y' in selected_wrist):
-                
+            # Calculate minimum frames based on FPS (3 frames for 30fps)
+            min_frames = max(1, round(self.fps * 3 / 30))  # 3 frames at 30fps
+            
+            # Check if ball is detected
+            if ball_info is not None and selected_wrist and 'x' in selected_wrist and 'y' in selected_wrist:
                 # Calculate distance between ball and wrist
                 ball_x = ball_info.get('center_x', 0)
                 ball_y = ball_info.get('center_y', 0)
@@ -672,16 +689,35 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                 follow_through_threshold = ball_distance_threshold * 1.5  # 1.5x longer distance than Release
                 
                 if distance > follow_through_threshold:
+                    self.ball_far_frames += 1
+                else:
+                    self.ball_far_frames = 0  # Reset counter
+                
+                # Transition to Follow-through if ball is far for minimum frames
+                if self.ball_far_frames >= min_frames:
                     # Reset tracking variables when phase changes
                     self.ball_drop_frames = 0
                     self.shoulder_hip_rise_frames = 0
+                    self.ball_not_detected_frames = 0
+                    self.ball_far_frames = 0
                     return "Follow-through"
-            elif ball_info is None:
-                # If no ball info, cancel to General
-                self.ball_drop_frames = 0
-                self.shoulder_hip_rise_frames = 0
-                return "Follow-through"  # Maintain phase if no ball info
+            else:
+                # Ball is not detected
+                self.ball_not_detected_frames += 1
+                self.ball_far_frames = 0  # Reset far frames counter
+                
+                # Transition to Follow-through if ball is not detected for minimum frames
+                if self.ball_not_detected_frames >= min_frames:
+                    # Reset tracking variables when phase changes
+                    self.ball_drop_frames = 0
+                    self.shoulder_hip_rise_frames = 0
+                    self.ball_not_detected_frames = 0
+                    self.ball_far_frames = 0
+                    return "Follow-through"
             
+            # Maintain current phase if conditions not met
+            return current_phase
+        
         # 6. Follow-through → General: Transition to General when wrist goes below eyes
         if current_phase == "Follow-through":
             # Check only required values: selected wrist, both eyes
@@ -693,8 +729,11 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                 right_eye_y = pose['right_eye']['y']
                 eye_y = (left_eye_y + right_eye_y) / 2
                 if wrist_y > eye_y:  # When wrist goes below eyes
+                    # Reset tracking variables when phase changes
                     self.ball_drop_frames = 0
                     self.shoulder_hip_rise_frames = 0
+                    self.ball_not_detected_frames = 0
+                    self.ball_far_frames = 0
                     return "General"
             # Maintain phase if conditions not met
             return current_phase
