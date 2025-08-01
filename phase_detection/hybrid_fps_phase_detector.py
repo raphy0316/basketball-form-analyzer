@@ -17,12 +17,12 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
     BASE_THRESHOLDS = {
         "movement": 0.040,      # 2% of torso length for Set-up→Loading (hip/shoulder movement)
         "elbow_relative": 0.015, # 1% of torso length for elbow relative movement
-        "wrist_relative": 0.020, # 1.5% of torso length for wrist relative movement
+        "wrist_relative": 0.040, # 1.5% of torso length for wrist relative movement
         "ball_relative": 0.045,  # 1.8% of torso length for ball relative movement
-        "ball_size_multiplier": 1.6,  # Ball radius multiplier for threshold
+        "ball_size_multiplier": 1.5,  # Ball radius multiplier for threshold
         "min_elbow_angle": 110,  # Minimum elbow angle (degrees)
-        "wrist_absolute": 0.025, # 2% of torso length for wrist absolute movement (Rising detection)
-        "rise_cancellation": 0.030, # 1.5% of torso length for shoulder/hip rising cancellation (optimized)
+        "wrist_absolute": 0.065, # 2% of torso length for wrist absolute movement (Rising detection)
+        "rise_cancellation": 0.010, # 1.5% of torso length for shoulder/hip rising cancellation (optimized)
         "rising_cancel_relative": 0.025, # 0.75% of torso length for rising cancellation relative movement
         "rising_cancel_absolute": 0.040, # 1.5% of torso length for rising cancellation absolute movement
         "ball_cancel_relative": 0.030, # 1% of torso length for ball rising cancellation relative movement
@@ -31,19 +31,24 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
     
     def __init__(self, min_phase_duration: int = 1, noise_threshold: int = 4):
         """
-        Initialize hybrid FPS phase detector.
+        Initialize the hybrid FPS phase detector.
         
         Args:
             min_phase_duration: Minimum frames a phase must last
-            noise_threshold: Threshold for noise filtering
+            noise_threshold: Threshold for filtering noise in phase transitions
         """
         super().__init__(min_phase_duration, noise_threshold)
-        self.fps = 30.0  # Default FPS, will be updated during detection
-        self.torso_length = 1.0  # Default torso length, will be updated during detection
         
-        # Cancellation tracking variables
-        self.ball_drop_frames = 0  # Track consecutive frames where ball is dropped
-        self.shoulder_hip_rise_frames = 0  # Track consecutive frames where shoulder/hip rise
+        # FPS adjustment factor
+        self.fps = 30.0
+        self.fps_factor = 1.0
+        
+        # Tracking variables for cancellation conditions
+        self.ball_drop_frames = 0
+        self.shoulder_hip_rise_frames = 0
+        
+        # New tracking variable for loading-rising phase
+        self.loading_rising_start_frame = None
         
     def set_fps(self, fps: float):
         """Set FPS for threshold calculations"""
@@ -595,10 +600,35 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                         # Reset tracking variables when phase changes
                         self.ball_drop_frames = 0
                         self.shoulder_hip_rise_frames = 0
-                        return "Rising"
+                        # Set loading-rising start frame and transition to loading-rising
+                        self.loading_rising_start_frame = frame_idx
+                        return "Loading-Rising"
+        
+        # 3.5. Loading-Rising → rising: Check for loading cancellation conditions
+        if current_phase == "Loading-Rising":
+            # Check for loading cancellation conditions (same as Loading phase)
+            loading_cancellation_result = self._is_loading_cancellation_condition(frame_idx, pose_data, ball_data, selected_hand)
+            if loading_cancellation_result:
+                # Reset tracking variables when phase changes
+                self.ball_drop_frames = 0
+                self.shoulder_hip_rise_frames = 0
+                self.loading_rising_start_frame = None
+                return "Rising"
+            
+            # Check for rising cancellation conditions (same as Rising phase)
+            rising_cancellation_result = self._is_rising_cancellation_condition(frame_idx, pose_data, ball_data, selected_hand)
+            if rising_cancellation_result:
+                # Reset tracking variables when phase changes
+                self.ball_drop_frames = 0
+                self.shoulder_hip_rise_frames = 0
+                self.loading_rising_start_frame = None
+                return "Set-up"
+            
+            # Stay in Loading-Rising phase if no cancellation conditions are met
+            return "Loading-Rising"
         
         # 4. Rising → Release: Ball is released with proper form
-        if current_phase == "Rising":
+        if current_phase == "Rising" or current_phase == "Loading-Rising":
             # Check only required values: ball info and selected hand keypoints
             if (ball_info is not None and 
                 selected_wrist and selected_shoulder and selected_elbow and
@@ -723,7 +753,203 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         
         return None
 
+    def _is_loading_cancellation_condition(self, frame_idx: int, pose_data: List[Dict], ball_data: List[Dict], selected_hand: str):
+        """Check if loading cancellation conditions are met (shoulder/hip rising only)"""
+        
+        # Get current frame data
+        pose = self.get_pose_info(frame_idx, pose_data)
+        ball_info = self.get_ball_info(frame_idx, ball_data)
+        
+        # Get selected hand keypoints
+        selected_shoulder, selected_elbow, selected_wrist = self.get_selected_hand_keypoints(pose, selected_hand)
+        
+        # Check if required keypoints exist
+        if not all([selected_shoulder, selected_elbow, selected_wrist]):
+            return False
+        
+        # Calculate shoulder position
+        shoulder_y = selected_shoulder.get('y', 0)
+        
+        # Check cancellation conditions (shoulder/hip rising only)
+        # Shoulder/hip rising (immediate cancellation)
+        if frame_idx > 0:
+            prev_pose = self.get_pose_info(frame_idx - 1, pose_data)
+            
+            # Get shoulder and hip positions
+            shoulder_y = selected_shoulder.get('y', 0)
+            prev_shoulder_y = prev_pose.get(selected_hand + '_shoulder', {}).get('y', 0)
+            
+            # Calculate hip position (average of left and right)
+            left_hip = pose.get('left_hip', {})
+            right_hip = pose.get('right_hip', {})
+            left_hip_y = left_hip.get('y', 0)
+            right_hip_y = right_hip.get('y', 0)
+            hip_y = (left_hip_y + right_hip_y) / 2 if left_hip_y != 0 and right_hip_y != 0 else (left_hip_y or right_hip_y or 0)
+            
+            prev_left_hip = prev_pose.get('left_hip', {})
+            prev_right_hip = prev_pose.get('right_hip', {})
+            prev_left_hip_y = prev_left_hip.get('y', 0)
+            prev_right_hip_y = prev_right_hip.get('y', 0)
+            prev_hip_y = (prev_left_hip_y + prev_right_hip_y) / 2 if prev_left_hip_y != 0 and prev_right_hip_y != 0 else (prev_left_hip_y or prev_right_hip_y or 0)
+            
+            # Calculate movement
+            d_shoulder_y = shoulder_y - prev_shoulder_y
+            d_hip_y = hip_y - prev_hip_y
+            
+            # Calculate threshold for rising cancellation (separate from movement threshold)
+            rise_cancellation_threshold = self.calculate_hybrid_threshold(pose, "rise_cancellation")
+            
+            # Check if shoulder and hip are rising (negative values mean going up)
+            shoulder_rising = d_shoulder_y < -rise_cancellation_threshold
+            hip_rising = d_hip_y < -rise_cancellation_threshold
+            
+            if shoulder_rising and hip_rising:
+                return "Set-up"
+        
+        return False
 
+    def _is_rising_cancellation_condition(self, frame_idx: int, pose_data: List[Dict], ball_data: List[Dict], selected_hand: str):
+        """Check if rising cancellation conditions are met (hand moving down relative to hip)"""
+        
+        # Get current frame data
+        pose = self.get_pose_info(frame_idx, pose_data)
+        ball_info = self.get_ball_info(frame_idx, ball_data)
+        
+        # Get selected hand keypoints
+        selected_shoulder, selected_elbow, selected_wrist = self.get_selected_hand_keypoints(pose, selected_hand)
+        
+        # Check if required keypoints exist
+        if not all([selected_shoulder, selected_elbow, selected_wrist]):
+            return False
+        
+        # Calculate shoulder position
+        shoulder_y = selected_shoulder.get('y', 0)
+        
+        # Select closest wrist to ball
+        wrist_x, wrist_y = self.get_selected_hand_position(pose, selected_hand)
+        
+        # Calculate ball position
+        ball_x = ball_info.get('center_x', 0) if ball_info else 0
+        ball_y = ball_info.get('center_y', 0) if ball_info else 0
+        ball_detected = ball_info is not None
+        
+        # Rising cancellation: Hand moving down relative to hip
+        # Check only required values: selected hand keypoints and hip
+        if (frame_idx > 0 and
+            selected_elbow and selected_wrist and
+            'x' in selected_elbow and 'y' in selected_elbow and
+            'x' in selected_wrist and 'y' in selected_wrist and
+            'left_hip' in pose and 'right_hip' in pose):
+            
+            prev_pose = self.get_pose_info(frame_idx - 1, pose_data)
+            
+            # Hip data validation
+            left_hip = pose.get('left_hip', {})
+            right_hip = pose.get('right_hip', {})
+            prev_left_hip = prev_pose.get('left_hip', {})
+            prev_right_hip = prev_pose.get('right_hip', {})
+            
+            if (isinstance(left_hip, dict) and 'y' in left_hip and
+                isinstance(right_hip, dict) and 'y' in right_hip and
+                isinstance(prev_left_hip, dict) and 'y' in prev_left_hip and
+                isinstance(prev_right_hip, dict) and 'y' in prev_right_hip):
+                
+                # Get selected hand keypoints for previous frame
+                prev_selected_shoulder, prev_selected_elbow, prev_selected_wrist = self.get_selected_hand_keypoints(prev_pose, selected_hand)
+                
+                # Check if required keypoints exist
+                if not all([prev_selected_shoulder, prev_selected_elbow, prev_selected_wrist]):
+                    return False # Should not happen if _get_previous_valid_frame works correctly
+                
+                # Calculate hip position
+                left_hip_y = left_hip.get('y', None)
+                right_hip_y = right_hip.get('y', None)
+                if left_hip_y is not None and right_hip_y is not None:
+                    hip_y = (left_hip_y + right_hip_y) / 2  # Use average
+                elif left_hip_y is not None:
+                    hip_y = left_hip_y
+                elif right_hip_y is not None:
+                    hip_y = right_hip_y
+                else:
+                    hip_y = 0
+                
+                prev_left_hip_y = prev_left_hip.get('y', None)
+                prev_right_hip_y = prev_right_hip.get('y', None)
+                if prev_left_hip_y is not None and prev_right_hip_y is not None:
+                    prev_hip_y = (prev_left_hip_y + prev_right_hip_y) / 2  # Use average
+                elif prev_left_hip_y is not None:
+                    prev_hip_y = prev_left_hip_y
+                elif prev_right_hip_y is not None:
+                    prev_hip_y = prev_right_hip_y
+                else:
+                    prev_hip_y = 0
+                
+                # Use selected hand keypoints instead of averages
+                elbow_y = selected_elbow.get('y', 0)
+                prev_elbow_y = prev_selected_elbow.get('y', 0)
+                
+                wrist_y = selected_wrist.get('y', 0)
+                prev_wrist_y = prev_selected_wrist.get('y', 0)
+                
+                # Calculate relative movement
+                d_wrist_relative = (wrist_y - prev_wrist_y) - (hip_y - prev_hip_y)
+                d_elbow_relative = (elbow_y - prev_elbow_y) - (hip_y - prev_hip_y)
+                d_ball_relative = 0
+                if ball_detected and frame_idx > 0:
+                    prev_ball_info = self.get_ball_info(frame_idx - 1, ball_data)
+                    if prev_ball_info:
+                        prev_ball_y = prev_ball_info.get('center_y', 0)
+                        ball_y = ball_info.get('center_y', 0)
+                        d_ball_relative = ball_y - prev_ball_y - (hip_y - prev_hip_y)
+                
+                # Calculate absolute movement
+                d_wrist_absolute = wrist_y - prev_wrist_y
+                d_ball_absolute = 0
+                if ball_detected and frame_idx > 0:
+                    prev_ball_info = self.get_ball_info(frame_idx - 1, ball_data)
+                    if prev_ball_info:
+                        prev_ball_y = prev_ball_info.get('center_y', 0)
+                        ball_y = ball_info.get('center_y', 0)
+                        d_ball_absolute = ball_y - prev_ball_y
+                
+                # Rising cancellation: Different conditions based on wrist position relative to shoulder
+                wrist_above_shoulder = wrist_y < shoulder_y
+                
+                if wrist_above_shoulder:
+                    # When above shoulder: cancel when wrist goes below shoulder
+                    # Check if current wrist is below shoulder
+                    wrist_below_shoulder = wrist_y >= shoulder_y
+                    
+                    if ball_detected:
+                        # Check if ball is also below shoulder
+                        ball_below_shoulder = ball_y >= shoulder_y
+                        
+                        if wrist_below_shoulder and ball_below_shoulder:
+                            return "Set-up"
+                    else:
+                        if wrist_below_shoulder:
+                            return "Set-up"
+                else:
+                    # When below shoulder: use cancel-specific threshold (cancel when moving down)
+                    wrist_cancel_relative_threshold = self.calculate_hybrid_threshold(pose, "rising_cancel_relative")
+                    wrist_cancel_absolute_threshold = self.calculate_hybrid_threshold(pose, "rising_cancel_absolute")
+                    ball_cancel_relative_threshold = self.calculate_hybrid_threshold(pose, "ball_cancel_relative")
+                    ball_cancel_absolute_threshold = self.calculate_hybrid_threshold(pose, "ball_cancel_absolute")
+                    
+                    wrist_moving_down_relative = d_wrist_relative > wrist_cancel_relative_threshold
+                    ball_moving_down_relative = d_ball_relative > ball_cancel_relative_threshold
+                    wrist_moving_down_absolute = d_wrist_absolute > wrist_cancel_absolute_threshold
+                    ball_moving_down_absolute = d_ball_absolute > ball_cancel_absolute_threshold
+                    
+                    if ball_detected:
+                        if (wrist_moving_down_relative and ball_moving_down_relative and 
+                            wrist_moving_down_absolute and ball_moving_down_absolute):
+                            return "Set-up"
+                    else:
+                        if wrist_moving_down_relative and wrist_moving_down_absolute:
+                            return "Set-up"
+        
+        return False
 
     def _is_cancellation_condition(self, current_phase: str, frame_idx: int, pose_data: List[Dict], ball_data: List[Dict], selected_hand: str):
         """Check if current phase should be cancelled and return to Set-up (like original)"""

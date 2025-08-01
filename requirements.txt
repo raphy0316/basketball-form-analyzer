@@ -9,3 +9,6 @@ mediapipe>=0.8.0
 Pillow>=8.3.0
 scikit-learn>=1.0.0 
 ultralytics
+# DTW dependencies
+scipy>=1.7.0
+fastdtw>=0.3.4
