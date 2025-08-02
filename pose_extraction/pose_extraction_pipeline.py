@@ -13,9 +13,9 @@ from .pose_model_layer import PoseModelLayer
 from .pose_storage_layer import PoseStorageLayer
 
 class PoseExtractionPipeline:
-    def __init__(self, output_dir: str = "data"):
+    def __init__(self, output_dir: str = "data", load_model: bool = True):
         """Initialize pose extraction pipeline"""
-        self.model_layer = PoseModelLayer()
+        self.model_layer = PoseModelLayer(load_model=load_model)
         self.storage_layer = PoseStorageLayer(output_dir)
         
         print("Pose extraction pipeline initialized")
@@ -63,7 +63,20 @@ class PoseExtractionPipeline:
         except Exception as e:
             print(f"❌ Error occurred: {e}")
             raise
-
+    
+    def filter_low_confidence_poses_api_helper(self, pose_data: List[Dict], confidence_threshold: float = 0.3) -> List[Dict]:
+        """
+        API helper to filter low-confidence poses
+        
+        Args:
+            pose_data: List of pose data dictionaries
+            confidence_threshold: Minimum confidence threshold
+        
+        Returns:
+            Filtered pose data
+        """
+        return self._filter_low_confidence_poses(pose_data, confidence_threshold)
+    
     def _filter_low_confidence_poses(self, pose_data: List[Dict], confidence_threshold: float) -> List[Dict]:
         """Filter out low-confidence keypoints"""
         filtered_data = []
@@ -87,6 +100,16 @@ class PoseExtractionPipeline:
             filtered_data.append(filtered_frame)
         
         return filtered_data
+
+    def print_summary_api_helper(self, pose_data: List[Dict], saved_file: str):
+        """
+        API helper to print extraction summary
+        
+        Args:
+            pose_data: List of pose data dictionaries
+            saved_file: Path to saved file
+        """
+        self._print_summary(pose_data, saved_file)
 
     def _print_summary(self, pose_data: List[Dict], saved_file: str):
         """Print extraction summary"""

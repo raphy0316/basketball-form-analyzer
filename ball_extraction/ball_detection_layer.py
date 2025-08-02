@@ -11,7 +11,7 @@ from typing import Dict, List, Tuple, Optional
 import torch
 
 class BallDetectionLayer:
-    def __init__(self, model_path: str = "ball_extraction/models/yolov8n736-customContinue.pt"):
+    def __init__(self, model_path: str = "ball_extraction/models/yolov8n736-customContinue.pt", load_model: bool = True):
         """
         Initialize basketball detection model
         
@@ -20,7 +20,8 @@ class BallDetectionLayer:
         """
         self.model_path = model_path
         self.model = None
-        self._load_model()
+        if load_model:
+            self._load_model()
         
     def _load_model(self):
         """Load YOLOv8 model"""
@@ -54,6 +55,112 @@ class BallDetectionLayer:
         corrected_x = x / aspect_ratio
         
         return corrected_x, y
+    
+    def process_frame_api_helper(self, frame):
+        '''
+        Process a single frame ball detectoin API helper function
+        detections: [{…}] 
+        -> {classId: 0, confidence: 0.312744140625, height: 102.64378041028976, width: 221.57704532146454, x: 171.31421756744385, y: 519.811654239893}
+        frameHeight:852
+        frameId: 2301
+        frameWidth: 393
+        keypoints: []
+        '''
+        w = frame.frameWidth
+        h = frame.frameHeight
+        boxes = frame.detections
+        frame_id = frame.frameId
+        ball_detections = []
+        rim_detections = []
+
+        if boxes is None or len(boxes) == 0:
+            print(f"No detections in frame {frame_id}")
+            return ball_detections, rim_detections
+
+        for box in boxes:
+            x1 = box.x
+            y1 = box.y
+            x2 = x1 + box.width
+            y2 = y1 + box.height
+            confidence = box.confidence
+            class_id = box.classId
+            aspect_ratio = w / h
+            x1_rel = np.clip(x1 / w, 0, 1)
+            y1_rel = np.clip(y1 / h, 0, 1)
+            x2_rel = np.clip(x2 / w, 0, 1)
+            y2_rel = np.clip(y2 / h, 0, 1)
+
+            x1_rel_corr = x1_rel * aspect_ratio
+            x2_rel_corr = x2_rel * aspect_ratio
+            center_x_rel_corr = (x1_rel_corr + x2_rel_corr) / 2
+            width_rel_corr = x2_rel_corr - x1_rel_corr
+            
+            center_y_rel = (y1_rel + y2_rel) / 2
+            height_rel = y2_rel - y1_rel
+
+            if class_id == 0:
+                ball_info = {
+                    'bbox': [float(x1_rel_corr), float(y1_rel), float(x2_rel_corr), float(y2_rel)],
+                    'confidence': float(confidence),
+                    'class_id': class_id,
+                    'center_x': float(center_x_rel_corr),
+                    'center_y': float(center_y_rel),
+                    'width': float(width_rel_corr),
+                    'height': float(height_rel),
+                    'pixel_width': float(x2 - x1),
+                    'pixel_height': float(y2 - y1)
+                }
+                ball_detections.append(ball_info)
+            elif class_id == 2:
+                rim_info = {
+                    'bbox': [float(x1_rel_corr), float(y1_rel), float(x2_rel_corr), float(y2_rel)],
+                    'confidence': float(confidence),
+                    'class_id': class_id,
+                    'center_x': float(center_x_rel_corr),
+                    'center_y': float(center_y_rel),
+                    'width': float(width_rel_corr),
+                    'height': float(height_rel),
+                    'pixel_width': float(x2 - x1),
+                    'pixel_height': float(y2 - y1)
+                }  
+                rim_detections.append(rim_info)
+
+        return ball_detections, rim_detections
+
+    def extract_ball_trajectory_and_rim_info_api_helper(self, frames: List[Dict]) -> Tuple[List[Dict], List[Dict]]:
+        """
+        Extract basketball trajectory from list of frames API helper
+        
+        Args:
+            frames: List of frame data
+            conf_threshold: Confidence threshold
+            classes: Classes to detect
+            iou_threshold: IoU threshold
+            
+        Returns:
+            Tuple of (ball_trajectory, rim_info)
+        """
+        ball_trajectory = []
+        rim_info = []
+        fps = frames[0].fps if frames else 22
+        frame_count = 0
+        for frame in frames:
+            ball_detections, rim_detections = self.process_frame_api_helper(frame)
+            frame_count += 1
+            ball_trajectory.append({
+                "frame_number": frame_count,
+                "timestamp": frame_count/ fps, 
+                "ball_detections": ball_detections,
+                "ball_count": len(ball_detections)
+            })
+            rim_info.append({
+                "frame_number": frame_count,
+                "timestamp": frame_count / fps,
+                "rim_detections": rim_detections,
+                "rim_count": len(rim_detections)
+            })
+        
+        return ball_trajectory, rim_info
 
     def _detect_ball_and_rim_in_frame(self, frame: np.ndarray, conf_threshold: float = 0.15, 
                            classes: List[int] = [0, 1, 2], iou_threshold: float = 0.1) -> Tuple[List[Dict], List[Dict]]:
@@ -128,6 +235,7 @@ class BallDetectionLayer:
                             'pixel_height': float(y2 - y1)
                         }  
                         rim_detections.append(rim_info)
+
         return ball_detections, rim_detections
 
     def extract_ball_trajectory_and_rim_info_from_video(self, video_path: str, conf_threshold: float = 0.15,

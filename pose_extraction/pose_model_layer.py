@@ -15,7 +15,7 @@ import matplotlib.patches as patches
    
 class PoseModelLayer:
 
-    def __init__(self, model_name="lightning"):
+    def __init__(self, model_name="lightning", load_model=True):
         self.model_name = model_name
         self.keypoint_names = [
             "nose", "left_eye", "right_eye", "left_ear", "right_ear",
@@ -26,7 +26,8 @@ class PoseModelLayer:
         self.model = None
          # Confidence score to determine whether a keypoint prediction is reliable.
         self.MIN_CROP_KEYPOINT_SCORE = 0.3
-        self._load_model()
+        if load_model:
+            self._load_model()
         self.crop_region = None
          # Dictionary that maps from joint names to keypoint indices.
         self.KEYPOINT_DICT = {
@@ -213,6 +214,19 @@ class PoseModelLayer:
             cv2.putText(output_frame, 'Rim', (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
         
         return output_frame
+
+    def extract_poses_from_video_api_helper(self, raw_pose_data, fps) -> List[Dict]:
+        pose_data = []
+        frame_count = 0
+        for data in raw_pose_data:
+            frame_count += 1
+            frame_data = {
+                "frame_number": frame_count,
+                "timestamp": frame_count / fps,
+                "pose": data
+            }
+            pose_data.append(frame_data)
+        return pose_data
 
     def extract_poses_from_video(self, video_path: str, detect_rim: bool = False) -> List[Dict]:
         """Extract poses from all frames in video"""
