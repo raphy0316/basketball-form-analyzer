@@ -1,6 +1,4 @@
-Here you go — the full README written in **Markdown syntax**:
 
-````markdown
 # Basketball Form Analyzer - Mobile App
 
 This project is a **React Native mobile application** for analyzing basketball shooting form using computer vision. It integrates **TensorFlow Lite models** for real-time **pose detection** and **object detection**, and communicates with a backend server for post-recording analysis and storage.
