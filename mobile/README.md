@@ -101,6 +101,7 @@ uvicorn main:app --reload  # For FastAPI
 
 ```
 basketball-form-analyzer/
+├── ball_extraction
 ├── mobile/                   # React Native frontend
 ├── backend/               # FastAPI/Flask backend
 ├── data_collection
