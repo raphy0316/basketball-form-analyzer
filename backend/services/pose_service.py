@@ -1,9 +1,9 @@
 from pose_extraction.pose_extraction_pipeline import PoseExtractionPipeline
-from backend.config import POSE_CONFIDENCE_THRESHOLD, BASE_FILENAME
+from backend.config import POSE_CONFIDENCE_THRESHOLD, BASE_FILENAME, OUTPUT_DIR
 
 class PoseService:
     def __init__(self):
-        self.pose_extraction_pipeline = PoseExtractionPipeline(load_model=False)
+        self.pose_extraction_pipeline = PoseExtractionPipeline(output_dir = OUTPUT_DIR, load_model=False)
 
     def process_pose_data(self, data):
         """
@@ -21,7 +21,7 @@ class PoseService:
         filtered_data = self.pose_extraction_pipeline.filter_low_confidence_poses_api_helper(
             pose_data, confidence_threshold=POSE_CONFIDENCE_THRESHOLD
         )
-
+        print(filtered_data)
         # Save processed data
         saved_file = self.pose_extraction_pipeline.storage_layer.save_original_as_json(
             filtered_data, f"demo_pose_{BASE_FILENAME}.json"
@@ -36,7 +36,15 @@ class PoseService:
         Preprocess pose data from frames.
         """
         pose_data = []
+        frame_count = 0
+        fps = data[0].fps if data else 22  # Default to 22
         for frame in data:
+            frame_count += 1
             pose = {kp.name: {"x": kp.x, "y": kp.y, "confidence": kp.confidence} for kp in frame.keypoints}
-            pose_data.append({"frameId": frame.frameId, "pose": pose})
+            frame_data = {
+                "frame_number": frame_count,
+                "timestamp": frame_count / fps,
+                "pose": pose
+            }
+            pose_data.append(frame_data)
         return pose_data

@@ -153,9 +153,10 @@
 
 from fastapi import FastAPI
 from backend.routes.model_output_routes import model_output_router
-
+import sys
+import os
 app = FastAPI()
-
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # Include routes
 app.include_router(model_output_router, prefix="/model-output", tags=["Model Output"])
 

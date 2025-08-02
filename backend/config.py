@@ -10,7 +10,7 @@ DEFAULT_FPS = 22
 
 # File settings
 BASE_FILENAME = "original"
-OUTPUT_DIR = "demo_data"
+OUTPUT_DIR = "data"
 
 # Pose detection settings
 POSE_CONFIDENCE_THRESHOLD = 0.3
