@@ -15,16 +15,16 @@ const styles = StyleSheet.create({
   switchButton: {
     position: 'absolute',
     bottom: 50,
-    right: 20,
+    left: 20,
     backgroundColor: '#4ECDC4',
     paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     borderRadius: 8,
     zIndex: 1000,
   },
   switchButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: 'bold',
   },
 });
