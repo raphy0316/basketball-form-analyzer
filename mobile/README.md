@@ -23,12 +23,28 @@ This project is a **React Native mobile application** for analyzing basketball s
 - Android Studio (for Android builds)
 - Xcode (for iOS builds)
 
+### IOS setup
+Open `ios/StickmanDancingApp/Info.plist` and add the required Camera Permissions:
+
+```bash
+<key>NSCameraUsageDescription</key>
+<string>StickmanDancingApp needs Camera access.</string>
+```
+
+To use the CoreML GPU Delegate, add this to your `ios/Podfile`:
+```bash
+$EnableCoreMLDelegate=true
+```
+### Android setup
+
+`TODO`
+
 ### Installation
 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/your-username/basketball-form-analyzer.git
-cd basketball-form-analyzer
+cd basketball-form-analyzer/mobile
 
 # 2. Install JS dependencies
 yarn install  # or npm install
@@ -72,6 +88,7 @@ python -m venv venv
 source venv/bin/activate  # or .\\venv\\Scripts\\activate (Windows)
 
 # 3. Install dependencies
+`TODO`
 pip install -r requirements.txt
 
 # 4. Run the backend server
@@ -92,33 +109,6 @@ basketball-form-analyzer/
 ├── phase_detection
 ├──basketball_shooting_analyzer.py
 └── basketball_shooting_integrated_pipeline.py
-```
-
----
-
-## 💡 Key Commands
-
-### Mobile App
-
-```bash
-# Start Metro
-yarn start
-
-# iOS build
-yarn ios
-
-# Android build
-yarn android
-```
-
-### Backend
-
-```bash
-# Start backend
-uvicorn main:app --reload
-
-# Install backend dependencies
-pip install -r requirements.txt
 ```
 
 ---
