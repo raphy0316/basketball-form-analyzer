@@ -1,7 +1,7 @@
 
 # Basketball Form Analyzer - Mobile App
 
-This project is a **React Native mobile application** for analyzing basketball shooting form using computer vision. It integrates **TensorFlow Lite models** for real-time **pose detection** and **object detection**, and communicates with a backend server for post-recording analysis and storage.
+This project is a **React Native mobile application** for analyzing basketball shooting form using computer vision. It integrates **TensorFlow Lite models** and for real-time **pose detection** and **object detection**, and communicates with a backend server for post-recording analysis and storage.
 
 ---
 
@@ -84,12 +84,14 @@ uvicorn main:app --reload  # For FastAPI
 
 ```
 basketball-form-analyzer/
-├── app/                   # React Native frontend
+├── mobile/                   # React Native frontend
 ├── backend/               # FastAPI/Flask backend
-├── assets/                # TFLite models, images, fonts
-├── utils/                 # Shared JS utility modules
-├── constants/             # Pose keypoint names & skeleton
-└── README.md
+├── data_collection
+├── data
+├── pose_extration
+├── phase_detection
+├──basketball_shooting_analyzer.py
+└── basketball_shooting_integrated_pipeline.py
 ```
 
 ---
