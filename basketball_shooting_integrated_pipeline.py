@@ -81,20 +81,22 @@ class BasketballShootingIntegratedPipeline:
                 print("❌ Failed to load original data")
                 return False
             
-            # STEP 3: Normalize and save data
-            print("\n🔄 STEP 3: Normalize and save data")
+            # STEP 3: Segment shooting phases
+            print("\n🎯 STEP 3: Segment shooting phases")
             print("-" * 30)
-            print("  - Torso-based scaling normalization")
-            print("  - Consistent scaling across different video resolutions")
-            
-            self.analyzer.normalize_pose_data(video_path)
-            
-            # STEP 4: Segment shooting phases
-            print("\n🎯 STEP 4: Segment shooting phases")
-            print("-" * 30)
+            print("  - Dynamic torso measurement from first transition")
+            print("  - FPS-adjusted thresholds")
             
             self.analyzer.segment_shooting_phases("hybrid_fps")
             print("✅ Phase segmentation completed (using hybrid FPS-based detector)")
+            
+            # STEP 4: Normalize and save data
+            print("\n🔄 STEP 4: Normalize and save data")
+            print("-" * 30)
+            print("  - Using torso measurement from first phase transition")
+            print("  - Direction normalization and coordinate standardization")
+            
+            self.analyzer.normalize_pose_data(video_path)
             
             # STEP 5: Save analysis results
             print("\n💾 STEP 5: Save analysis results")
@@ -265,14 +267,14 @@ class BasketballShootingIntegratedPipeline:
         print("\n🎬 STEP 0: Select processing mode")
         print("=" * 50)
         print("Available processing options:")
-        print(f"[1] Single video selection ({len(self.available_videos)} total videos)")
+        print(f"[1] Multiple video selection ({len(self.available_videos)} total videos)")
         print(f"[2] Process all Standard videos ({len(standard_videos)} videos)")
         print(f"[3] Process all EdgeCase videos ({len(edgecase_videos)} videos)")
         print(f"[4] Process all Bakke videos ({len(bakke_videos)} videos)")
         print(f"[5] Process all Test videos ({len(test_videos)} videos)")
         print(f"[6] Process all videos ({len(self.available_videos)} videos)")
         print("[7] Cancel")
-        print("\n💡 Tip: You can select multiple options (e.g., '2,1,3' to process Standard → Single → EdgeCase)")
+        print("\n💡 Tip: You can select multiple options (e.g., '2,1,3' to process Standard → Multiple → EdgeCase)")
         
         while True:
             try:
@@ -288,26 +290,74 @@ class BasketballShootingIntegratedPipeline:
                 
                 for selection in selections:
                     if selection == "1":
-                        print(f"\n📹 Single video selection:")
+                        print(f"\n📹 Multiple video selection:")
                         print("Available videos:")
                         for i, video in enumerate(self.available_videos, 1):
                             print(f"  [{i}] {os.path.basename(video)}")
                         
-                        video_choice = input("Enter the number or file name: ").strip()
-                        if video_choice.isdigit():
-                            idx = int(video_choice) - 1
-                            if 0 <= idx < len(self.available_videos):
-                                selected_modes.append(self.available_videos[idx])
-                            else:
-                                print("❌ Invalid number.")
-                                continue
+                        print("\n💡 Tip: You can select multiple videos using:")
+                        print("   - Numbers: '1,3,5' or '1-3' or '1,3-5,7'")
+                        print("   - Names: 'video1.mp4,video2.mp4'")
+                        print("   - Mixed: '1,video2.mp4,5-7'")
+                        print("   - All: 'all'")
+                        
+                        video_choices = input("Enter video selection(s): ").strip()
+                        
+                        if video_choices.lower() == 'all':
+                            selected_modes.extend(self.available_videos)
+                            print(f"✅ Added: All videos ({len(self.available_videos)} videos)")
                         else:
-                            for video in self.available_videos:
-                                if os.path.basename(video) == video_choice:
-                                    selected_modes.append(video)
-                                    break
+                            # Parse multiple video selections
+                            video_selections = [choice.strip() for choice in video_choices.split(',')]
+                            added_videos = []
+                            
+                            for video_choice in video_selections:
+                                # Handle range notation (e.g., "1-3", "5-8")
+                                if '-' in video_choice and video_choice.replace('-', '').replace(' ', '').isdigit():
+                                    try:
+                                        start, end = map(int, video_choice.split('-'))
+                                        for idx in range(start - 1, min(end, len(self.available_videos))):
+                                            if 0 <= idx < len(self.available_videos):
+                                                video_path = self.available_videos[idx]
+                                                if video_path not in selected_modes and video_path not in added_videos:
+                                                    selected_modes.append(video_path)
+                                                    added_videos.append(video_path)
+                                    except ValueError:
+                                        print(f"❌ Invalid range format: {video_choice}")
+                                        continue
+                                        
+                                # Handle single number
+                                elif video_choice.isdigit():
+                                    idx = int(video_choice) - 1
+                                    if 0 <= idx < len(self.available_videos):
+                                        video_path = self.available_videos[idx]
+                                        if video_path not in selected_modes and video_path not in added_videos:
+                                            selected_modes.append(video_path)
+                                            added_videos.append(video_path)
+                                    else:
+                                        print(f"❌ Invalid number: {video_choice}")
+                                        continue
+                                        
+                                # Handle filename
+                                else:
+                                    found = False
+                                    for video in self.available_videos:
+                                        if os.path.basename(video) == video_choice:
+                                            if video not in selected_modes and video not in added_videos:
+                                                selected_modes.append(video)
+                                                added_videos.append(video)
+                                            found = True
+                                            break
+                                    if not found:
+                                        print(f"❌ Video not found: {video_choice}")
+                                        continue
+                            
+                            if added_videos:
+                                print(f"✅ Added {len(added_videos)} video(s):")
+                                for video in added_videos:
+                                    print(f"   - {os.path.basename(video)}")
                             else:
-                                print("❌ Invalid selection.")
+                                print("❌ No valid videos selected.")
                                 continue
                     elif selection == "2":
                         if standard_videos:

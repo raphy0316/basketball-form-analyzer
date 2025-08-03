@@ -37,17 +37,28 @@ class DTWProcessor:
         ]
         
         # Phase-specific features
-        self.loading_rising_features = [
+        # Loading phase specific features (딥, 스쿼트, 준비 자세)
+        self.loading_features = [
             'foot_rim_difference',       # 발의 림 방향 차이
-            'ball_hip_vertical_distance', # 공-엉덩이 수직거리
-            'hip_knee_ankle_angle',      # 엉덩이-무릎-발목 각도
-            'shoulder_hip_knee_angle',   # 어깨-엉덩이-무릎 각도
+            'ball_hip_vertical_distance', # 공-엉덩이 수직거리 (딥 측정)
+            'hip_knee_ankle_angle',      # 엉덩이-무릎-발목 각도 (스쿼트 자세)
+            'shoulder_hip_knee_angle',   # 어깨-엉덩이-무릎 각도 (상체 준비)
             'hip_shoulder_incline_angle', # 엉덩이-어깨 기울기 각도
+            'ankle_width_vs_shoulder_width', # 발목 간격 vs 어깨 간격 (스탠스)
+        ]
+        
+        # Rising phase specific features (윈드업, 상승, 셋포인트)
+        self.rising_features = [
             'windup_trajectory_length',  # 윈드업 궤도 길이
             'dip_to_setpoint_time',      # 딥에서 셋포인트까지 시간
-            'ankle_width_vs_shoulder_width', # 발목 간격 vs 어깨 간격
+            'shoulder_elbow_wrist_angle', # 어깨-팔꿈치-손목 각도 (셋포인트 준비)
+            'elbow_shoulder_hip_angle',   # 팔꿈치-어깨-엉덩이 각도 (상승 자세)
+            'ball_to_eye_vertical_distance', # 공-눈 수직거리 (셋포인트 높이)
             'upward_movement_after_setpoint' # 셋포인트 후 상승 여부
         ]
+        
+        # Legacy: Combined features (backward compatibility)
+        self.loading_rising_features = self.loading_features + self.rising_features
         
         self.release_features = [
             'shoulder_elbow_wrist_angle', # 어깨-팔꿈치-손목 각도
@@ -171,28 +182,28 @@ class DTWProcessor:
         eyes = pose.get(f"{selected_hand}_eye", {})
         
         # Calculate overall features
-        if hip and knee and ankle:
+        if self._has_valid_coordinates(hip, knee, ankle):
             features['hip_knee_ankle_angle'] = self._calculate_angle(
                 hip['x'], hip['y'], knee['x'], knee['y'], ankle['x'], ankle['y']
             )
         else:
             features['hip_knee_ankle_angle'] = 0.0
             
-        if shoulder and hip and knee:
+        if self._has_valid_coordinates(shoulder, hip, knee):
             features['shoulder_hip_knee_angle'] = self._calculate_angle(
                 shoulder['x'], shoulder['y'], hip['x'], hip['y'], knee['x'], knee['y']
             )
         else:
             features['shoulder_hip_knee_angle'] = 0.0
             
-        if shoulder and elbow and wrist:
+        if self._has_valid_coordinates(shoulder, elbow, wrist):
             features['shoulder_elbow_wrist_angle'] = self._calculate_angle(
                 shoulder['x'], shoulder['y'], elbow['x'], elbow['y'], wrist['x'], wrist['y']
             )
         else:
             features['shoulder_elbow_wrist_angle'] = 0.0
             
-        if elbow and shoulder and hip:
+        if self._has_valid_coordinates(elbow, shoulder, hip):
             features['elbow_shoulder_hip_angle'] = self._calculate_angle(
                 elbow['x'], elbow['y'], shoulder['x'], shoulder['y'], hip['x'], hip['y']
             )
@@ -200,21 +211,21 @@ class DTWProcessor:
             features['elbow_shoulder_hip_angle'] = 0.0
         
         # Calculate distances
-        if ball and eyes:
+        if self._has_valid_coordinates(ball, eyes):
             features['ball_to_eye_vertical_distance'] = self._calculate_vertical_distance(ball, eyes)
         else:
             features['ball_to_eye_vertical_distance'] = 0.0
             
-        if elbow and eyes:
+        if self._has_valid_coordinates(elbow, eyes):
             features['elbow_to_eye_height'] = self._calculate_vertical_distance(elbow, eyes)
         else:
             features['elbow_to_eye_height'] = 0.0
         
         return features
     
-    def extract_loading_rising_features_from_frame(self, frame: Dict, selected_hand: str = "right") -> Dict[str, float]:
+    def extract_loading_features_from_frame(self, frame: Dict, selected_hand: str = "right") -> Dict[str, float]:
         """
-        Extract loading & rising phase specific features.
+        Extract loading phase specific features (딥, 스쿼트, 준비 자세).
         """
         pose = frame.get("normalized_pose", {})
         ball = frame.get("normalized_ball", {})
@@ -223,8 +234,6 @@ class DTWProcessor:
         
         # Extract joint positions
         shoulder = pose.get(f"{selected_hand}_shoulder", {})
-        elbow = pose.get(f"{selected_hand}_elbow", {})
-        wrist = pose.get(f"{selected_hand}_wrist", {})
         hip = pose.get(f"{selected_hand}_hip", {})
         knee = pose.get(f"{selected_hand}_knee", {})
         ankle = pose.get(f"{selected_hand}_ankle", {})
@@ -233,7 +242,7 @@ class DTWProcessor:
         left_shoulder = pose.get("left_shoulder", {})
         right_shoulder = pose.get("right_shoulder", {})
         
-        # Loading & Rising specific features
+        # Loading specific features (딥, 스쿼트, 준비 자세)
         if hip and ball:
             features['ball_hip_vertical_distance'] = self._calculate_vertical_distance(ball, hip)
         else:
@@ -261,12 +270,6 @@ class DTWProcessor:
         # Foot rim difference (simplified)
         features['foot_rim_difference'] = 0.0  # Would need rim position data
         
-        # Windup trajectory (simplified)
-        features['windup_trajectory_length'] = 0.0  # Would need trajectory calculation
-        
-        # Time features (simplified)
-        features['dip_to_setpoint_time'] = 0.0  # Would need timing data
-        
         # Ankle width vs shoulder width
         if left_ankle and right_ankle and left_shoulder and right_shoulder:
             ankle_width = abs(left_ankle['x'] - right_ankle['x'])
@@ -275,10 +278,69 @@ class DTWProcessor:
         else:
             features['ankle_width_vs_shoulder_width'] = 0.0
         
+        return features
+
+    def extract_rising_features_from_frame(self, frame: Dict, selected_hand: str = "right") -> Dict[str, float]:
+        """
+        Extract rising phase specific features (윈드업, 상승, 셋포인트).
+        """
+        pose = frame.get("normalized_pose", {})
+        ball = frame.get("normalized_ball", {})
+        
+        features = {}
+        
+        # Extract joint positions
+        shoulder = pose.get(f"{selected_hand}_shoulder", {})
+        elbow = pose.get(f"{selected_hand}_elbow", {})
+        wrist = pose.get(f"{selected_hand}_wrist", {})
+        hip = pose.get(f"{selected_hand}_hip", {})
+        eyes = pose.get(f"{selected_hand}_eye", {})
+        
+        # Rising specific features (윈드업, 상승, 셋포인트)
+        if shoulder and elbow and wrist:
+            features['shoulder_elbow_wrist_angle'] = self._calculate_angle(
+                shoulder['x'], shoulder['y'], elbow['x'], elbow['y'], wrist['x'], wrist['y']
+            )
+        else:
+            features['shoulder_elbow_wrist_angle'] = 0.0
+            
+        if elbow and shoulder and hip:
+            features['elbow_shoulder_hip_angle'] = self._calculate_angle(
+                elbow['x'], elbow['y'], shoulder['x'], shoulder['y'], hip['x'], hip['y']
+            )
+        else:
+            features['elbow_shoulder_hip_angle'] = 0.0
+        
+        if ball and eyes:
+            features['ball_to_eye_vertical_distance'] = self._calculate_vertical_distance(ball, eyes)
+        else:
+            features['ball_to_eye_vertical_distance'] = 0.0
+        
+        # Windup trajectory (simplified)
+        features['windup_trajectory_length'] = 0.0  # Would need trajectory calculation
+        
+        # Time features (simplified)
+        features['dip_to_setpoint_time'] = 0.0  # Would need timing data
+        
         # Upward movement (simplified)
         features['upward_movement_after_setpoint'] = 0.0  # Would need movement analysis
         
         return features
+
+    def extract_loading_rising_features_from_frame(self, frame: Dict, selected_hand: str = "right") -> Dict[str, float]:
+        """
+        Extract loading & rising phase specific features (legacy method for backward compatibility).
+        """
+        # Combine loading and rising features for backward compatibility
+        loading_features = self.extract_loading_features_from_frame(frame, selected_hand)
+        rising_features = self.extract_rising_features_from_frame(frame, selected_hand)
+        
+        # Merge both feature sets
+        combined_features = {}
+        combined_features.update(loading_features)
+        combined_features.update(rising_features)
+        
+        return combined_features
     
     def extract_release_features_from_frame(self, frame: Dict, selected_hand: str = "right") -> Dict[str, float]:
         """
@@ -398,7 +460,7 @@ class DTWProcessor:
         
         Args:
             phase_frames: List of frame data for a phase
-            feature_type: Type of features to extract ("overall", "loading_rising", "release", "follow_through")
+            feature_type: Type of features to extract ("overall", "loading", "rising", "loading_rising", "release", "follow_through")
             selected_hand: Which hand is being used for shooting
             
         Returns:
@@ -407,22 +469,48 @@ class DTWProcessor:
         features_list = []
         
         for frame in phase_frames:
-            if feature_type == "overall":
-                features = self.extract_overall_features_from_frame(frame, selected_hand)
-                feature_names = self.overall_feature_names
-            elif feature_type == "loading_rising":
-                features = self.extract_loading_rising_features_from_frame(frame, selected_hand)
-                feature_names = self.loading_rising_features
-            elif feature_type == "release":
-                features = self.extract_release_features_from_frame(frame, selected_hand)
-                feature_names = self.release_features
-            elif feature_type == "follow_through":
-                features = self.extract_follow_through_features_from_frame(frame, selected_hand)
-                feature_names = self.follow_through_features
-            else:
-                raise ValueError(f"Unknown feature type: {feature_type}")
-            
-            features_list.append([features[name] for name in feature_names])
+            try:
+                if feature_type == "overall":
+                    features = self.extract_overall_features_from_frame(frame, selected_hand)
+                    feature_names = self.overall_feature_names
+                elif feature_type == "loading":
+                    features = self.extract_loading_features_from_frame(frame, selected_hand)
+                    feature_names = self.loading_features
+                elif feature_type == "rising":
+                    features = self.extract_rising_features_from_frame(frame, selected_hand)
+                    feature_names = self.rising_features
+                elif feature_type == "loading_rising":
+                    features = self.extract_loading_rising_features_from_frame(frame, selected_hand)
+                    feature_names = self.loading_rising_features
+                elif feature_type == "release":
+                    features = self.extract_release_features_from_frame(frame, selected_hand)
+                    feature_names = self.release_features
+                elif feature_type == "follow_through":
+                    features = self.extract_follow_through_features_from_frame(frame, selected_hand)
+                    feature_names = self.follow_through_features
+                else:
+                    raise ValueError(f"Unknown feature type: {feature_type}")
+                
+                features_list.append([features[name] for name in feature_names])
+            except Exception as e:
+                print(f"⚠️  Error extracting features from frame: {e}")
+                # Create zero features for failed frame
+                if feature_type == "overall":
+                    feature_names = self.overall_feature_names
+                elif feature_type == "loading":
+                    feature_names = self.loading_features
+                elif feature_type == "rising":
+                    feature_names = self.rising_features
+                elif feature_type == "loading_rising":
+                    feature_names = self.loading_rising_features
+                elif feature_type == "release":
+                    feature_names = self.release_features
+                elif feature_type == "follow_through":
+                    feature_names = self.follow_through_features
+                else:
+                    feature_names = []
+                
+                features_list.append([0.0] * len(feature_names))
         
         return np.array(features_list)
     
@@ -539,10 +627,11 @@ class DTWProcessor:
             'feature_names': self.overall_feature_names
         }
     
-    def analyze_loading_rising_phases(self, json_file1: str, json_file2: str,
-                                     selected_hand: str = "right") -> Dict:
+    def analyze_loading_phases(self, json_file1: str, json_file2: str,
+                              selected_hand: str = "right") -> Dict:
         """
-        Analyze Loading and Rising phases using feature-based DTW.
+        Analyze Loading phases using feature-based DTW.
+        Includes Loading-Rising frames as part of Loading phase.
         
         Args:
             json_file1: Path to first JSON file
@@ -554,29 +643,80 @@ class DTWProcessor:
         """
         # Load data
         self.load_data(json_file1)
-        phase_frames1 = self.get_combined_phase_frames(["Loading", "Rising", "Loading-Rising"])
+        phase_frames1 = self.get_combined_phase_frames(["Loading", "Loading-Rising"])
         
         self.load_data(json_file2)
-        phase_frames2 = self.get_combined_phase_frames(["Loading", "Rising", "Loading-Rising"])
+        phase_frames2 = self.get_combined_phase_frames(["Loading", "Loading-Rising"])
         
         if not phase_frames1 or not phase_frames2:
             return {
-                "error": "No Loading/Rising/Loading-Rising phases found in one or both files",
+                "error": "No Loading/Loading-Rising phases found in one or both files",
                 "distance": float('inf'),
                 "path": []
             }
         
-        # Extract features
-        features1 = self.extract_phase_features(phase_frames1, "loading_rising", selected_hand)
-        features2 = self.extract_phase_features(phase_frames2, "loading_rising", selected_hand)
+        # Extract loading-specific features (Loading + Loading-Rising frames but with loading features only)
+        features1 = self.extract_phase_features(phase_frames1, "loading", selected_hand)
+        features2 = self.extract_phase_features(phase_frames2, "loading", selected_hand)
         
         # Perform DTW
         distance, path = self.perform_feature_dtw(features1, features2)
         
         return {
-            "distance": distance,
-            "path": path,
-            "features_used": self.loading_rising_features,
+            "phase": "loading",
+            "method": "feature",
+            "dtw_distance": distance,
+            "warping_path": path,
+            "sequence1_length": len(features1),
+            "sequence2_length": len(features2),
+            "feature_names": self.loading_features,
+            "frames1": len(phase_frames1),
+            "frames2": len(phase_frames2)
+        }
+    
+    def analyze_rising_phases(self, json_file1: str, json_file2: str,
+                             selected_hand: str = "right") -> Dict:
+        """
+        Analyze Rising phases using feature-based DTW.
+        Includes Loading-Rising frames as part of Rising phase.
+        
+        Args:
+            json_file1: Path to first JSON file
+            json_file2: Path to second JSON file
+            selected_hand: Which hand is being used for shooting
+            
+        Returns:
+            Dictionary containing DTW analysis results
+        """
+        # Load data
+        self.load_data(json_file1)
+        phase_frames1 = self.get_combined_phase_frames(["Rising", "Loading-Rising"])
+        
+        self.load_data(json_file2)
+        phase_frames2 = self.get_combined_phase_frames(["Rising", "Loading-Rising"])
+        
+        if not phase_frames1 or not phase_frames2:
+            return {
+                "error": "No Rising/Loading-Rising phases found in one or both files",
+                "distance": float('inf'),
+                "path": []
+            }
+        
+        # Extract rising-specific features (Rising + Loading-Rising frames but with rising features only)
+        features1 = self.extract_phase_features(phase_frames1, "rising", selected_hand)
+        features2 = self.extract_phase_features(phase_frames2, "rising", selected_hand)
+        
+        # Perform DTW
+        distance, path = self.perform_feature_dtw(features1, features2)
+        
+        return {
+            "phase": "rising", 
+            "method": "feature",
+            "dtw_distance": distance,
+            "warping_path": path,
+            "sequence1_length": len(features1),
+            "sequence2_length": len(features2),
+            "feature_names": self.rising_features,
             "frames1": len(phase_frames1),
             "frames2": len(phase_frames2)
         }
@@ -593,6 +733,20 @@ class DTWProcessor:
         self.load_data(json_file2)
         frames2 = self.get_phase_frames("Release")
         
+        if not frames1 or not frames2:
+            return {
+                "error": "No Release phases found in one or both files",
+                "phase": "release",
+                "method": "feature",
+                "dtw_distance": float('inf'),
+                "warping_path": [],
+                "sequence1_length": 0,
+                "sequence2_length": 0,
+                "frames1": len(frames1) if frames1 else 0,
+                "frames2": len(frames2) if frames2 else 0,
+                "feature_names": self.release_features
+            }
+        
         # Extract features
         features1 = self.extract_phase_features(frames1, "release", selected_hand)
         features2 = self.extract_phase_features(frames2, "release", selected_hand)
@@ -607,6 +761,8 @@ class DTWProcessor:
             'warping_path': path,
             'sequence1_length': len(features1),
             'sequence2_length': len(features2),
+            'frames1': len(frames1),
+            'frames2': len(frames2),
             'feature_names': self.release_features
         }
     
@@ -617,10 +773,24 @@ class DTWProcessor:
         """
         # Load data and get follow-through frames
         self.load_data(json_file1)
-        frames1 = self.get_phase_frames("FollowThrough")
+        frames1 = self.get_phase_frames("Follow-through")
         
         self.load_data(json_file2)
-        frames2 = self.get_phase_frames("FollowThrough")
+        frames2 = self.get_phase_frames("Follow-through")
+        
+        if not frames1 or not frames2:
+            return {
+                "error": "No Follow-through phases found in one or both files",
+                "phase": "follow_through",
+                "method": "feature",
+                "dtw_distance": float('inf'),
+                "warping_path": [],
+                "sequence1_length": 0,
+                "sequence2_length": 0,
+                "frames1": len(frames1) if frames1 else 0,
+                "frames2": len(frames2) if frames2 else 0,
+                "feature_names": self.follow_through_features
+            }
         
         # Extract features
         features1 = self.extract_phase_features(frames1, "follow_through", selected_hand)
@@ -636,6 +806,8 @@ class DTWProcessor:
             'warping_path': path,
             'sequence1_length': len(features1),
             'sequence2_length': len(features2),
+            'frames1': len(frames1),
+            'frames2': len(frames2),
             'feature_names': self.follow_through_features
         }
     
@@ -647,7 +819,8 @@ class DTWProcessor:
         results = {
             'coordinate_overall': [],
             'feature_overall': [],
-            'loading_rising': [],
+            'loading': [],
+            'rising': [],
             'release': [],
             'follow_through': []
         }
@@ -671,12 +844,19 @@ class DTWProcessor:
                 results['feature_overall'].append(feature_result)
                 
                 # Phase-specific analysis
-                lr_result = self.analyze_loading_rising_phases(
+                loading_result = self.analyze_loading_phases(
                     json_files[i], json_files[j], selected_hand
                 )
-                lr_result['file1'] = json_files[i]
-                lr_result['file2'] = json_files[j]
-                results['loading_rising'].append(lr_result)
+                loading_result['file1'] = json_files[i]
+                loading_result['file2'] = json_files[j]
+                results['loading'].append(loading_result)
+                
+                rising_result = self.analyze_rising_phases(
+                    json_files[i], json_files[j], selected_hand
+                )
+                rising_result['file1'] = json_files[i]
+                rising_result['file2'] = json_files[j]
+                results['rising'].append(rising_result)
                 
                 release_result = self.analyze_release_phases(
                     json_files[i], json_files[j], selected_hand
@@ -695,6 +875,13 @@ class DTWProcessor:
         return results
     
     # Helper methods for calculations
+    def _has_valid_coordinates(self, *points) -> bool:
+        """Check if all points have valid x, y coordinates."""
+        for point in points:
+            if not point or 'x' not in point or 'y' not in point:
+                return False
+        return True
+    
     def _calculate_angle(self, ax: float, ay: float, bx: float, by: float, 
                         cx: float, cy: float) -> float:
         """Calculate angle between three points."""

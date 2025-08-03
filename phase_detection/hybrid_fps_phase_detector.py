@@ -16,17 +16,18 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
     # Base thresholds (relative to torso length)
     BASE_THRESHOLDS = {
         "movement": 0.040,      # 2% of torso length for Set-up→Loading (hip/shoulder movement)
-        "elbow_relative": 0.015, # 1% of torso length for elbow relative movement
-        "wrist_relative": 0.040, # 1.5% of torso length for wrist relative movement
-        "ball_relative": 0.045,  # 1.8% of torso length for ball relative movement
-        "ball_size_multiplier": 1.5,  # Ball radius multiplier for threshold
+        "elbow_relative": 0.025, # 1% of torso length for elbow relative movement
+        "wrist_relative": 0.035, # 1.5% of torso length for wrist relative movement
+        "ball_relative": 0.040,  # 1.8% of torso length for ball relative movement
+        "ball_size_multiplier": 1.6,  # Ball radius multiplier for threshold
         "min_elbow_angle": 110,  # Minimum elbow angle (degrees)
-        "wrist_absolute": 0.065, # 2% of torso length for wrist absolute movement (Rising detection)
-        "rise_cancellation": 0.010, # 1.5% of torso length for shoulder/hip rising cancellation (optimized)
+        "wrist_absolute": 0.055, # 2% of torso length for wrist absolute movement (Rising detection)
+        "rise_cancellation": 0.020, # 1.5% of torso length for shoulder/hip rising loading cancellation (optimized)
         "rising_cancel_relative": 0.025, # 0.75% of torso length for rising cancellation relative movement
-        "rising_cancel_absolute": 0.040, # 1.5% of torso length for rising cancellation absolute movement
+        "rising_cancel_absolute": 0.035, # 1.5% of torso length for rising cancellation absolute movement
         "ball_cancel_relative": 0.030, # 1% of torso length for ball rising cancellation relative movement
-        "ball_cancel_absolute": 0.045, # 2% of torso length for ball rising cancellation absolute movement
+        "ball_cancel_absolute": 0.040, # 2% of torso length for ball rising cancellation absolute movement
+        "rising_to_loading_rising": 0.010, # 3% of torso length for Rising→Loading-Rising transition (separate from movement)
     }
     
     def __init__(self, min_phase_duration: int = 1, noise_threshold: int = 4):
@@ -50,16 +51,165 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         # New tracking variable for loading-rising phase
         self.loading_rising_start_frame = None
         
+        # Dynamic torso measurement variables (4 frames before first transition)
+        self.stable_torso_length = None
+        self.torso_measurement_complete = False
+        self.recent_torso_values = []  # Rolling 4-frame window
+        self.recent_torso_frames = []  # Corresponding frame indices
+        self.first_transition_detected = False
+        self.transition_reference_torso = None
+        self.first_transition_frame = None  # Frame index where first meaningful transition occurred
+        
     def set_fps(self, fps: float):
         """Set FPS for threshold calculations"""
         self.fps = fps
+    
+    def calculate_required_measurement_frames(self) -> int:
+        """Calculate required frames for torso measurement based on FPS"""
+        # 30fps 기준 4프레임, FPS에 비례하여 조정
+        base_frames = 4
+        return max(3, int(base_frames * (self.fps / 30.0)))
+    
+    def update_rolling_torso_measurement(self, frame_idx: int, pose: Dict) -> None:
+        """
+        Update rolling 4-frame torso measurement window.
+        Keeps track of recent 4 frames until first transition is detected.
+        
+        Args:
+            frame_idx: Current frame index
+            pose: Pose data for current frame
+        """
+        if self.first_transition_detected:
+            return  # No more updates needed after first transition
+            
+        # Calculate torso length for current frame
+        torso_length = self.calculate_torso_length(pose)
+        
+        required_frames = self.calculate_required_measurement_frames()
+        
+        if torso_length > 0:
+            # Add new measurement
+            self.recent_torso_values.append(torso_length)
+            self.recent_torso_frames.append(frame_idx)
+            
+            # Keep only the most recent N frames
+            if len(self.recent_torso_values) > required_frames:
+                self.recent_torso_values.pop(0)
+                self.recent_torso_frames.pop(0)
+            
+            # print(f"Frame {frame_idx}: Rolling torso {torso_length:.4f} (window: {len(self.recent_torso_values)}/{required_frames})")  # 로그 제거
+        else:
+            # If no valid measurement, keep previous values but update frame index
+            if self.recent_torso_values and len(self.recent_torso_frames) > 0:
+                # Use the last valid torso measurement
+                last_torso = self.recent_torso_values[-1]
+                self.recent_torso_values.append(last_torso)
+                self.recent_torso_frames.append(frame_idx)
+                
+                # Keep only the most recent N frames
+                if len(self.recent_torso_values) > required_frames:
+                    self.recent_torso_values.pop(0)
+                    self.recent_torso_frames.pop(0)
+                
+                print(f"Frame {frame_idx}: Using previous torso {last_torso:.4f} (no valid measurement)")
+    
+    def reset_for_new_shot(self) -> None:
+        """
+        Reset torso measurement for new shot detection.
+        Only resets if this is a completely new shot (not just continuation).
+        Keeps fixed torso if already finalized.
+        
+        Called when a new shot starts (General → Set-up transition).
+        """
+        print(f"🔄 Resetting torso measurement for new shot...")
+        
+        # Only reset if this is a completely new shot (not just continuation)
+        if not self.torso_measurement_complete:
+            # Reset transition detection flags
+            self.first_transition_detected = False
+            self.torso_measurement_complete = False
+            self.transition_reference_torso = None
+            self.stable_torso_length = None
+            self.first_transition_frame = None
+            
+            # Clear rolling measurements for fresh start
+            self.recent_torso_values = []
+            self.recent_torso_frames = []
+            
+            print(f"   ✅ Torso measurement reset complete (new shot)")
+        else:
+            # Keep existing fixed torso for continuation
+            print(f"   🔒 Keeping existing fixed torso: {self.stable_torso_length:.4f}")
+            
+            # Only clear rolling measurements for fresh tracking
+            self.recent_torso_values = []
+            self.recent_torso_frames = []
+            
+            print(f"   ✅ Rolling measurements cleared, fixed torso maintained")
+    
+    def finalize_transition_reference_torso(self, transition_frame: int) -> None:
+        """
+        Finalize the reference torso measurement based on post-processed first transition.
+        
+        Args:
+            transition_frame: Frame index where first meaningful transition occurred (after cancellation processing)
+        """
+        if self.first_transition_detected:
+            return  # Already finalized
+            
+        # Store the first transition frame for direction calculation
+        self.first_transition_frame = transition_frame
+            
+        required_frames = self.calculate_required_measurement_frames()
+        
+        # Find torso measurements from frames before the transition
+        start_frame = max(0, transition_frame - required_frames)
+        end_frame = transition_frame
+        
+        # Collect torso measurements from the specified range
+        torso_values = []
+        torso_frames = []
+        
+        for frame_idx in range(start_frame, end_frame):
+            if frame_idx < len(self.recent_torso_frames):
+                # Find if this frame is in our recorded measurements
+                try:
+                    measurement_idx = self.recent_torso_frames.index(frame_idx)
+                    torso_values.append(self.recent_torso_values[measurement_idx])
+                    torso_frames.append(frame_idx)
+                except ValueError:
+                    # Frame not in recorded measurements, skip
+                    continue
+        
+        if len(torso_values) >= 3:  # Need at least 3 measurements
+            self.transition_reference_torso = np.mean(torso_values)
+            self.stable_torso_length = self.transition_reference_torso
+            self.torso_measurement_complete = True
+            self.first_transition_detected = True
+            
+            print(f"🎯 Post-processed first transition at frame {transition_frame}!")
+            print(f"   Reference torso from frames {torso_frames}: {[f'{v:.4f}' for v in torso_values]}")
+            print(f"   ✅ Transition reference torso: {self.transition_reference_torso:.4f}")
+        else:
+            # Fallback: use any available measurements
+            if self.recent_torso_values:
+                self.transition_reference_torso = np.mean(self.recent_torso_values[-required_frames:])
+                self.stable_torso_length = self.transition_reference_torso
+                self.torso_measurement_complete = True
+                self.first_transition_detected = True
+                
+                print(f"⚠️ Post-processed transition at frame {transition_frame} with limited measurements")
+                print(f"   Using recent measurements: {[f'{v:.4f}' for v in self.recent_torso_values[-required_frames:]]}")
+                print(f"   ✅ Transition reference torso: {self.transition_reference_torso:.4f}")
+            else:
+                print(f"❌ No valid torso measurements available for transition at frame {transition_frame}")
+                return
         
     def calculate_torso_length(self, pose: Dict) -> float:
         """
-        Calculate torso length from pose data.
+        Calculate torso length from pose data using confidence-weighted average.
         Uses left shoulder-left hip and right shoulder-right hip distances,
-        returns the longer one.
-        If keypoints are missing, uses the last valid torso length.
+        excludes low-confidence measurements and returns average of valid ones.
         
         Args:
             pose: Pose data
@@ -75,14 +225,14 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                 if hasattr(self, 'torso_length') and self.torso_length > 0:
                     return self.torso_length
                 else:
-                    return 0.1  # Default fallback value
+                    return 0.0  # Return 0 instead of default value
             kp_data = pose[keypoint]
             if not isinstance(kp_data, dict) or 'x' not in kp_data or 'y' not in kp_data:
                 # Use last valid torso length if available
                 if hasattr(self, 'torso_length') and self.torso_length > 0:
                     return self.torso_length
                 else:
-                    return 0.1  # Default fallback value
+                    return 0.0  # Return 0 instead of default value
         
         # Get shoulder and hip positions
         left_shoulder = pose['left_shoulder']
@@ -90,20 +240,58 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         left_hip = pose['left_hip']
         right_hip = pose['right_hip']
         
-        # Calculate left torso length (left shoulder to left hip)
-        left_torso_length = np.sqrt(
-            (left_shoulder.get('x', 0) - left_hip.get('x', 0))**2 + 
-            (left_shoulder.get('y', 0) - left_hip.get('y', 0))**2
-        )
+        # Confidence threshold for valid measurements
+        confidence_threshold = 0.3  # 30% 이하는 제외
         
-        # Calculate right torso length (right shoulder to right hip)
-        right_torso_length = np.sqrt(
-            (right_shoulder.get('x', 0) - right_hip.get('x', 0))**2 + 
-            (right_shoulder.get('y', 0) - right_hip.get('y', 0))**2
-        )
+        valid_torso_lengths = []
         
-        # Return the longer torso length
-        torso_length = max(left_torso_length, right_torso_length)
+        # Check left side torso (left shoulder to left hip)
+        left_shoulder_conf = left_shoulder.get('confidence', 1.0)
+        left_hip_conf = left_hip.get('confidence', 1.0)
+        left_avg_conf = (left_shoulder_conf + left_hip_conf) / 2
+        
+        if left_avg_conf >= confidence_threshold:
+            left_torso_length = np.sqrt(
+                (left_shoulder.get('x', 0) - left_hip.get('x', 0))**2 + 
+                (left_shoulder.get('y', 0) - left_hip.get('y', 0))**2
+            )
+            if left_torso_length > 0:
+                valid_torso_lengths.append(left_torso_length)
+                # print(f"   Left torso: {left_torso_length:.4f} (conf: {left_avg_conf:.3f}) ✓")  # 로그 제거
+        else:
+            # print(f"   Left torso: excluded (conf: {left_avg_conf:.3f} < {confidence_threshold}) ✗")  # 로그 제거
+            pass
+        
+        # Check right side torso (right shoulder to right hip)
+        right_shoulder_conf = right_shoulder.get('confidence', 1.0)
+        right_hip_conf = right_hip.get('confidence', 1.0)
+        right_avg_conf = (right_shoulder_conf + right_hip_conf) / 2
+        
+        if right_avg_conf >= confidence_threshold:
+            right_torso_length = np.sqrt(
+                (right_shoulder.get('x', 0) - right_hip.get('x', 0))**2 + 
+                (right_shoulder.get('y', 0) - right_hip.get('y', 0))**2
+            )
+            if right_torso_length > 0:
+                valid_torso_lengths.append(right_torso_length)
+                # print(f"   Right torso: {right_torso_length:.4f} (conf: {right_avg_conf:.3f}) ✓")  # 로그 제거
+        else:
+            # print(f"   Right torso: excluded (conf: {right_avg_conf:.3f} < {confidence_threshold}) ✗")  # 로그 제거
+            pass
+        
+        # Calculate final torso length
+        if len(valid_torso_lengths) > 0:
+            # Use average of valid measurements
+            torso_length = np.mean(valid_torso_lengths)
+            # print(f"   Final torso: {torso_length:.4f} (average of {len(valid_torso_lengths)} measurements)")  # 로그 제거
+        else:
+            # No valid measurements, use last valid torso length
+            if hasattr(self, 'torso_length') and self.torso_length > 0:
+                torso_length = self.torso_length
+                # print(f"   Final torso: {torso_length:.4f} (using last valid measurement)")  # 로그 제거
+            else:
+                torso_length = 0.0
+                # print(f"   Final torso: 0.0 (no valid measurements available)")  # 로그 제거
         
         # Update stored torso length if valid
         if torso_length > 0:
@@ -113,23 +301,23 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
     
     def get_stable_torso_length(self, pose: Dict) -> float:
         """
-        Get stable torso length.
-        Uses current frame's torso length if valid, otherwise uses last valid value.
+        Get stable torso length. Uses pre-calculated average if available,
+        otherwise uses rolling 4-frame average, or 0 if no measurements available.
         
         Args:
             pose: Current pose data
             
         Returns:
-            Stable torso length
+            Stable torso length, rolling average, or 0 if no measurements
         """
-        # Calculate current torso length (with fallback to last valid value)
-        torso_length = self.calculate_torso_length(pose)
-        
-        # Store the torso length for future use
-        if torso_length > 0:
-            self.torso_length = torso_length
-        
-        return torso_length
+        if self.torso_measurement_complete and self.stable_torso_length is not None:
+            return self.stable_torso_length
+        elif len(self.recent_torso_values) >= 4:  # Use 4-frame rolling average
+            return np.mean(self.recent_torso_values[-4:])
+        elif len(self.recent_torso_values) > 0:  # Use all available measurements
+            return np.mean(self.recent_torso_values)
+        else:
+            return 0.0  # No measurements available
     
     def calculate_fps_adjusted_threshold(self, base_threshold: float) -> float:
         """
@@ -235,6 +423,12 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         pose = self.get_pose_info(frame_idx, pose_data)
         ball_info = self.get_ball_info(frame_idx, ball_data)
         
+        # Update rolling torso measurement (until first transition)
+        self.update_rolling_torso_measurement(frame_idx, pose)
+        
+        # Continue torso measurements throughout the entire process
+        # Phase detection will use rolling measurements, first transition will be found later
+        
         # Check for cancellation conditions first (like original)
         cancellation_result = self._is_cancellation_condition(current_phase, frame_idx, pose_data, ball_data, selected_hand)
         if cancellation_result:
@@ -250,9 +444,7 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         # Get selected hand keypoints
         selected_shoulder, selected_elbow, selected_wrist = self.get_selected_hand_keypoints(pose, selected_hand)
        
-        # Check if required keypoints exist
-        if not all([selected_shoulder, selected_elbow, selected_wrist]):
-            return current_phase
+        # Note: Individual phase transitions will validate their required keypoints
         
         # print(selected_shoulder, selected_elbow, selected_wrist)
         # Calculate shoulder position
@@ -331,11 +523,20 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                 
                 distance = ((ball_x - wrist_x)**2 + (ball_y - wrist_y)**2)**0.5
                 
+                # Debug: Print General → Set-up detection info
+                if frame_idx % 30 == 0:  # Print every 30 frames to avoid spam
+                    print(f"   Frame {frame_idx}: Ball({ball_x:.2f},{ball_y:.2f}) Wrist({wrist_x:.2f},{wrist_y:.2f}) Dist={distance:.2f} Threshold={ball_distance_threshold:.2f}")
+                
                 if distance < ball_distance_threshold:
+                    print(f"Frame {frame_idx}: General → Set-up (ball-wrist distance: {distance:.2f} < {ball_distance_threshold:.2f})")
                     # Reset tracking variables when phase changes
                     self.ball_drop_frames = 0
                     self.shoulder_hip_rise_frames = 0
                     return "Set-up"
+            else:
+                # Debug: Print why General → Set-up failed
+                if frame_idx % 30 == 0:  # Print every 30 frames to avoid spam
+                    print(f"   Frame {frame_idx}: General → Set-up blocked - Ball:{ball_info is not None}, Wrist:{selected_wrist is not None and 'x' in selected_wrist if selected_wrist else False}")
         
         # 2. Set-up → Loading: Hip AND shoulder moving downward
         if current_phase == "Set-up":
@@ -543,7 +744,7 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                             self.shoulder_hip_rise_frames = 0
                             return "Rising"
         
-        # 3. Loading → Rising: Wrist and elbow moving upward (relative to torso)
+        # 3. Loading → Loading-Rising: Wrist and elbow moving upward (relative to torso)
         if current_phase == "Loading":
             # Check only required values: selected hand keypoints and hip
             if (selected_elbow and selected_wrist and
@@ -604,17 +805,17 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                         self.loading_rising_start_frame = frame_idx
                         return "Loading-Rising"
         
-        # 3.5. Loading-Rising → rising: Check for loading cancellation conditions
+        # 3.5. Loading-Rising → Rising/Set-up: Check for transition and cancellation conditions
         if current_phase == "Loading-Rising":
-            # Check for loading cancellation conditions (same as Loading phase)
+            # Check for rising transition (shoulder/hip rising - Loading 완료, Rising 시작)
             loading_cancellation_result = self._is_loading_cancellation_condition(frame_idx, pose_data, ball_data, selected_hand)
             if loading_cancellation_result:
                 # Reset tracking variables when phase changes
                 self.ball_drop_frames = 0
                 self.shoulder_hip_rise_frames = 0
                 self.loading_rising_start_frame = None
-                return "Rising"
-            
+                return "Rising"  # Loading 완료, Rising 시작
+        
             # Check for rising cancellation conditions (same as Rising phase)
             rising_cancellation_result = self._is_rising_cancellation_condition(frame_idx, pose_data, ball_data, selected_hand)
             if rising_cancellation_result:
@@ -627,7 +828,7 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
             # Stay in Loading-Rising phase if no cancellation conditions are met
             return "Loading-Rising"
         
-        # 4. Rising → Release: Ball is released with proper form
+        # 4. Rising/Loading-Rising → Release: Ball is released with proper form (Priority Check)
         if current_phase == "Rising" or current_phase == "Loading-Rising":
             # Check only required values: ball info and selected hand keypoints
             if (ball_info is not None and 
@@ -683,7 +884,137 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                         self.shoulder_hip_rise_frames = 0
                         return "General"  # Cancel to General if conditions not met
         
-        # 5. Release → Follow-through: Ball is released and wrist is above shoulder
+        # 5. Rising → Loading-Rising: Check for loading conditions (hip/shoulder/knee moving down)
+        if current_phase == "Rising":
+            # Check for loading conditions (hip/shoulder moving down)
+            if ('left_hip' in pose and 'right_hip' in pose and 
+                'left_shoulder' in pose and 'right_shoulder' in pose and
+                frame_idx > 0):
+                
+                # Hip and shoulder data validation
+                left_hip = pose.get('left_hip', {})
+                right_hip = pose.get('right_hip', {})
+                left_shoulder = pose.get('left_shoulder', {})
+                right_shoulder = pose.get('right_shoulder', {})
+                
+                if (isinstance(left_hip, dict) and 'y' in left_hip and
+                    isinstance(right_hip, dict) and 'y' in right_hip and
+                    isinstance(left_shoulder, dict) and 'y' in left_shoulder and
+                    isinstance(right_shoulder, dict) and 'y' in right_shoulder):
+                    
+                    prev_frame_idx = self._get_previous_valid_frame(frame_idx, pose_data, ball_data)
+                    if prev_frame_idx is not None:
+                        prev_pose = self.get_pose_info(prev_frame_idx, pose_data)
+                        
+                        # Calculate current hip and shoulder positions
+                        left_hip_y = left_hip.get('y', None)
+                        right_hip_y = right_hip.get('y', None)
+                        if left_hip_y is not None and right_hip_y is not None:
+                            hip_y = (left_hip_y + right_hip_y) / 2  # Use average
+                        elif left_hip_y is not None:
+                            hip_y = left_hip_y
+                        elif right_hip_y is not None:
+                            hip_y = right_hip_y
+                        else:
+                            hip_y = 0
+                        
+                        shoulder_y = (left_shoulder['y'] + right_shoulder['y']) / 2
+                        
+                        # Calculate previous hip and shoulder positions
+                        prev_left_hip = prev_pose.get('left_hip', {'y': None})
+                        prev_right_hip = prev_pose.get('right_hip', {'y': None})
+                        prev_left_shoulder = prev_pose.get('left_shoulder', {'y': None})
+                        prev_right_shoulder = prev_pose.get('right_shoulder', {'y': None})
+                        
+                        prev_left_hip_y = prev_left_hip.get('y', None)
+                        prev_right_hip_y = prev_right_hip.get('y', None)
+                        if prev_left_hip_y is not None and prev_right_hip_y is not None:
+                            prev_hip_y = (prev_left_hip_y + prev_right_hip_y) / 2  # Use average
+                        elif prev_left_hip_y is not None:
+                            prev_hip_y = prev_left_hip_y
+                        elif prev_right_hip_y is not None:
+                            prev_hip_y = prev_right_hip_y
+                        else:
+                            prev_hip_y = 0
+                        
+                        # Validate previous shoulder data
+                        if (isinstance(prev_left_shoulder, dict) and 'y' in prev_left_shoulder and
+                            isinstance(prev_right_shoulder, dict) and 'y' in prev_right_shoulder):
+                            prev_shoulder_y = (prev_left_shoulder['y'] + prev_right_shoulder['y']) / 2
+                            
+                            # Calculate movement changes
+                            d_hip_y = hip_y - prev_hip_y
+                            d_shoulder_y = shoulder_y - prev_shoulder_y
+                            
+                            # Calculate thresholds for Rising→Loading-Rising transition (separate from movement)
+                            rising_to_loading_rising_threshold = self.calculate_hybrid_threshold(pose, "rising_to_loading_rising")
+                            
+                            conditions = []
+                            
+                            # Hip moving downward (y-coordinate increasing)
+                            if d_hip_y > rising_to_loading_rising_threshold:
+                                conditions.append("hip_down")
+                            
+                            # Shoulder moving downward
+                            if d_shoulder_y > rising_to_loading_rising_threshold:
+                                conditions.append("shoulder_down")
+                            
+                            # Knee angles decreasing (squatting motion)
+                            # Knee angle calculation validation
+                            if ('left_hip' in pose and 'right_hip' in pose and
+                                'left_knee' in pose and 'right_knee' in pose and
+                                'left_ankle' in pose and 'right_ankle' in pose and
+                                'left_hip' in prev_pose and 'right_hip' in prev_pose and
+                                'left_knee' in prev_pose and 'right_knee' in prev_pose and
+                                'left_ankle' in prev_pose and 'right_ankle' in prev_pose):
+                                
+                                # Calculate current knee angles
+                                left_knee_angle = self.calculate_angle(
+                                    pose.get('left_hip', {}).get('x', 0), pose.get('left_hip', {}).get('y', 0),
+                                    pose.get('left_knee', {}).get('x', 0), pose.get('left_knee', {}).get('y', 0),
+                                    pose.get('left_ankle', {}).get('x', 0), pose.get('left_ankle', {}).get('y', 0)
+                                )
+                                right_knee_angle = self.calculate_angle(
+                                    pose.get('right_hip', {}).get('x', 0), pose.get('right_hip', {}).get('y', 0),
+                                    pose.get('right_knee', {}).get('x', 0), pose.get('right_knee', {}).get('y', 0),
+                                    pose.get('right_ankle', {}).get('x', 0), pose.get('right_ankle', {}).get('y', 0)
+                                )
+                                
+                                # Calculate previous knee angles
+                                prev_left_knee_angle = self.calculate_angle(
+                                    prev_pose.get('left_hip', {}).get('x', 0), prev_pose.get('left_hip', {}).get('y', 0),
+                                    prev_pose.get('left_knee', {}).get('x', 0), prev_pose.get('left_knee', {}).get('y', 0),
+                                    prev_pose.get('left_ankle', {}).get('x', 0), prev_pose.get('left_ankle', {}).get('y', 0)
+                                )
+                                prev_right_knee_angle = self.calculate_angle(
+                                    prev_pose.get('right_hip', {}).get('x', 0), prev_pose.get('right_hip', {}).get('y', 0),
+                                    prev_pose.get('right_knee', {}).get('x', 0), prev_pose.get('right_knee', {}).get('y', 0),
+                                    prev_pose.get('right_ankle', {}).get('x', 0), prev_pose.get('right_ankle', {}).get('y', 0)
+                                )
+                            else:
+                                # Set default values if invalid
+                                left_knee_angle = 180
+                                right_knee_angle = 180
+                                prev_left_knee_angle = 180
+                                prev_right_knee_angle = 180
+                            
+                            # Check if knee angles are decreasing (squatting)
+                            left_knee_decreasing = left_knee_angle < prev_left_knee_angle
+                            right_knee_decreasing = right_knee_angle < prev_right_knee_angle
+                            
+                            if left_knee_decreasing and right_knee_decreasing:
+                                conditions.append("knees_bending")
+                            
+                            # ALL THREE conditions must be met: hip down, shoulder down, knees bending
+                            if len(conditions) == 3:
+                                # Reset tracking variables when phase changes
+                                self.ball_drop_frames = 0
+                                self.shoulder_hip_rise_frames = 0
+                                self.loading_rising_start_frame = frame_idx
+                                return "Loading-Rising"
+
+        
+        # 6. Release → Follow-through: Ball is released and wrist is above shoulder
         if current_phase == "Release":
             # Check only required values: ball info and selected hand keypoints
             if (ball_info is not None and 
@@ -712,7 +1043,7 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                 self.shoulder_hip_rise_frames = 0
                 return "Follow-through"  # Maintain phase if no ball info
             
-        # 6. Follow-through → General: Transition to General when wrist goes below eyes
+        # 7. Follow-through → General: Transition to General when wrist goes below eyes
         if current_phase == "Follow-through":
             # Check only required values: selected wrist, both eyes
             if (selected_wrist and 'y' in selected_wrist and
@@ -723,6 +1054,19 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                 right_eye_y = pose['right_eye']['y']
                 eye_y = (left_eye_y + right_eye_y) / 2
                 if wrist_y > eye_y:  # When wrist goes below eyes
+                    # Reset fixed torso for new shot cycle
+                    self.first_transition_detected = False
+                    self.torso_measurement_complete = False
+                    self.transition_reference_torso = None
+                    self.stable_torso_length = None
+                    self.first_transition_frame = None
+                    
+                    # Clear rolling measurements for fresh start
+                    self.recent_torso_values = []
+                    self.recent_torso_frames = []
+                    
+                    print(f"🔄 Follow-through → General: Reset fixed torso for new shot cycle")
+                    
                     self.ball_drop_frames = 0
                     self.shoulder_hip_rise_frames = 0
                     return "General"
@@ -804,7 +1148,7 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
             hip_rising = d_hip_y < -rise_cancellation_threshold
             
             if shoulder_rising and hip_rising:
-                return "Set-up"
+                return "Rising"  # Loading 완료, Rising 시작
         
         return False
 
