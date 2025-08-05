@@ -1,6 +1,9 @@
 *.json
 *.png
 *.csv
+*.txt
+*.pyc
+
 
 data/visualized_video/
 data/video/Unused/

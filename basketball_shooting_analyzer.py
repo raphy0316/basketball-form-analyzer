@@ -2022,13 +2022,13 @@ class BasketballShootingAnalyzer:
             
             # Only include frames that belong to a shot
             if shot_id is not None:
-                frame_result = {
-                    "frame_index": i,
-                    "phase": self.phases[i] if i < len(self.phases) else "Unknown",
+            frame_result = {
+                "frame_index": i,
+                "phase": self.phases[i] if i < len(self.phases) else "Unknown",
                     "shot": shot_id,
-                    "normalized_pose": frame_data["normalized_pose"],
-                    "normalized_ball": frame_data["normalized_ball"],
-                    "scaling_factor": frame_data["scaling_factor"],
+                "normalized_pose": frame_data["normalized_pose"],
+                "normalized_ball": frame_data["normalized_ball"],
+                "scaling_factor": frame_data["scaling_factor"],
                     "ball_detected": frame_data["ball_detected"],
                     "shot_normalization_applied": frame_data.get("shot_normalization_applied", False)
                 }

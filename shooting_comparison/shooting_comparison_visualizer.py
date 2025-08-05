@@ -28,7 +28,7 @@ class ShootingComparisonVisualizer:
         self.comparison_results = None
         self.video1_path = None
         self.video2_path = None
-        self.output_dir = "shooting_comparison/visualized_video"
+        self.output_dir = "data/visualized_video/comparison"
         
         # Ensure output directory exists
         os.makedirs(self.output_dir, exist_ok=True)
@@ -324,185 +324,420 @@ class ShootingComparisonVisualizer:
         
         return comprehensive_matches
     
-    def create_comparison_video(self, output_filename: str = None) -> str:
+    def create_comprehensive_visualizations(self, video1_path: str, video2_path: str, 
+                                         video1_data: Dict, video2_data: Dict,
+                                         comparison_results: Dict, video_info: Dict) -> Dict[str, str]:
         """
-        Create side-by-side comparison video with DTW matching.
+        Create comprehensive visualizations for all DTW analysis types
         
         Args:
-            output_filename: Custom output filename (optional)
+            video1_path: Path to first video
+            video2_path: Path to second video
+            video1_data: First video analysis data
+            video2_data: Second video analysis data
+            comparison_results: DTW comparison results
+            video_info: Video metadata information
             
         Returns:
-            Path to the created video file
+            Dictionary of output video paths
         """
-        if not self.comparison_results:
-            raise ValueError("No comparison results loaded. Call load_comparison_results() first.")
+        output_videos = {}
         
-        if not self.video1_path or not self.video2_path:
-            raise ValueError("Video paths not found in comparison results.")
+        # Create output directory
+        base_name1 = os.path.splitext(os.path.basename(video1_path))[0]
+        base_name2 = os.path.splitext(os.path.basename(video2_path))[0]
+        output_dir = self.output_dir
+        os.makedirs(output_dir, exist_ok=True)
         
-        # Generate output filename if not provided
-        if not output_filename:
-            video1_name = os.path.splitext(os.path.basename(self.video1_path))[0]
-            video2_name = os.path.splitext(os.path.basename(self.video2_path))[0]
-            output_filename = f"{video1_name}_vs_{video2_name}_comparison.mp4"
+        print(f"🎬 Creating comprehensive visualizations...")
         
-        output_path = os.path.join(self.output_dir, output_filename)
-        
-        print(f"🎬 Creating comparison video: {output_filename}")
-        
-        # Open video captures
-        cap1 = cv2.VideoCapture(self.video1_path)
-        cap2 = cv2.VideoCapture(self.video2_path)
-        
-        if not cap1.isOpened() or not cap2.isOpened():
-            raise ValueError("Could not open one or both video files.")
-        
-        # Get video properties
-        fps1 = int(cap1.get(cv2.CAP_PROP_FPS))
-        fps2 = int(cap2.get(cv2.CAP_PROP_FPS))
-        frame_width = int(cap1.get(cv2.CAP_PROP_FRAME_WIDTH))
-        frame_height = int(cap1.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        
-        # Use the FPS of the first video for output
-        output_fps = fps1
-        
-        # Setup video writer
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        panel_height = 200
-        output_width = frame_width * 2
-        output_height = frame_height + panel_height
-        
-        out = cv2.VideoWriter(output_path, fourcc, output_fps, 
-                             (output_width, output_height))
-        
-        # Get DTW warping paths from phase-specific comparisons
-        phase_warping_paths = {}
-        dtw_scores = {}
-        
-        # Extract DTW results for each phase
-        for analysis_type, results in self.comparison_results.items():
-            if analysis_type in ['coordinate_overall', 'feature_overall', 'loading', 'rising', 'release', 'follow_through']:
-                if isinstance(results, dict):
-                    if 'warping_path' in results:
-                        phase_warping_paths[analysis_type] = results['warping_path']
-                    dtw_scores[analysis_type] = results
-        
-        # Load frame data for phase information
-        video1_data_path = self.comparison_results.get('video1_data_path')
-        video2_data_path = self.comparison_results.get('video2_data_path')
-        
-        frame_data1 = []
-        frame_data2 = []
-        
-        if video1_data_path and os.path.exists(video1_data_path):
-            with open(video1_data_path, 'r') as f:
-                data1 = json.load(f)
-                frame_data1 = data1.get('frames', [])
-        
-        if video2_data_path and os.path.exists(video2_data_path):
-            with open(video2_data_path, 'r') as f:
-                data2 = json.load(f)
-                frame_data2 = data2.get('frames', [])
-        
-        # Create comprehensive DTW matching showing all matched frames
-        dtw_matches = self._create_dtw_comprehensive_matching(phase_warping_paths, frame_data1, frame_data2)
-        
-        print(f"📊 Processing {len(dtw_matches)} DTW matched frame pairs...")
-        
-        # Process each DTW match
-        for pair_idx, match_info in enumerate(dtw_matches):
-            frame1_idx = match_info['frame1_idx']
-            frame2_idx = match_info['frame2_idx']
-            # Set frame positions
-            cap1.set(cv2.CAP_PROP_POS_FRAMES, frame1_idx)
-            cap2.set(cv2.CAP_PROP_POS_FRAMES, frame2_idx)
-            
-            # Read frames
-            ret1, frame1 = cap1.read()
-            ret2, frame2 = cap2.read()
-            
-            if not ret1 or not ret2:
-                print(f"⚠️  Could not read frames at indices {frame1_idx}, {frame2_idx}")
-                continue
-            
-            # Resize frames if necessary
-            if frame1.shape[:2] != (frame_height, frame_width):
-                frame1 = cv2.resize(frame1, (frame_width, frame_height))
-            if frame2.shape[:2] != (frame_height, frame_width):
-                frame2 = cv2.resize(frame2, (frame_width, frame_height))
-            
-            # Get phases for current frames
-            phase1 = self._get_frame_phase(frame_data1, frame1_idx)
-            phase2 = self._get_frame_phase(frame_data2, frame2_idx)
-            
-            # Add frame indices as overlay
-            cv2.putText(frame1, f"F:{frame1_idx}", (10, 30), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            cv2.putText(frame2, f"F:{frame2_idx}", (10, 30), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            
-            # Add phase indicators with matching info
-            phase1_color = self.phase_colors.get(phase1, (255, 255, 255))
-            phase2_color = self.phase_colors.get(phase2, (255, 255, 255))
-            
-            # Show phase and matching status
-            match_status = "OK" if phase1 == phase2 else "DIFF"
-            match_color = (0, 255, 0) if phase1 == phase2 else (0, 255, 255)
-            
-            # Extract DTW source and overlap info
-            dtw_source = match_info.get('dtw_source', 'unknown')
-            match_type = match_info.get('match_type', 'dtw_matched')
-            overlap_info = ""
-            
-            if match_type == 'overlapping_dtw':
-                overlap_idx = match_info.get('overlap_index', 1)
-                overlap_total = match_info.get('overlap_total', 1)
-                overlap_info = f" ({overlap_idx}/{overlap_total})"
-            
-            # Display enhanced phase information
-            cv2.putText(frame1, f"{phase1} [{match_status}]", (10, 70), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.8, phase1_color, 2)
-            cv2.putText(frame2, f"{phase2} [{match_status}]", (10, 70), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.8, phase2_color, 2)
-            
-            # Add DTW source information
-            dtw_color = (255, 255, 0)  # Yellow for DTW info
-            cv2.putText(frame1, f"DTW: {dtw_source.upper()}{overlap_info}", (10, 100), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, dtw_color, 2)
-            
-            # Add matching indicator
-            cv2.putText(frame1, f"Match: {match_status}", (10, 130), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, match_color, 2)
-            
-            # Combine frames side by side
-            combined_frame = np.hstack([frame1, frame2])
-            
-            # Create info panel
-            info_panel = self._draw_info_panel(
-                frame_width, frame_height,
-                frame1_idx, frame2_idx,
-                phase1, phase2, dtw_scores
+        # 1. Overall Coordinate-based Visualization
+        if 'coordinate_overall' in comparison_results:
+            print("📊 Creating overall coordinate-based visualization...")
+            coord_overall_path = os.path.join(output_dir, f"{base_name1}_vs_{base_name2}_coord_overall.mp4")
+            success = self._create_overall_visualization(
+                video1_path, video2_path, coord_overall_path,
+                video1_data, video2_data, comparison_results, video_info,
+                'coordinate_overall', 'Coordinate-based Overall'
             )
-            
-            # Combine video and info panel
-            final_frame = np.vstack([combined_frame, info_panel])
-            
-            # Write frame
-            out.write(final_frame)
-            
-            # Progress indicator
-            if pair_idx % 50 == 0:
-                progress = (pair_idx / len(dtw_matches)) * 100
-                print(f"⏳ Progress: {progress:.1f}% ({pair_idx}/{len(dtw_matches)})")
+            if success:
+                output_videos['coord_overall'] = coord_overall_path
         
-        # Cleanup
-        cap1.release()
-        cap2.release()
-        out.release()
+        # 2. Overall Feature-based Visualization
+        if 'feature_overall' in comparison_results:
+            print("📊 Creating overall feature-based visualization...")
+            feature_overall_path = os.path.join(output_dir, f"{base_name1}_vs_{base_name2}_feature_overall.mp4")
+            success = self._create_overall_visualization(
+                video1_path, video2_path, feature_overall_path,
+                video1_data, video2_data, comparison_results, video_info,
+                'feature_overall', 'Feature-based Overall'
+            )
+            if success:
+                output_videos['feature_overall'] = feature_overall_path
         
-        print(f"✅ Comparison video created: {output_path}")
+        # 3. Phase-specific Coordinate-based Visualization
+        print("📊 Creating phase-specific coordinate-based visualization...")
+        coord_phase_path = os.path.join(output_dir, f"{base_name1}_vs_{base_name2}_coord_phases.mp4")
+        success = self._create_phase_specific_visualization(
+            video1_path, video2_path, coord_phase_path,
+            video1_data, video2_data, comparison_results, video_info,
+            'coordinate', 'Coordinate-based Phase'
+        )
+        if success:
+            output_videos['coord_phases'] = coord_phase_path
         
-        return output_path
+        # 4. Phase-specific Feature-based Visualization
+        print("📊 Creating phase-specific feature-based visualization...")
+        feature_phase_path = os.path.join(output_dir, f"{base_name1}_vs_{base_name2}_feature_phases.mp4")
+        success = self._create_phase_specific_visualization(
+            video1_path, video2_path, feature_phase_path,
+            video1_data, video2_data, comparison_results, video_info,
+            'feature', 'Feature-based Phase'
+        )
+        if success:
+            output_videos['feature_phases'] = feature_phase_path
+        
+        return output_videos
+    
+    def _create_overall_visualization(self, video1_path: str, video2_path: str, output_path: str,
+                                     video1_data: Dict, video2_data: Dict,
+                                     comparison_results: Dict, video_info: Dict,
+                                     analysis_type: str, title: str) -> bool:
+        """
+        Create overall visualization (coordinate or feature based)
+        
+        Args:
+            analysis_type: 'coordinate_overall' or 'feature_overall'
+            title: Title for the visualization
+        """
+        try:
+            # Get overall warping path
+            overall_result = comparison_results.get(analysis_type, {})
+            warping_path = overall_result.get('warping_path', [])
+            actual_frame_path = overall_result.get('actual_frame_path', warping_path)
+            
+            if not actual_frame_path:
+                print(f"❌ No warping path found for {analysis_type}")
+                return False
+            
+            # Create video writer
+            cap1 = cv2.VideoCapture(video1_path)
+            cap2 = cv2.VideoCapture(video2_path)
+            
+            if not cap1.isOpened() or not cap2.isOpened():
+                print("❌ Error opening video files")
+                return False
+            
+            # Get video properties
+            fps1 = video_info.get('video1_fps', 30.0)
+            fps2 = video_info.get('video2_fps', 30.0)
+            width1 = int(cap1.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height1 = int(cap1.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            width2 = int(cap2.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height2 = int(cap2.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            
+            output_width = max(width1, width2) * 2
+            output_height = max(height1, height2)
+            
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            out = cv2.VideoWriter(output_path, fourcc, min(fps1, fps2), (output_width, output_height))
+            
+            if not out.isOpened():
+                print("❌ Error creating output video")
+                return False
+            
+            print(f"📊 Processing {len(actual_frame_path)} overall matched frames...")
+            
+            # Process each matched frame pair
+            for i, (frame1_idx, frame2_idx) in enumerate(actual_frame_path):
+                # Read frames
+                cap1.set(cv2.CAP_PROP_POS_FRAMES, frame1_idx)
+                cap2.set(cv2.CAP_PROP_POS_FRAMES, frame2_idx)
+                
+                ret1, frame1 = cap1.read()
+                ret2, frame2 = cap2.read()
+                
+                if not ret1 or not ret2:
+                    print(f"⚠️  Failed to read frames: V1:{frame1_idx}, V2:{frame2_idx}")
+                    continue
+                
+                # Resize frames
+                frame1_resized = cv2.resize(frame1, (output_width // 2, output_height))
+                frame2_resized = cv2.resize(frame2, (output_width // 2, output_height))
+                
+                # Create side-by-side frame
+                combined_frame = np.hstack([frame1_resized, frame2_resized])
+                
+                # Add title and frame info
+                combined_frame = self._add_overlay_text(
+                    combined_frame, title, frame1_idx, frame2_idx, i, len(actual_frame_path)
+                )
+                
+                out.write(combined_frame)
+                
+                # Progress indicator
+                if i % 30 == 0:
+                    progress = (i / len(actual_frame_path)) * 100
+                    print(f"   📈 Progress: {progress:.1f}%")
+            
+            cap1.release()
+            cap2.release()
+            out.release()
+            
+            print(f"✅ {title} visualization created: {os.path.basename(output_path)}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error creating {title} visualization: {e}")
+            return False
+    
+    def _create_phase_specific_visualization(self, video1_path: str, video2_path: str, output_path: str,
+                                           video1_data: Dict, video2_data: Dict,
+                                           comparison_results: Dict, video_info: Dict,
+                                           analysis_type: str, title: str) -> bool:
+        """
+        Create phase-specific visualization (coordinate or feature based)
+        
+        Args:
+            analysis_type: 'coordinate' or 'feature'
+            title: Title for the visualization
+        """
+        try:
+            # Get phase-specific warping paths
+            phase_paths = {}
+            phase_order = ['loading', 'rising', 'release', 'follow_through']
+            
+            print(f"\n🔍 Available comparison results keys: {list(comparison_results.keys())}")
+            
+            for phase in phase_order:
+                phase_key = f"{phase}_{analysis_type}" if analysis_type == 'coordinate' else phase
+                print(f"   Looking for key: {phase_key}")
+                if phase_key in comparison_results:
+                    phase_result = comparison_results[phase_key]
+                    warping_path = phase_result.get('warping_path', [])
+                    actual_frame_path = phase_result.get('actual_frame_path', [])
+                    print(f"   Found {phase_key}: {len(warping_path)} warping path entries")
+                    print(f"   Actual frame path: {len(actual_frame_path)} entries")
+                    if warping_path:
+                        phase_paths[phase] = {
+                            'warping_path': warping_path,
+                            'actual_frame_path': actual_frame_path
+                        }
+                else:
+                    print(f"   ❌ Key {phase_key} not found in comparison results")
+            
+            if not phase_paths:
+                print(f"❌ No phase-specific warping paths found for {analysis_type}")
+                return False
+            
+            # Create video writer
+            cap1 = cv2.VideoCapture(video1_path)
+            cap2 = cv2.VideoCapture(video2_path)
+            
+            if not cap1.isOpened() or not cap2.isOpened():
+                print("❌ Error opening video files")
+                return False
+            
+            # Get video properties
+            fps1 = video_info.get('video1_fps', 30.0)
+            fps2 = video_info.get('video2_fps', 30.0)
+            width1 = int(cap1.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height1 = int(cap1.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            width2 = int(cap2.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height2 = int(cap2.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            
+            output_width = max(width1, width2) * 2
+            output_height = max(height1, height2)
+            
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            out = cv2.VideoWriter(output_path, fourcc, min(fps1, fps2), (output_width, output_height))
+            
+            if not out.isOpened():
+                print("❌ Error creating output video")
+                return False
+            
+            # Get frame data for phase mapping
+            frame_data1 = video1_data.get('frames', [])
+            frame_data2 = video2_data.get('frames', [])
+            
+            # Create phase-to-frame mappings
+            def get_phase_frames(frame_data):
+                phase_frames = {}
+                for i, frame in enumerate(frame_data):
+                    phase = frame.get('phase', 'General')
+                    if phase not in phase_frames:
+                        phase_frames[phase] = []
+                    phase_frames[phase].append(i)
+                return phase_frames
+            
+            phase_frames1 = get_phase_frames(frame_data1)
+            phase_frames2 = get_phase_frames(frame_data2)
+            
+            print(f"\n🔍 Phase frame distribution:")
+            print(f"Video1: {[(p, len(f)) for p, f in phase_frames1.items()]}")
+            print(f"Video2: {[(p, len(f)) for p, f in phase_frames2.items()]}")
+            
+            # Process each phase in order
+            total_frames = 0
+            phase_frame_mappings = {}
+            
+            # First pass: calculate total frames and create mappings
+            for phase in phase_order:
+                if phase not in phase_paths:
+                    continue
+                
+                phase_data = phase_paths[phase]
+                warping_path = phase_data['warping_path']
+                actual_frame_path = phase_data['actual_frame_path']
+                
+                print(f"   📊 {phase} phase:")
+                print(f"      Warping path length: {len(warping_path)}")
+                print(f"      Actual frame path length: {len(actual_frame_path)}")
+                
+                # Use actual_frame_path if available, otherwise convert warping_path
+                if actual_frame_path:
+                    phase_matches = actual_frame_path
+                    print(f"      Using actual_frame_path: {len(phase_matches)} matches")
+                    # Show first few matches for debugging
+                    if phase_matches:
+                        print(f"      First 3 matches: {phase_matches[:3]}")
+                else:
+                    # Convert warping path to actual frame indices (fallback)
+                    phase_matches = []
+                    # Determine which actual phases this DTW covers
+                    if phase == 'loading':
+                        target_phases = ['Loading', 'Loading-Rising']
+                    elif phase == 'rising':
+                        target_phases = ['Rising', 'Loading-Rising']
+                    elif phase == 'release':
+                        target_phases = ['Release']
+                    elif phase == 'follow_through':
+                        target_phases = ['Follow-through']
+                    else:
+                        continue
+                    
+                    # Get frames for this DTW phase from both videos
+                    video1_dtw_frames = []
+                    video2_dtw_frames = []
+                    
+                    for phase_name in target_phases:
+                        video1_dtw_frames.extend(phase_frames1.get(phase_name, []))
+                        video2_dtw_frames.extend(phase_frames2.get(phase_name, []))
+                    
+                    video1_dtw_frames.sort()
+                    video2_dtw_frames.sort()
+                    
+                    print(f"      Video1 DTW frames: {len(video1_dtw_frames)}")
+                    print(f"      Video2 DTW frames: {len(video2_dtw_frames)}")
+                    
+                    for path_idx1, path_idx2 in warping_path:
+                        if path_idx1 < len(video1_dtw_frames) and path_idx2 < len(video2_dtw_frames):
+                            actual_frame1 = video1_dtw_frames[path_idx1]
+                            actual_frame2 = video2_dtw_frames[path_idx2]
+                            phase_matches.append((actual_frame1, actual_frame2))
+                    
+                    print(f"      Converted warping_path: {len(phase_matches)} matches")
+                    if phase_matches:
+                        print(f"      First 3 converted matches: {phase_matches[:3]}")
+                
+                phase_frame_mappings[phase] = phase_matches
+                total_frames += len(phase_matches)
+            
+            print(f"📊 Total phase-specific matched frames: {total_frames}")
+            
+            # Second pass: create visualization
+            frame_count = 0
+            
+            for phase in phase_order:
+                if phase not in phase_frame_mappings:
+                    continue
+                
+                phase_matches = phase_frame_mappings[phase]
+                print(f"   📊 Processing {phase} phase: {len(phase_matches)} frames")
+                
+                # Process each matched frame pair in this phase
+                for i, (frame1_idx, frame2_idx) in enumerate(phase_matches):
+                    # Read frames
+                    cap1.set(cv2.CAP_PROP_POS_FRAMES, frame1_idx)
+                    cap2.set(cv2.CAP_PROP_POS_FRAMES, frame2_idx)
+                    
+                    ret1, frame1 = cap1.read()
+                    ret2, frame2 = cap2.read()
+                    
+                    if not ret1 or not ret2:
+                        print(f"⚠️  Failed to read frames: V1:{frame1_idx}, V2:{frame2_idx}")
+                        continue
+                    
+                    # Resize frames
+                    frame1_resized = cv2.resize(frame1, (output_width // 2, output_height))
+                    frame2_resized = cv2.resize(frame2, (output_width // 2, output_height))
+                    
+                    # Create side-by-side frame
+                    combined_frame = np.hstack([frame1_resized, frame2_resized])
+                    
+                    # Add phase info and frame info
+                    combined_frame = self._add_phase_overlay_text(
+                        combined_frame, title, phase, frame1_idx, frame2_idx, 
+                        frame_count, total_frames
+                    )
+                    
+                    out.write(combined_frame)
+                    frame_count += 1
+                    
+                    # Progress indicator
+                    if frame_count % 30 == 0:
+                        progress = (frame_count / total_frames) * 100
+                        print(f"   📈 Progress: {progress:.1f}%")
+            
+            cap1.release()
+            cap2.release()
+            out.release()
+            
+            print(f"✅ {title} visualization created: {os.path.basename(output_path)}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error creating {title} visualization: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    def _add_overlay_text(self, frame: np.ndarray, title: str, frame1_idx: int, 
+                          frame2_idx: int, current_frame: int, total_frames: int) -> np.ndarray:
+        """Add overlay text to frame"""
+        # Add title
+        cv2.putText(frame, title, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        
+        # Add frame information
+        frame_info = f"Frame {current_frame+1}/{total_frames}"
+        cv2.putText(frame, frame_info, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+        
+        # Add frame indices
+        cv2.putText(frame, f"V1: {frame1_idx}", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+        cv2.putText(frame, f"V2: {frame2_idx}", (10, 140), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+        
+        return frame
+    
+    def _add_phase_overlay_text(self, frame: np.ndarray, title: str, phase: str, 
+                               frame1_idx: int, frame2_idx: int, 
+                               current_frame: int, total_frames: int) -> np.ndarray:
+        """Add phase-specific overlay text to frame"""
+        # Add title
+        cv2.putText(frame, title, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        
+        # Add phase information
+        phase_display = phase.replace('_', ' ').title()
+        cv2.putText(frame, f"Phase: {phase_display}", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 0), 2)
+        
+        # Add frame information
+        frame_info = f"Frame {current_frame+1}/{total_frames}"
+        cv2.putText(frame, frame_info, (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+        
+        # Add frame indices
+        cv2.putText(frame, f"V1: {frame1_idx}", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+        cv2.putText(frame, f"V2: {frame2_idx}", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+        
+        return frame
 
 
 def create_shooting_comparison_visualization(comparison_results_file: str, 

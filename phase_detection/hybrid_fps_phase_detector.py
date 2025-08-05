@@ -15,19 +15,19 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
     
     # Base thresholds (relative to torso length)
     BASE_THRESHOLDS = {
-        "movement": 0.040,      # 2% of torso length for Set-up→Loading (hip/shoulder movement)
-        "elbow_relative": 0.025, # 1% of torso length for elbow relative movement
-        "wrist_relative": 0.035, # 1.5% of torso length for wrist relative movement
-        "ball_relative": 0.040,  # 1.8% of torso length for ball relative movement
+        "movement": 0.020,      # 2% of torso length for Set-up→Loading (hip/shoulder movement)
+        "elbow_relative": 0.040, # 1% of torso length for elbow relative movement
+        "wrist_relative": 0.050, # 1.5% of torso length for wrist relative movement
+        "ball_relative": 0.055,  # 1.8% of torso length for ball relative movement
         "ball_size_multiplier": 1.6,  # Ball radius multiplier for threshold
         "min_elbow_angle": 110,  # Minimum elbow angle (degrees)
-        "wrist_absolute": 0.055, # 2% of torso length for wrist absolute movement (Rising detection)
-        "rise_cancellation": 0.020, # 1.5% of torso length for shoulder/hip rising loading cancellation (optimized)
-        "rising_cancel_relative": 0.025, # 0.75% of torso length for rising cancellation relative movement
-        "rising_cancel_absolute": 0.035, # 1.5% of torso length for rising cancellation absolute movement
+        "wrist_absolute": 0.070, # 2% of torso length for wrist absolute movement (Rising detection)
+        "rise_cancellation": 0.010, # 1.5% of torso length for shoulder/hip rising loading cancellation (optimized)
+        "rising_cancel_relative": 0.020, # 0.75% of torso length for rising cancellation relative movement
+        "rising_cancel_absolute": 0.030, # 1.5% of torso length for rising cancellation absolute movement
         "ball_cancel_relative": 0.030, # 1% of torso length for ball rising cancellation relative movement
         "ball_cancel_absolute": 0.040, # 2% of torso length for ball rising cancellation absolute movement
-        "rising_to_loading_rising": 0.010, # 3% of torso length for Rising→Loading-Rising transition (separate from movement)
+        "rising_to_loading_rising": 0.013, # 3% of torso length for Rising→Loading-Rising transition (separate from movement)
     }
     
     def __init__(self, min_phase_duration: int = 1, noise_threshold: int = 4):
@@ -251,10 +251,10 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         left_avg_conf = (left_shoulder_conf + left_hip_conf) / 2
         
         if left_avg_conf >= confidence_threshold:
-            left_torso_length = np.sqrt(
-                (left_shoulder.get('x', 0) - left_hip.get('x', 0))**2 + 
-                (left_shoulder.get('y', 0) - left_hip.get('y', 0))**2
-            )
+        left_torso_length = np.sqrt(
+            (left_shoulder.get('x', 0) - left_hip.get('x', 0))**2 + 
+            (left_shoulder.get('y', 0) - left_hip.get('y', 0))**2
+        )
             if left_torso_length > 0:
                 valid_torso_lengths.append(left_torso_length)
                 # print(f"   Left torso: {left_torso_length:.4f} (conf: {left_avg_conf:.3f}) ✓")  # 로그 제거
@@ -268,10 +268,10 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         right_avg_conf = (right_shoulder_conf + right_hip_conf) / 2
         
         if right_avg_conf >= confidence_threshold:
-            right_torso_length = np.sqrt(
-                (right_shoulder.get('x', 0) - right_hip.get('x', 0))**2 + 
-                (right_shoulder.get('y', 0) - right_hip.get('y', 0))**2
-            )
+        right_torso_length = np.sqrt(
+            (right_shoulder.get('x', 0) - right_hip.get('x', 0))**2 + 
+            (right_shoulder.get('y', 0) - right_hip.get('y', 0))**2
+        )
             if right_torso_length > 0:
                 valid_torso_lengths.append(right_torso_length)
                 # print(f"   Right torso: {right_torso_length:.4f} (conf: {right_avg_conf:.3f}) ✓")  # 로그 제거
@@ -356,12 +356,8 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         # Calculate threshold relative to torso length
         torso_relative_threshold = base_threshold * torso_length
         
-        # Apply FPS adjustment for movement and relative thresholds
-        if threshold_type in ["movement", "wrist_relative", "elbow_relative", "ball_relative"]:
+        # Apply FPS adjustment for all thresholds
             adjusted_threshold = self.calculate_fps_adjusted_threshold(torso_relative_threshold)
-        else:
-            # For ball_distance, use torso-relative threshold without FPS adjustment
-            adjusted_threshold = torso_relative_threshold
         
         return adjusted_threshold
     
