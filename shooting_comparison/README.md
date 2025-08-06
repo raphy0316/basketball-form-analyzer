@@ -157,10 +157,9 @@ shooting_comparison/
 ### Bugs fixes
 
 * dip point reversed y
-* selected hand is always right in analyzers
+* selected hand is always right in analyzers(follow-through, rising)
 * swapping logic in normalization
 * height reversed y
-* 
 
 ### TODO 
 * dip point angles are not calculated
@@ -179,3 +178,19 @@ Video 2 Rising Analysis:
       Setup Time: 0.000s
       Relative Timing: -0.729s
 ```
+* made up toes and fingers
+* frame numbers in follow-through is not actual frame number of the whole video, it's just the frame index of follow-through frames
+```bash
+Video 2 Follow-through Analysis:
+    Total Follow-through Time: 0.7119894736842105s
+    Follow-through Frames: 43
+    Max Elbow Angle Analysis:
+      Max Elbow Angle: 180.00°
+      Max Elbow Frame Index: 7
+      Arm Angles Std: 10.34°
+      Body Angles Std: 0.41°
+      Leg Angles Std: 0.39°
+      Overall Angles Std: 7.20°
+    Stability Analysis:
+```
+* selected hand is always right in release analyzer
