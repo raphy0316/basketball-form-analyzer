@@ -156,10 +156,10 @@ shooting_comparison/
 
 ### Bugs fixes
 
-* dip point reversed y
-* selected hand is always right in analyzers(follow-through, rising)
-* swapping logic in normalization
-* height reversed y
+* dip point reversed y(rising)
+* selected hand is always right in analyzers(follow-through, rising, release)
+* swapping logic in normalization(basketball_shooting_analyzer)
+* height reversed y(rising, release)
 
 ### TODO 
 * dip point angles are not calculated
@@ -193,4 +193,3 @@ Video 2 Follow-through Analysis:
       Overall Angles Std: 7.20°
     Stability Analysis:
 ```
-* selected hand is always right in release analyzer
