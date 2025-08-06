@@ -30,8 +30,8 @@ class RisingAnalyzer:
     
     def __init__(self):
         self.rising_data = {}
-    
-    def analyze_rising_phase(self, video_data: Dict) -> Dict:
+
+    def analyze_rising_phase(self, video_data: Dict, selected_hand = "right") -> Dict:
         """
         Analyze rising phase information from video data.
         
@@ -47,7 +47,7 @@ class RisingAnalyzer:
         
         # Get FPS from metadata (default to 30fps)
         fps = video_data.get('metadata', {}).get('fps', 30.0)
-        
+        self.selected_hand = selected_hand.lower()
         # Find all Rising and Loading-Rising frames
         rising_frames = []
         loading_rising_frames = []
@@ -719,37 +719,37 @@ class RisingAnalyzer:
         pose = setup_frame.get('normalized_pose', {})
         
         # Get joint positions
-        right_shoulder = pose.get('right_shoulder', {})
-        right_elbow = pose.get('right_elbow', {})
-        right_wrist = pose.get('right_wrist', {})
+        selected_shoulder = pose.get(f'{self.selected_hand}_shoulder', {})
+        selected_elbow = pose.get(f'{self.selected_hand}_elbow', {})
+        selected_wrist = pose.get(f'{self.selected_hand}_wrist', {})
         left_shoulder = pose.get('left_shoulder', {})
         left_hip = pose.get('left_hip', {})
-        right_hip = pose.get('right_hip', {})
+        selected_hip = pose.get(f'{self.selected_hand}_hip', {})
         
         angles = {}
         
         # Right arm angles
-        if self._has_valid_coordinates(right_shoulder, right_elbow, right_wrist):
+        if self._has_valid_coordinates(selected_shoulder, selected_elbow, selected_wrist):
             # Shoulder-elbow-wrist angle
             shoulder_elbow_wrist = self._calculate_angle(
-                right_shoulder.get('x', 0), right_shoulder.get('y', 0),
-                right_elbow.get('x', 0), right_elbow.get('y', 0),
-                right_wrist.get('x', 0), right_wrist.get('y', 0)
+                selected_shoulder.get('x', 0), selected_shoulder.get('y', 0),
+                selected_elbow.get('x', 0), selected_elbow.get('y', 0),
+                selected_wrist.get('x', 0), selected_wrist.get('y', 0)
             )
             angles['shoulder_elbow_wrist'] = shoulder_elbow_wrist
         
-        if self._has_valid_coordinates(right_elbow, right_shoulder, right_hip):
+        if self._has_valid_coordinates(selected_elbow, selected_shoulder, selected_hip):
             # Elbow-shoulder-hip angle (armpit angle)
             elbow_shoulder_hip = self._calculate_angle(
-                right_elbow.get('x', 0), right_elbow.get('y', 0),
-                right_shoulder.get('x', 0), right_shoulder.get('y', 0),
-                right_hip.get('x', 0), right_hip.get('y', 0)
+                selected_elbow.get('x', 0), selected_elbow.get('y', 0),
+                selected_shoulder.get('x', 0), selected_shoulder.get('y', 0),
+                selected_hip.get('x', 0), selected_hip.get('y', 0)
             )
             angles['elbow_shoulder_hip'] = elbow_shoulder_hip
         
         # Calculate torso angle (shoulder-hip line relative to vertical)
-        if self._has_valid_coordinates(right_shoulder, right_hip):
-            torso_angle = self._calculate_angle_to_vertical(right_shoulder, right_hip)
+        if self._has_valid_coordinates(selected_shoulder, selected_hip):
+            torso_angle = self._calculate_angle_to_vertical(selected_shoulder, selected_hip)
             angles['torso_angle'] = torso_angle
         
         # Calculate arm angle relative to torso
