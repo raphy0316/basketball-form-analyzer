@@ -143,16 +143,57 @@ class RisingAnalyzer:
     def _find_dip_point(self, frames: List[Dict]) -> Optional[Dict]:
         """Find the frame with the lowest ball position (dip point)."""
         lowest_frame = None
-        lowest_y = float('inf')
+        lowest_y = float('-inf')
         
         for frame in frames:
             ball_pos = self._get_ball_position(frame)
-            if ball_pos and ball_pos['y'] < lowest_y:
+            if ball_pos and ball_pos['y'] > lowest_y:
                 lowest_y = ball_pos['y']
                 lowest_frame = frame
         
         return lowest_frame
+
+    def _get_dip(self, rising_ball, release_y):
+        """
+        Get the dip frame index based on the last frame before the ball begins moving upward
+
+        Args:
+            rising_pose: The first frame's pose dict.
+
+        Returns:
+            Dip value (float).
+        """
+        fps_ratio = self._get_fps_ratio()
+        if not rising_ball or len(rising_ball) < 2 * fps_ratio:
+            return 0
+
+        lookback = max(1, (int) (2 * fps_ratio))
+
+        # Step 1: Compute distances to rim
+        distances = []
+        for ball in rising_ball:
+            if not ball or "center_y" not in ball:
+                distances.append(-1)
+                continue
+            distances.append(abs(ball.get("center_y", 0) - release_y))
     
+        # Step 2: Traverse backward to get the last frame where the vertical distance is decreasing 
+        for i in range(len(distances) - lookback, lookback, -1):
+            look_back_arr = []
+            look_ahead_arr = []
+            for j in range(i - lookback, i):
+                if distances[j] == -1:
+                    continue
+                look_back_arr.append(distances[j])
+            for j in range(i + 1, i + lookback):
+                if distances[j] == -1:
+                    continue
+                look_ahead_arr.append(distances[j])
+        
+            if np.mean(look_back_arr) < np.mean(look_ahead_arr):
+                return i
+        return 0
+
     def _find_setup_point_using_setpoint_detector(self, frames: List[Dict]) -> Optional[Dict]:
         """Find setup point using SetpointDetector instead of eye level detection."""
         if not frames:
