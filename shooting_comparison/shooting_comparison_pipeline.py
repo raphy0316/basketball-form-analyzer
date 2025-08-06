@@ -301,8 +301,8 @@ class ShootingComparisonPipeline:
             
             # Perform Release phase analysis
             print("📊 Performing release phase analysis...")
-            release_analysis1 = self.release_analyzer.analyze_release_phase(filtered_video1_data)
-            release_analysis2 = self.release_analyzer.analyze_release_phase(filtered_video2_data)
+            release_analysis1 = self.release_analyzer.analyze_release_phase(filtered_video1_data, self.selected_hand)
+            release_analysis2 = self.release_analyzer.analyze_release_phase(filtered_video2_data, self.selected_hand)
             comparison_results['release_analysis'] = {
                 'video1': release_analysis1,
                 'video2': release_analysis2
