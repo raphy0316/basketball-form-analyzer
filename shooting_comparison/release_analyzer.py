@@ -543,7 +543,7 @@ class ReleaseAnalyzer:
             return None
         
         max_jump_frame = None
-        max_jump_height = -float('inf')
+        max_jump_height = float('inf')
         
         for frame in frames:
             # Calculate jump height based on foot position relative to baseline
@@ -555,7 +555,7 @@ class ReleaseAnalyzer:
                 # Use average ankle height as jump height indicator
                 ankle_height = (left_ankle.get('y', 0) + right_ankle.get('y', 0)) / 2
                 
-                if ankle_height > max_jump_height:
+                if ankle_height < max_jump_height:
                     max_jump_height = ankle_height
                     max_jump_frame = frame
         
