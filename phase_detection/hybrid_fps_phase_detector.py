@@ -272,8 +272,8 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                 (right_shoulder.get('x', 0) - right_hip.get('x', 0))**2 + 
                 (right_shoulder.get('y', 0) - right_hip.get('y', 0))**2
             )
-        if right_torso_length > 0:
-            valid_torso_lengths.append(right_torso_length)
+            if right_torso_length > 0:
+                valid_torso_lengths.append(right_torso_length)
                 # print(f"   Right torso: {right_torso_length:.4f} (conf: {right_avg_conf:.3f}) ✓")  # 로그 제거
         else:
             # print(f"   Right torso: excluded (conf: {right_avg_conf:.3f} < {confidence_threshold}) ✗")  # 로그 제거

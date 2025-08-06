@@ -1730,6 +1730,10 @@ class BasketballShootingAnalyzer:
             (frame_idx == 0 and current_phase == "Set-up" and not self.is_shot_active)):
             print(f"   🏀 SHOT START detected: {prev_phase} → Set-up at frame {frame_idx}")
             self._start_new_shot(frame_idx)
+        # Shot cancel: Set-up → General (shot 감지 취소)
+        elif (prev_phase == "Set-up" and current_phase == "General" and self.is_shot_active):
+            print(f"   ❌ SHOT CANCEL detected: Set-up → General at frame {frame_idx}")
+            self._cancel_current_shot(frame_idx)
         # Shot end: Follow-through → General (shot 완료)
         elif (prev_phase == "Follow-through" and current_phase == "General" and self.is_shot_active):
             print(f"   🎯 SHOT END detected: Follow-through → General at frame {frame_idx}")
@@ -1754,6 +1758,24 @@ class BasketballShootingAnalyzer:
         
         print(f"\n🏀 Shot {self.current_shot_id} started at frame {frame_idx}")
         print(f"   🔍 Waiting for meaningful transition to fix torso...")
+    
+    def _cancel_current_shot(self, frame_idx: int):
+        """
+        Cancel current shot: reset shot tracking and wait for next General → Set-up
+        """
+        if self.is_shot_active:
+            print(f"\n❌ Shot {self.current_shot_id} cancelled at frame {frame_idx}")
+            print(f"   📊 Cancelled shot: frames {self.current_shot_start}-{frame_idx}")
+            
+            # Reset shot tracking
+            self.is_shot_active = False
+            self.current_shot_start = None
+            self.current_shot_fixed_torso = None
+            self.torso_tracking_active = True  # Resume rolling torso tracking
+            self.rolling_torso_values = []  # Clear rolling window
+            self.rolling_torso_frames = []
+            
+            print(f"   🔄 Waiting for next General → Set-up to start new shot...")
     
     def _fix_shot_torso_at_meaningful_transition(self, frame_idx: int):
         """
@@ -2025,13 +2047,13 @@ class BasketballShootingAnalyzer:
                 frame_result = {
                     "frame_index": i,
                     "phase": self.phases[i] if i < len(self.phases) else "Unknown",
-                        "shot": shot_id,
+                    "shot": shot_id,
                     "normalized_pose": frame_data["normalized_pose"],
                     "normalized_ball": frame_data["normalized_ball"],
                     "scaling_factor": frame_data["scaling_factor"],
-                        "ball_detected": frame_data["ball_detected"],
-                        "shot_normalization_applied": frame_data.get("shot_normalization_applied", False)
-                    }
+                    "ball_detected": frame_data["ball_detected"],
+                    "shot_normalization_applied": frame_data.get("shot_normalization_applied", False)
+                }
                 shot_frames.append(frame_result)
         
         results["frames"] = shot_frames

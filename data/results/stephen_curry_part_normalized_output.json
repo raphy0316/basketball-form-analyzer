@@ -1,14 +1,14 @@
 {
   "metadata": {
     "video_path": "data/video\\Standard\\stephen_curry_part.mp4",
-    "analysis_date": "2025-08-05T00:05:49.106288",
+    "analysis_date": "2025-08-06T01:39:07.175845",
     "total_frames": 0,
     "phases_detected": [
-      "General",
-      "Loading",
       "Set-up",
       "Loading-Rising",
-      "Rising"
+      "Loading",
+      "Rising",
+      "General"
     ],
     "shots_detected": 0,
     "shots": [],

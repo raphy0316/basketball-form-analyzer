@@ -22,13 +22,13 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from data_collection.dtw_processor import DTWProcessor
 from shooting_comparison.shooting_comparison_visualizer import ShootingComparisonVisualizer
 from shooting_comparison.analysis_utils import get_analysis_utils
-from setup_analyzer import SetupAnalyzer
-from loading_analyzer import LoadingAnalyzer
-from rising_analyzer import RisingAnalyzer
-from release_analyzer import ReleaseAnalyzer
-from follow_through_analyzer import FollowThroughAnalyzer
-from landing_analyzer import LandingAnalyzer
-from analysis_interpreter import AnalysisInterpreter
+from shooting_comparison.setup_analyzer import SetupAnalyzer
+from shooting_comparison.loading_analyzer import LoadingAnalyzer
+from shooting_comparison.rising_analyzer import RisingAnalyzer
+from shooting_comparison.release_analyzer import ReleaseAnalyzer
+from shooting_comparison.follow_through_analyzer import FollowThroughAnalyzer
+from shooting_comparison.landing_analyzer import LandingAnalyzer
+from shooting_comparison.analysis_interpreter import AnalysisInterpreter
 
 
 class ShootingComparisonPipeline:
@@ -253,12 +253,17 @@ class ShootingComparisonPipeline:
             filtered_video2_data = self._filter_data_by_shot(self.video2_data, selected_shot2)
             
             print("🔍 [DEBUG] Filtered data:")
+            
+            # Check if filtered data is None before accessing
+            if filtered_video1_data is None:
+                print("❌ Video 1 data filtering failed")
+                return None
+            if filtered_video2_data is None:
+                print("❌ Video 2 data filtering failed")
+                return None
+                
             print(f"   Video 1: {len(filtered_video1_data.get('frames', []))} frames")
             print(f"   Video 2: {len(filtered_video2_data.get('frames', []))} frames")
-            
-            if not filtered_video1_data or not filtered_video2_data:
-                print("❌ Failed to filter video data")
-                return None
             
             # Get selected hand
             selected_hand = filtered_video1_data.get('metadata', {}).get('hand', 'right')
@@ -460,6 +465,11 @@ class ShootingComparisonPipeline:
         frames = data.get('frames', [])
         shots = data.get('metadata', {}).get('shots', {})
         
+        # Debug shot information
+        print(f"🔍 Debug: Available shots: {shots}")
+        print(f"🔍 Debug: Selected shot: {selected_shot}")
+        print(f"🔍 Debug: Shots type: {type(shots)}")
+        
         # Handle both list and dictionary formats for shots
         if isinstance(shots, list):
             # Convert shot number to index (e.g., "shot1" -> 0)
@@ -467,7 +477,7 @@ class ShootingComparisonPipeline:
                 try:
                     shot_index = int(selected_shot[4:]) - 1  # "shot1" -> 0
                     if shot_index < 0 or shot_index >= len(shots):
-                        print(f"❌ Selected shot '{selected_shot}' not found in data")
+                        print(f"❌ Selected shot '{selected_shot}' not found in data (index {shot_index} out of range)")
                         return None
                     shot_info = shots[shot_index]
                 except ValueError:
@@ -480,6 +490,7 @@ class ShootingComparisonPipeline:
             # Dictionary format
             if selected_shot not in shots:
                 print(f"❌ Selected shot '{selected_shot}' not found in data")
+                print(f"🔍 Debug: Available shot keys: {list(shots.keys()) if shots else 'None'}")
                 return None
             shot_info = shots[selected_shot]
         
@@ -508,17 +519,27 @@ class ShootingComparisonPipeline:
                 if selected_shot.startswith("shot"):
                     # Extract shot number from selected_shot (e.g., "shot1" -> "1")
                     shot_number = selected_shot[4:]  # "shot1" -> "1"
-                    shot_matches = shot_id_str == shot_number
+                    # Convert shot_number to integer for comparison with shot_id
+                    try:
+                        shot_number_int = int(shot_number)
+                        shot_matches = shot_id == shot_number_int
+                    except ValueError:
+                        shot_matches = shot_id_str == shot_number
+                    # Only print debug info for first few frames
+                    if frame_idx < 5:
+                        print(f"🔍 Debug: shot_id={shot_id} (type: {type(shot_id)}), shot_number={shot_number_int}, matches={shot_matches}")
                 else:
                     shot_matches = shot_id_str == selected_shot
             
             # Also check frame index range as fallback
             frame_in_range = start_frame <= frame_idx <= end_frame
             
+            # Always include frames that match by shot_id
             if shot_matches:
                 shot_id_count += 1
                 filtered_frames.append(frame)
-            elif frame_in_range:
+            # Only include range matches if no shot_id matches were found
+            elif frame_in_range and shot_id_count == 0:
                 range_count += 1
                 filtered_frames.append(frame)
         
@@ -902,6 +923,28 @@ class ShootingComparisonPipeline:
             print(f"      Total Rising Time: {timing1.get('total_rising_time', 'N/A'):.3f}s")
             print(f"      Windup Ratio: {timing1.get('windup_ratio', 'N/A'):.2f}")
         
+        # Setup point analysis
+        setup_point1 = video1_rising.get('setup_point_analysis', {})
+        if 'error' not in setup_point1:
+            print(f"    Setup Point Analysis:")
+            print(f"      Setup Frame: {setup_point1.get('setup_frame_index', 'N/A')}")
+            
+            # Arm angles at setup point
+            arm_angles1 = setup_point1.get('arm_angles', {})
+            if arm_angles1:
+                print(f"      Arm Angles:")
+                print(f"        Shoulder-Elbow-Wrist: {arm_angles1.get('shoulder_elbow_wrist', 'N/A'):.2f}°")
+                print(f"        Elbow-Shoulder-Hip: {arm_angles1.get('elbow_shoulder_hip', 'N/A'):.2f}°")
+                print(f"        Torso Angle: {arm_angles1.get('torso_angle', 'N/A'):.2f}°")
+                print(f"        Arm-Torso Angle: {arm_angles1.get('arm_torso_angle', 'N/A'):.2f}°")
+            
+            # Ball position relative to eyes at setup point
+            ball_eye1 = setup_point1.get('ball_eye_position', {})
+            if ball_eye1 and 'error' not in ball_eye1:
+                print(f"      Ball Position (Relative to Eyes):")
+                print(f"        Horizontal Distance: {ball_eye1.get('relative_x', 'N/A'):.4f}")
+                print(f"        Vertical Distance: {ball_eye1.get('relative_y', 'N/A'):.4f}")
+        
         print("  📊 Video 2 Rising Analysis:")
         print(f"    Total Rising Time: {video2_rising.get('total_rising_time', 'N/A')}s")
         print(f"    Rising Frames: {video2_rising.get('rising_frames', 'N/A')}")
@@ -948,6 +991,28 @@ class ShootingComparisonPipeline:
             print(f"      Windup Time: {timing2.get('windup_time', 'N/A'):.3f}s")
             print(f"      Total Rising Time: {timing2.get('total_rising_time', 'N/A'):.3f}s")
             print(f"      Windup Ratio: {timing2.get('windup_ratio', 'N/A'):.2f}")
+        
+        # Setup point analysis
+        setup_point2 = video2_rising.get('setup_point_analysis', {})
+        if 'error' not in setup_point2:
+            print(f"    Setup Point Analysis:")
+            print(f"      Setup Frame: {setup_point2.get('setup_frame_index', 'N/A')}")
+            
+            # Arm angles at setup point
+            arm_angles2 = setup_point2.get('arm_angles', {})
+            if arm_angles2:
+                print(f"      Arm Angles:")
+                print(f"        Shoulder-Elbow-Wrist: {arm_angles2.get('shoulder_elbow_wrist', 'N/A'):.2f}°")
+                print(f"        Elbow-Shoulder-Hip: {arm_angles2.get('elbow_shoulder_hip', 'N/A'):.2f}°")
+                print(f"        Torso Angle: {arm_angles2.get('torso_angle', 'N/A'):.2f}°")
+                print(f"        Arm-Torso Angle: {arm_angles2.get('arm_torso_angle', 'N/A'):.2f}°")
+            
+            # Ball position relative to eyes at setup point
+            ball_eye2 = setup_point2.get('ball_eye_position', {})
+            if ball_eye2 and 'error' not in ball_eye2:
+                print(f"      Ball Position (Relative to Eyes):")
+                print(f"        Horizontal Distance: {ball_eye2.get('relative_x', 'N/A'):.4f}")
+                print(f"        Vertical Distance: {ball_eye2.get('relative_y', 'N/A'):.4f}")
 
     def _display_release_analysis(self, release_analysis: Dict):
         """Display release analysis results."""
