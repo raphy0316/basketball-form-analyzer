@@ -25,8 +25,8 @@ class FollowThroughAnalyzer:
     def __init__(self):
         self.follow_through_data = {}
         self.stability_threshold = 5.0  # degrees - threshold for stable form
-    
-    def analyze_follow_through_phase(self, video_data: Dict) -> Dict:
+        self.selected_hand = 'right'  # default to right hand shooting
+    def analyze_follow_through_phase(self, video_data: Dict, selected_hand) -> Dict:
         """
         Analyze follow-through phase information from video data.
         
@@ -36,6 +36,7 @@ class FollowThroughAnalyzer:
         Returns:
             Dictionary containing follow-through phase analysis results
         """
+        self.selected_hand = selected_hand
         frames = video_data.get('frames', [])
         if not frames:
             return {"error": "No frames available for analysis"}
@@ -224,7 +225,7 @@ class FollowThroughAnalyzer:
                 'max': np.max(wrist_angles)
             }
         }
-        
+
         return arm_stability
     
     def _analyze_overall_stability(self, follow_through_frames: List[Dict]) -> Dict:
@@ -296,9 +297,9 @@ class FollowThroughAnalyzer:
     
     def _calculate_elbow_angle(self, pose: Dict) -> Optional[float]:
         """Calculate elbow angle (shoulder-elbow-wrist)."""
-        shoulder = pose.get('right_shoulder', {})
-        elbow = pose.get('right_elbow', {})
-        wrist = pose.get('right_wrist', {})
+        shoulder = pose.get(f'{self.selected_hand}_shoulder', {})
+        elbow = pose.get(f'{self.selected_hand}_elbow', {})
+        wrist = pose.get(f'{self.selected_hand}_wrist', {})
         
         if self._has_valid_coordinates(shoulder, elbow, wrist):
             return self._calculate_angle(
@@ -310,9 +311,9 @@ class FollowThroughAnalyzer:
     
     def _calculate_shoulder_angle(self, pose: Dict) -> Optional[float]:
         """Calculate shoulder angle (hip-shoulder-elbow)."""
-        hip = pose.get('right_hip', {})
-        shoulder = pose.get('right_shoulder', {})
-        elbow = pose.get('right_elbow', {})
+        hip = pose.get(f'{self.selected_hand}_hip', {})
+        shoulder = pose.get(f'{self.selected_hand}_shoulder', {})
+        elbow = pose.get(f'{self.selected_hand}_elbow', {})
         
         if self._has_valid_coordinates(hip, shoulder, elbow):
             return self._calculate_angle(
@@ -324,8 +325,8 @@ class FollowThroughAnalyzer:
     
     def _calculate_wrist_angle(self, pose: Dict) -> Optional[float]:
         """Calculate wrist angle (elbow-wrist-finger)."""
-        elbow = pose.get('right_elbow', {})
-        wrist = pose.get('right_wrist', {})
+        elbow = pose.get(f'{self.selected_hand}_elbow', {})
+        wrist = pose.get(f'{self.selected_hand}_wrist', {})
         # Use a point above wrist as finger reference
         finger_x = wrist.get('x', 0)
         finger_y = wrist.get('y', 0) - 20  # 20 pixels above wrist
@@ -340,9 +341,9 @@ class FollowThroughAnalyzer:
     
     def _calculate_hip_angle(self, pose: Dict) -> Optional[float]:
         """Calculate hip angle (shoulder-hip-knee)."""
-        shoulder = pose.get('right_shoulder', {})
-        hip = pose.get('right_hip', {})
-        knee = pose.get('right_knee', {})
+        shoulder = pose.get(f'{self.selected_hand}_shoulder', {})
+        hip = pose.get(f'{self.selected_hand}_hip', {})
+        knee = pose.get(f'{self.selected_hand}_knee', {})
         
         if self._has_valid_coordinates(shoulder, hip, knee):
             return self._calculate_angle(
@@ -354,9 +355,9 @@ class FollowThroughAnalyzer:
     
     def _calculate_knee_angle(self, pose: Dict) -> Optional[float]:
         """Calculate knee angle (hip-knee-ankle)."""
-        hip = pose.get('right_hip', {})
-        knee = pose.get('right_knee', {})
-        ankle = pose.get('right_ankle', {})
+        hip = pose.get(f'{self.selected_hand}_hip', {})
+        knee = pose.get(f'{self.selected_hand}_knee', {})
+        ankle = pose.get(f'{self.selected_hand}_ankle', {})
         
         if self._has_valid_coordinates(hip, knee, ankle):
             return self._calculate_angle(
@@ -368,8 +369,8 @@ class FollowThroughAnalyzer:
     
     def _calculate_ankle_angle(self, pose: Dict) -> Optional[float]:
         """Calculate ankle angle (knee-ankle-toe)."""
-        knee = pose.get('right_knee', {})
-        ankle = pose.get('right_ankle', {})
+        knee = pose.get(f'{self.selected_hand}_knee', {})
+        ankle = pose.get(f'{self.selected_hand}_ankle', {})
         # Use a point below ankle as toe reference
         toe_x = ankle.get('x', 0)
         toe_y = ankle.get('y', 0) + 20  # 20 pixels below ankle
@@ -384,8 +385,8 @@ class FollowThroughAnalyzer:
     
     def _calculate_torso_angle(self, pose: Dict) -> Optional[float]:
         """Calculate torso angle relative to vertical."""
-        shoulder = pose.get('right_shoulder', {})
-        hip = pose.get('right_hip', {})
+        shoulder = pose.get(f'{self.selected_hand}_shoulder', {})
+        hip = pose.get(f'{self.selected_hand}_hip', {})
         
         if self._has_valid_coordinates(shoulder, hip):
             # Calculate angle relative to vertical

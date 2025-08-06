@@ -311,8 +311,8 @@ class ShootingComparisonPipeline:
             
             # Perform Follow-through phase analysis
             print("📊 Performing follow-through phase analysis...")
-            follow_through_analysis1 = self.follow_through_analyzer.analyze_follow_through_phase(filtered_video1_data)
-            follow_through_analysis2 = self.follow_through_analyzer.analyze_follow_through_phase(filtered_video2_data)
+            follow_through_analysis1 = self.follow_through_analyzer.analyze_follow_through_phase(filtered_video1_data, self.selected_hand)
+            follow_through_analysis2 = self.follow_through_analyzer.analyze_follow_through_phase(filtered_video2_data, self.selected_hand)
             comparison_results['follow_through_analysis'] = {
                 'video1': follow_through_analysis1,
                 'video2': follow_through_analysis2
