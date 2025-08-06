@@ -251,10 +251,10 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         left_avg_conf = (left_shoulder_conf + left_hip_conf) / 2
         
         if left_avg_conf >= confidence_threshold:
-        left_torso_length = np.sqrt(
-            (left_shoulder.get('x', 0) - left_hip.get('x', 0))**2 + 
-            (left_shoulder.get('y', 0) - left_hip.get('y', 0))**2
-        )
+            left_torso_length = np.sqrt(
+                (left_shoulder.get('x', 0) - left_hip.get('x', 0))**2 + 
+                (left_shoulder.get('y', 0) - left_hip.get('y', 0))**2
+            )
             if left_torso_length > 0:
                 valid_torso_lengths.append(left_torso_length)
                 # print(f"   Left torso: {left_torso_length:.4f} (conf: {left_avg_conf:.3f}) ✓")  # 로그 제거
@@ -268,10 +268,10 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         right_avg_conf = (right_shoulder_conf + right_hip_conf) / 2
         
         if right_avg_conf >= confidence_threshold:
-        right_torso_length = np.sqrt(
-            (right_shoulder.get('x', 0) - right_hip.get('x', 0))**2 + 
-            (right_shoulder.get('y', 0) - right_hip.get('y', 0))**2
-        )
+            right_torso_length = np.sqrt(
+                (right_shoulder.get('x', 0) - right_hip.get('x', 0))**2 + 
+                (right_shoulder.get('y', 0) - right_hip.get('y', 0))**2
+            )
             if right_torso_length > 0:
                 valid_torso_lengths.append(right_torso_length)
                 # print(f"   Right torso: {right_torso_length:.4f} (conf: {right_avg_conf:.3f}) ✓")  # 로그 제거
@@ -357,7 +357,7 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         torso_relative_threshold = base_threshold * torso_length
         
         # Apply FPS adjustment for all thresholds
-            adjusted_threshold = self.calculate_fps_adjusted_threshold(torso_relative_threshold)
+        adjusted_threshold = self.calculate_fps_adjusted_threshold(torso_relative_threshold)
         
         return adjusted_threshold
     

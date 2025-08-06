@@ -993,173 +993,126 @@ class AnalysisInterpreter:
                     interpretation['differences'].append(
                         f"Time to reach max jump height shows {level} difference - Video 2 is faster ({max_timing_diff:.2f}s)"
                     )
-            
-            # Compare setup timing relative to max jump (setup occurs before max jump)
-            setup_time1 = jump1.get('setup_time', 0)
-            setup_time2 = jump2.get('setup_time', 0)
-            relative_timing1 = jump1.get('relative_timing', 0)  # setup_time - max_time
-            relative_timing2 = jump2.get('relative_timing', 0)
-            
-            if abs(relative_timing1 - relative_timing2) > 0.1:
-                relative_timing_diff = abs(relative_timing1 - relative_timing2)
-                # Determine difference level
-                if relative_timing_diff <= 0.2:
-                    level = "low"
-                elif relative_timing_diff <= 0.4:
-                    level = "medium"
-                elif relative_timing_diff <= 0.6:
-                    level = "high"
-                else:
-                    level = "very high"
-                
-                # Show actual timing differences (negative = before max jump, positive = after max jump)
-                timing_diff_video1 = relative_timing1
-                timing_diff_video2 = relative_timing2
-                
-                interpretation['differences'].append(
-                    f"Setup timing relative to max jump shows {level} difference - Video 1: {timing_diff_video1:.2f}s, Video 2: {timing_diff_video2:.2f}s"
-                )
         
-        # Compare body angles at max jump
-        body1 = video1.get('body_analysis', {})
-        body2 = video2.get('body_analysis', {})
+        # Compare setup point analysis
+        setup1 = video1.get('setup_point_analysis', {})
+        setup2 = video2.get('setup_point_analysis', {})
         
-        if body1 and body2:
-            # Compare body tilt (upper body lean)
-            tilt1 = body1.get('body_tilt', 0)
-            tilt2 = body2.get('body_tilt', 0)
+        if setup1 and setup2 and 'error' not in setup1 and 'error' not in setup2:
+            # Compare arm angles at setup point
+            arm_angles1 = setup1.get('arm_angles', {})
+            arm_angles2 = setup2.get('arm_angles', {})
             
-            if abs(tilt1 - tilt2) > 10:
-                tilt_diff = abs(tilt1 - tilt2)
-                # Determine difference level
-                if tilt_diff <= 15:
-                    level = "low"
-                elif tilt_diff <= 25:
-                    level = "medium"
-                elif tilt_diff <= 35:
-                    level = "high"
-                else:
-                    level = "very high"
+            if arm_angles1 and arm_angles2:
+                # Compare shoulder-elbow-wrist angle
+                sew1 = arm_angles1.get('shoulder_elbow_wrist', 0)
+                sew2 = arm_angles2.get('shoulder_elbow_wrist', 0)
                 
-                # Determine which video has more tilt (Video 1 is reference)
-                if tilt1 > tilt2:
-                    interpretation['differences'].append(
-                        f"Upper body lean at max jump shows {level} difference - Video 2 leans less forward ({tilt_diff:.1f}°)"
-                    )
-                else:
-                    interpretation['differences'].append(
-                        f"Upper body lean at max jump shows {level} difference - Video 2 leans more forward ({tilt_diff:.1f}°)"
-                    )
+                if abs(sew1 - sew2) > 5:  # 5 degree threshold
+                    sew_diff = abs(sew1 - sew2)
+                    # Determine difference level
+                    if sew_diff <= 10:
+                        level = "low"
+                    elif sew_diff <= 20:
+                        level = "medium"
+                    elif sew_diff <= 30:
+                        level = "high"
+                    else:
+                        level = "very high"
+                    
+                    # Determine which video has larger angle (Video 1 is reference)
+                    if sew1 > sew2:
+                        interpretation['differences'].append(
+                            f"Setup point shoulder-elbow-wrist angle shows {level} difference - Video 2 has smaller angle ({sew_diff:.1f}°)"
+                        )
+                    else:
+                        interpretation['differences'].append(
+                            f"Setup point shoulder-elbow-wrist angle shows {level} difference - Video 2 has larger angle ({sew_diff:.1f}°)"
+                        )
+                
+                # Compare arm-torso angle
+                at1 = arm_angles1.get('arm_torso_angle', 0)
+                at2 = arm_angles2.get('arm_torso_angle', 0)
+                
+                if abs(at1 - at2) > 5:  # 5 degree threshold
+                    at_diff = abs(at1 - at2)
+                    # Determine difference level
+                    if at_diff <= 10:
+                        level = "low"
+                    elif at_diff <= 20:
+                        level = "medium"
+                    elif at_diff <= 30:
+                        level = "high"
+                    else:
+                        level = "very high"
+                    
+                    # Determine which video has larger arm-torso angle (Video 1 is reference)
+                    if at1 > at2:
+                        interpretation['differences'].append(
+                            f"Setup point arm-torso angle shows {level} difference - Video 2 has smaller angle ({at_diff:.1f}°)"
+                        )
+                    else:
+                        interpretation['differences'].append(
+                            f"Setup point arm-torso angle shows {level} difference - Video 2 has larger angle ({at_diff:.1f}°)"
+                        )
             
-            # Compare leg angles at max jump
-            leg_angles1 = body1.get('leg_angles', {})
-            leg_angles2 = body2.get('leg_angles', {})
+            # Compare ball position relative to eyes at setup point
+            ball_eye1 = setup1.get('ball_eye_position', {})
+            ball_eye2 = setup2.get('ball_eye_position', {})
             
-            if leg_angles1 and leg_angles2:
-                # Compare left thigh angle (hip-knee)
-                left_thigh1 = leg_angles1.get('left_thigh_angle', 0)
-                left_thigh2 = leg_angles2.get('left_thigh_angle', 0)
+            if ball_eye1 and ball_eye2 and 'error' not in ball_eye1 and 'error' not in ball_eye2:
+                # Compare horizontal distance
+                rel_x1 = ball_eye1.get('relative_x', 0)
+                rel_x2 = ball_eye2.get('relative_x', 0)
                 
-                if abs(left_thigh1 - left_thigh2) > 10:
-                    thigh_diff = abs(left_thigh1 - left_thigh2)
+                if abs(rel_x1 - rel_x2) > 0.02:  # 2cm threshold
+                    rel_x_diff = abs(rel_x1 - rel_x2)
                     # Determine difference level
-                    if thigh_diff <= 15:
+                    if rel_x_diff <= 0.05:
                         level = "low"
-                    elif thigh_diff <= 25:
+                    elif rel_x_diff <= 0.1:
                         level = "medium"
-                    elif thigh_diff <= 35:
+                    elif rel_x_diff <= 0.15:
                         level = "high"
                     else:
                         level = "very high"
                     
-                    # Determine which video has more bent left thigh (Video 1 is reference)
-                    if left_thigh1 < left_thigh2:  # Smaller angle = more bent
+                    # Determine which video has ball more to the right relative to eyes (Video 1 is reference)
+                    if rel_x1 > rel_x2:
                         interpretation['differences'].append(
-                            f"Left thigh angle at max jump shows {level} difference - Video 2 bends less ({thigh_diff:.1f}°)"
+                            f"Setup point ball horizontal position relative to eyes shows {level} difference - Video 2 has ball more to the left ({rel_x_diff:.3f})"
                         )
                     else:
                         interpretation['differences'].append(
-                            f"Left thigh angle at max jump shows {level} difference - Video 2 bends more ({thigh_diff:.1f}°)"
+                            f"Setup point ball horizontal position relative to eyes shows {level} difference - Video 2 has ball more to the right ({rel_x_diff:.3f})"
                         )
                 
-                # Compare right thigh angle (hip-knee)
-                right_thigh1 = leg_angles1.get('right_thigh_angle', 0)
-                right_thigh2 = leg_angles2.get('right_thigh_angle', 0)
+                # Compare vertical distance
+                rel_y1 = ball_eye1.get('relative_y', 0)
+                rel_y2 = ball_eye2.get('relative_y', 0)
                 
-                if abs(right_thigh1 - right_thigh2) > 10:
-                    thigh_diff = abs(right_thigh1 - right_thigh2)
+                if abs(rel_y1 - rel_y2) > 0.02:  # 2cm threshold
+                    rel_y_diff = abs(rel_y1 - rel_y2)
                     # Determine difference level
-                    if thigh_diff <= 15:
+                    if rel_y_diff <= 0.05:
                         level = "low"
-                    elif thigh_diff <= 25:
+                    elif rel_y_diff <= 0.1:
                         level = "medium"
-                    elif thigh_diff <= 35:
+                    elif rel_y_diff <= 0.15:
                         level = "high"
                     else:
                         level = "very high"
                     
-                    # Determine which video has more bent right thigh (Video 1 is reference)
-                    if right_thigh1 < right_thigh2:  # Smaller angle = more bent
+                    # Determine which video has ball higher relative to eyes (Video 1 is reference)
+                    if rel_y1 > rel_y2:
                         interpretation['differences'].append(
-                            f"Right thigh angle at max jump shows {level} difference - Video 2 bends less ({thigh_diff:.1f}°)"
+                            f"Setup point ball vertical position relative to eyes shows {level} difference - Video 2 has ball lower ({rel_y_diff:.3f})"
                         )
                     else:
                         interpretation['differences'].append(
-                            f"Right thigh angle at max jump shows {level} difference - Video 2 bends more ({thigh_diff:.1f}°)"
+                            f"Setup point ball vertical position relative to eyes shows {level} difference - Video 2 has ball higher ({rel_y_diff:.3f})"
                         )
                 
-                # Compare left leg angle (hip-knee-ankle)
-                left_leg1 = leg_angles1.get('left_leg_angle', 0)
-                left_leg2 = leg_angles2.get('left_leg_angle', 0)
-                
-                if abs(left_leg1 - left_leg2) > 10:
-                    leg_diff = abs(left_leg1 - left_leg2)
-                    # Determine difference level
-                    if leg_diff <= 15:
-                        level = "low"
-                    elif leg_diff <= 25:
-                        level = "medium"
-                    elif leg_diff <= 35:
-                        level = "high"
-                    else:
-                        level = "very high"
-                    
-                    # Determine which video has more bent left leg (Video 1 is reference)
-                    if left_leg1 < left_leg2:  # Smaller angle = more bent
-                        interpretation['differences'].append(
-                            f"Left leg angle at max jump shows {level} difference - Video 2 bends less ({leg_diff:.1f}°)"
-                        )
-                    else:
-                        interpretation['differences'].append(
-                            f"Left leg angle at max jump shows {level} difference - Video 2 bends more ({leg_diff:.1f}°)"
-                        )
-                
-                # Compare right leg angle (hip-knee-ankle)
-                right_leg1 = leg_angles1.get('right_leg_angle', 0)
-                right_leg2 = leg_angles2.get('right_leg_angle', 0)
-                
-                if abs(right_leg1 - right_leg2) > 10:
-                    leg_diff = abs(right_leg1 - right_leg2)
-                    # Determine difference level
-                    if leg_diff <= 15:
-                        level = "low"
-                    elif leg_diff <= 25:
-                        level = "medium"
-                    elif leg_diff <= 35:
-                        level = "high"
-                    else:
-                        level = "very high"
-                    
-                    # Determine which video has more bent right leg (Video 1 is reference)
-                    if right_leg1 < right_leg2:  # Smaller angle = more bent
-                        interpretation['differences'].append(
-                            f"Right leg angle at max jump shows {level} difference - Video 2 bends less ({leg_diff:.1f}°)"
-                        )
-                    else:
-                        interpretation['differences'].append(
-                            f"Right leg angle at max jump shows {level} difference - Video 2 bends more ({leg_diff:.1f}°)"
-                        )
-        
 
         
         return interpretation
