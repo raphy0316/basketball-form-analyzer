@@ -151,3 +151,31 @@ shooting_comparison/
 
 🎉 Shooting form comparison completed successfully!
 ```
+
+## Notes
+
+### Bugs fixes
+
+* dip point reversed y
+* selected hand is always right in analyzers
+* swapping logic in normalization
+* height reversed y
+* 
+
+### TODO 
+* dip point angles are not calculated
+* frame numbers in jump height is not actual frame number of the whole video, it's just the frame index of rising frames
+ex
+```bash
+Video 2 Rising Analysis:
+    Total Rising Time: 0.7451052631578947s
+    Rising Frames: 13
+    Loading-Rising Frames: 32
+    Combined Rising Frames: 45
+    Jump Analysis:
+      Max Jump Height: 1.8575
+      Max Height Frame: 44 # this is just frame index of the rising frames
+      Max Height Time: 0.729s
+      Setup Time: 0.000s
+      Relative Timing: -0.729s
+```
