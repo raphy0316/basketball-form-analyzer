@@ -18,8 +18,8 @@ const { width, height } = Dimensions.get('window');
 
 // Debug the Camera import
 console.log('ExpoCamera import:', ExpoCamera);
-console.log('Camera component:', ExpoCamera.Camera);
-console.log('Camera type:', typeof ExpoCamera.Camera);
+console.log('CameraView component:', ExpoCamera.CameraView);
+console.log('CameraView type:', typeof ExpoCamera.CameraView);
 
 const CameraScreen = ({ navigation }) => {
   const [permission, requestPermission] = ExpoCamera.useCameraPermissions();
@@ -245,10 +245,10 @@ const CameraScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ExpoCamera.Camera
+      <ExpoCamera.CameraView
         ref={cameraRef}
         style={styles.camera}
-        type="back"
+        facing="back"
         video={true}
         isRecording={isRecording}
         onCameraReady={() => {
