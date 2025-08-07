@@ -9,7 +9,7 @@ import {
   Dimensions,
   SafeAreaView,
 } from 'react-native';
-import { useCameraPermissions } from 'expo-camera';
+import { Camera, useCameraPermissions } from 'expo-camera';
 import { Video } from 'expo-video';
 import axios from 'axios';
 import { CONFIG, getApiUrl } from './config';
@@ -18,7 +18,6 @@ const { width, height } = Dimensions.get('window');
 
 const CameraScreen = ({ navigation }) => {
   const [permission, requestPermission] = useCameraPermissions();
-  const [CameraComponent, setCameraComponent] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordedVideo, setRecordedVideo] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -29,21 +28,6 @@ const CameraScreen = ({ navigation }) => {
   const recordingTimerRef = useRef(null);
   const videoRef = useRef(null);
   const cameraRef = useRef(null);
-
-  // Load camera component dynamically
-  useEffect(() => {
-    const loadCamera = async () => {
-      try {
-        const expoCamera = await import('expo-camera');
-        setCameraComponent(expoCamera.Camera); // Set the component directly, not as a function
-        console.log('Camera component loaded successfully');
-      } catch (error) {
-        console.error('Failed to load camera component:', error);
-      }
-    };
-    
-    loadCamera();
-  }, []);
 
   // Monitor camera ref changes
   useEffect(() => {
@@ -198,15 +182,7 @@ const CameraScreen = ({ navigation }) => {
     );
   }
 
-  // Handle camera component loading
-  if (!CameraComponent) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Loading camera component...</Text>
-      </View>
-    );
-  }
+
 
   if (!permission.granted) {
     return (
@@ -266,20 +242,18 @@ const CameraScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {CameraComponent && (
-        <CameraComponent
-          ref={cameraRef}
-          style={styles.camera}
-          type="back"
-          video={true}
-          isRecording={isRecording}
-          onCameraReady={() => {
-            console.log('Camera is ready!');
-            console.log('Camera ref in onCameraReady:', !!cameraRef.current);
-            setIsCameraReady(true);
-          }}
-        />
-      )}
+      <Camera
+        ref={cameraRef}
+        style={styles.camera}
+        type="back"
+        video={true}
+        isRecording={isRecording}
+        onCameraReady={() => {
+          console.log('Camera is ready!');
+          console.log('Camera ref in onCameraReady:', !!cameraRef.current);
+          setIsCameraReady(true);
+        }}
+      />
       
       {/* Overlay positioned absolutely */}
       <View style={styles.overlay}>
