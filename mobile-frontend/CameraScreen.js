@@ -8,10 +8,8 @@ import {
   ActivityIndicator,
   Dimensions,
   SafeAreaView,
-  PermissionsAndroid,
-  Platform,
 } from 'react-native';
-import { RNCamera } from 'react-native-camera';
+import { Camera } from 'expo-camera';
 import axios from 'axios';
 import { CONFIG, getApiUrl } from './config';
 
@@ -24,44 +22,20 @@ const CameraScreen = ({ navigation }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
-  const [isCameraReady, setIsCameraReady] = useState(false);
   
   const recordingTimerRef = useRef(null);
   const cameraRef = useRef(null);
 
   // Request camera permissions
   useEffect(() => {
-    requestCameraPermission();
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === 'granted');
+    })();
   }, []);
-
-  const requestCameraPermission = async () => {
-    if (Platform.OS === 'android') {
-      try {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.CAMERA,
-          {
-            title: 'Camera Permission',
-            message: 'This app needs access to camera to record basketball shots.',
-            buttonNeutral: 'Ask Me Later',
-            buttonNegative: 'Cancel',
-            buttonPositive: 'OK',
-          }
-        );
-        setHasPermission(granted === PermissionsAndroid.RESULTS.GRANTED);
-      } catch (err) {
-        console.warn(err);
-        setHasPermission(false);
-      }
-    } else {
-      // iOS permissions are handled by react-native-camera
-      setHasPermission(true);
-    }
-  };
 
   // Recording timer
   useEffect(() => {
-    console.log('Recording state changed:', isRecording);
-    
     if (isRecording) {
       recordingTimerRef.current = setInterval(() => {
         setRecordingTime((prev) => {
@@ -86,19 +60,12 @@ const CameraScreen = ({ navigation }) => {
   }, [isRecording]);
 
   const startRecording = async () => {
-    if (!isCameraReady) {
-      Alert.alert('Error', 'Camera is not ready yet. Please wait a moment and try again.');
-      return;
-    }
-
     if (!cameraRef.current) {
       Alert.alert('Error', 'Camera not ready. Please try again.');
       return;
     }
 
     console.log('Starting recording...');
-    console.log('Camera ready state:', isCameraReady);
-    console.log('Camera ref exists:', !!cameraRef.current);
     
     try {
       setIsRecording(true);
@@ -106,21 +73,18 @@ const CameraScreen = ({ navigation }) => {
       setRecordedVideo(null);
       setShowPreview(false);
       
-      // Start recording with react-native-camera
-      const options = {
-        quality: RNCamera.Constants.VideoQuality['720p'],
+      const video = await cameraRef.current.recordAsync({
+        quality: Camera.Constants.VideoQuality['720p'],
         maxDuration: CONFIG.RECORDING.MAX_DURATION,
         mute: CONFIG.RECORDING.MUTE,
-      };
+      });
       
-      const { uri } = await cameraRef.current.recordAsync(options);
-      
-      console.log('Recording completed, video:', uri);
-      if (uri) {
-        setRecordedVideo(uri);
+      console.log('Recording completed, video:', video);
+      if (video && video.uri) {
+        setRecordedVideo(video.uri);
         setShowPreview(true);
         setIsRecording(false);
-        console.log('Video URI captured:', uri);
+        console.log('Video URI captured:', video.uri);
       } else {
         console.error('No video URI received');
         setIsRecording(false);
@@ -136,7 +100,6 @@ const CameraScreen = ({ navigation }) => {
     if (!isRecording || !cameraRef.current) return;
     
     console.log('Stopping recording...');
-    console.log('Recording state before stop:', isRecording);
     
     try {
       await cameraRef.current.stopRecording();
@@ -229,7 +192,7 @@ const CameraScreen = ({ navigation }) => {
         </Text>
         <TouchableOpacity
           style={styles.retryButton}
-          onPress={requestCameraPermission}
+          onPress={() => Camera.requestCameraPermissionsAsync()}
         >
           <Text style={styles.retryButtonText}>Grant Permission</Text>
         </TouchableOpacity>
@@ -275,18 +238,12 @@ const CameraScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <RNCamera
+      <Camera
         ref={cameraRef}
         style={styles.camera}
-        type={RNCamera.Constants.Type.back}
-        captureAudio={true}
+        type={Camera.Constants.Type.back}
         onCameraReady={() => {
           console.log('Camera is ready!');
-          setIsCameraReady(true);
-        }}
-        onMountError={(error) => {
-          console.error('Camera mount error:', error);
-          Alert.alert('Camera Error', 'Failed to initialize camera. Please restart the app.');
         }}
       />
       
@@ -310,11 +267,6 @@ const CameraScreen = ({ navigation }) => {
           <Text style={styles.instructionsText}>
             Position yourself in the frame and tap record to capture your shot
           </Text>
-          {!isCameraReady && (
-            <Text style={styles.cameraReadyText}>
-              Camera is initializing...
-            </Text>
-          )}
         </View>
 
         {/* Recording button */}
@@ -325,7 +277,7 @@ const CameraScreen = ({ navigation }) => {
               isRecording && styles.recordingButton,
             ]}
             onPress={isRecording ? stopRecording : startRecording}
-            disabled={isAnalyzing || !isCameraReady}
+            disabled={isAnalyzing}
           >
             {isRecording ? (
               <View style={styles.stopIcon} />
@@ -398,13 +350,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     opacity: 0.9,
-  },
-  cameraReadyText: {
-    color: '#FFD700',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 8,
-    fontStyle: 'italic',
   },
   buttonContainer: {
     alignItems: 'center',
