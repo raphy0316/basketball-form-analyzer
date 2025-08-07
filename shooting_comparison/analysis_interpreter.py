@@ -8,7 +8,7 @@ that can be sent to LLM for further analysis and coaching recommendations.
 import json
 from typing import Dict, List, Tuple, Optional
 import numpy as np
-
+import config
 
 class AnalysisInterpreter:
     """
@@ -225,7 +225,7 @@ class AnalysisInterpreter:
                 if value == 'Undefined' or value is None:
                     return 0.0
                 return float(value)
-            
+
             left_std1 = safe_float(left_std1)
             left_std2 = safe_float(left_std2)
             right_std1 = safe_float(right_std1)
@@ -258,11 +258,11 @@ class AnalysisInterpreter:
             
             if left_diff > 10:
                 # Determine difference level
-                if left_diff <= 15:
+                if left_diff <= config.SETUP_HIP_KNEE_ANKLE_ANGLES_LOW:
                     level = "low"
-                elif left_diff <= 25:
+                elif left_diff <= config.SETUP_HIP_KNEE_ANKLE_ANGLES_MEDIUM:
                     level = "medium"
-                elif left_diff <= 35:
+                elif left_diff <= config.SETUP_HIP_KNEE_ANKLE_ANGLES_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -279,11 +279,11 @@ class AnalysisInterpreter:
             
             if right_diff > 10:
                 # Determine difference level
-                if right_diff <= 15:
+                if right_diff <= config.SETUP_HIP_KNEE_ANKLE_ANGLES_LOW:
                     level = "low"
-                elif right_diff <= 25:
+                elif right_diff <= config.SETUP_HIP_KNEE_ANKLE_ANGLES_MEDIUM:
                     level = "medium"
-                elif right_diff <= 35:
+                elif right_diff <= config.SETUP_HIP_KNEE_ANKLE_ANGLES_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -361,11 +361,11 @@ class AnalysisInterpreter:
 
             if vert_diff > 0.1:
                 # Determine difference level
-                if vert_diff <= 0.15:
+                if vert_diff <= config.SETUP_POINT_BALL_EYE_DIFF_Y_LOW:
                     level = "low"
-                elif vert_diff <= 0.25:
+                elif vert_diff <= config.SETUP_POINT_BALL_EYE_DIFF_Y_MEDIUM:
                     level = "medium"
-                elif vert_diff <= 0.35:
+                elif vert_diff <= config.SETUP_POINT_BALL_EYE_DIFF_Y_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -381,11 +381,11 @@ class AnalysisInterpreter:
 
             if horiz_diff > 0.1:
                 # Determine difference level
-                if horiz_diff <= 0.15:
+                if horiz_diff <= config.SETUP_POINT_BALL_EYE_DIFF_X_LOW:
                     level = "low"
-                elif horiz_diff <= 0.25:
+                elif horiz_diff <= config.SETUP_POINT_BALL_EYE_DIFF_X_MEDIUM:
                     level = "medium"
-                elif horiz_diff <= 0.35:
+                elif horiz_diff <= config.SETUP_POINT_BALL_EYE_DIFF_X_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -460,11 +460,11 @@ class AnalysisInterpreter:
 
                 if stance_diff > 0.05:  # Lower threshold for stance width
                     # Determine difference level
-                    if stance_diff <= 0.15:
+                    if stance_diff <= config.SETUP_STANCE_WIDTH_DIST_LOW:
                         level = "low"
-                    elif stance_diff <= 0.25:
+                    elif stance_diff <= config.SETUP_STANCE_WIDTH_DIST_MEDIUM:
                         level = "medium"
-                    elif stance_diff <= 0.35:
+                    elif stance_diff <= config.SETUP_STANCE_WIDTH_DIST_HIGH:
                         level = "high"
                     else:
                         level = "very high"
@@ -525,11 +525,11 @@ class AnalysisInterpreter:
                 
             if tilt_diff > 5:  # Threshold for significant difference
                 # Determine difference level
-                if tilt_diff <= 10:
+                if tilt_diff <= config.SETUP_TILT_DIFF_LOW:
                     level = "low"
-                elif tilt_diff <= 15:
+                elif tilt_diff <= config.SETUP_TILT_DIFF_MEDIUM:
                     level = "medium"
-                elif tilt_diff <= 20:
+                elif tilt_diff <= config.SETUP_TILT_DIFF_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -543,9 +543,7 @@ class AnalysisInterpreter:
                     interpretation['differences'].append(
                         f"Upper body lean shows {level} difference - Video 2 leans more forward ({tilt_diff:.1f}°)"
                     )
-        
 
-        
         return interpretation
     
     def _interpret_loading_analysis(self, loading_analysis: Dict) -> Dict:
@@ -558,9 +556,7 @@ class AnalysisInterpreter:
             'differences': []
             # 'insights': [] # Removed
         }
-        
 
-        
         # Compare max leg angles and asymmetric loading
         max_angles1 = video1.get('max_leg_angles', {})
         max_angles2 = video2.get('max_leg_angles', {})
@@ -592,11 +588,11 @@ class AnalysisInterpreter:
             # Compare asymmetric loading between videos
             asym_diff = abs(asym1 - asym2)
             if asym_diff > 5:
-                if asym_diff <= 10:
+                if asym_diff <= config.LOADING_ASYM_LOW:
                     asym_diff_level = "low"
-                elif asym_diff <= 20:
+                elif asym_diff <= config.LOADING_ASYM_MEDIUM:
                     asym_diff_level = "medium"
-                elif asym_diff <= 30:
+                elif asym_diff <= config.LOADING_ASYM_HIGH:
                     asym_diff_level = "high"
                 else:
                     asym_diff_level = "very high"
@@ -627,7 +623,7 @@ class AnalysisInterpreter:
                     interpretation['differences'].append(
                         f"Asymmetric loading shows {asym_diff_level} difference - Video 2 shifts weight to {video2_favor} side while Video 1 favors {video1_favor} side ({asym_diff:.1f}°)"
                     )
-            
+
             # Analyze overall loading depth differences
             left_depth_diff = abs(left_max1 - left_max2)
             right_depth_diff = abs(right_max1 - right_max2)
@@ -635,11 +631,11 @@ class AnalysisInterpreter:
             # Compare left leg depth
             if left_depth_diff > 15:
                 # Determine difference level
-                if left_depth_diff <= 20:
+                if left_depth_diff <= config.LOADING_DEPTH_DIFF_LOW:
                     level = "low"
-                elif left_depth_diff <= 30:
+                elif left_depth_diff <= config.LOADING_DEPTH_DIFF_MEDIUM:
                     level = "medium"
-                elif left_depth_diff <= 40:
+                elif left_depth_diff <= config.LOADING_DEPTH_DIFF_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -657,11 +653,11 @@ class AnalysisInterpreter:
             # Compare right leg depth
             if right_depth_diff > 15:
                 # Determine difference level
-                if right_depth_diff <= 20:
+                if right_depth_diff <= config.LOADING_DEPTH_DIFF_LOW:
                     level = "low"
-                elif right_depth_diff <= 30:
+                elif right_depth_diff <= config.LOADING_DEPTH_DIFF_MEDIUM:
                     level = "medium"
-                elif right_depth_diff <= 40:
+                elif right_depth_diff <= config.LOADING_DEPTH_DIFF_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -700,11 +696,11 @@ class AnalysisInterpreter:
             if abs(time_to_max1 - time_to_max2) > 0.1:
                 max_timing_diff = abs(time_to_max1 - time_to_max2)
                 # Determine difference level
-                if max_timing_diff <= 0.2:
+                if max_timing_diff <= config.LOADING_MAX_TIMING_DIFF_LOW:
                     level = "low"
-                elif max_timing_diff <= 0.4:
+                elif max_timing_diff <= config.LOADING_MAX_TIMING_DIFF_MEDIUM:
                     level = "medium"
-                elif max_timing_diff <= 0.6:
+                elif max_timing_diff <= config.LOADING_MAX_TIMING_DIFF_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -726,11 +722,11 @@ class AnalysisInterpreter:
             if abs(time_to_trans1 - time_to_trans2) > 0.1:
                 timing_diff = abs(time_to_trans1 - time_to_trans2)
                 # Determine difference level
-                if timing_diff <= 0.3:
+                if timing_diff <= config.LOADING_TIME_TO_TRANS_LOW:
                     level = "low"
-                elif timing_diff <= 0.5:
+                elif timing_diff <= config.LOADING_TIME_TO_TRANS_MEDIUM:
                     level = "medium"
-                elif timing_diff <= 0.8:
+                elif timing_diff <= config.LOADING_TIME_TO_TRANS_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -744,9 +740,6 @@ class AnalysisInterpreter:
                     interpretation['differences'].append(
                         f"Transition timing shows {level} difference - Video 2 is faster ({timing_diff:.2f}s)"
                     )
-        
-
-        
         return interpretation
     
     def _interpret_rising_analysis(self, rising_analysis: Dict) -> Dict:
@@ -776,11 +769,11 @@ class AnalysisInterpreter:
                 if abs(height1 - height2) > 0.02:
                     height_diff = abs(height1 - height2)
                     # Determine difference level
-                    if height_diff <= 0.03:
+                    if height_diff <= config.RISING_JUMP_HEIGHT_DIFF_LOW:
                         level = "low"
-                    elif height_diff <= 0.05:
+                    elif height_diff <= config.RISING_JUMP_HEIGHT_DIFF_MEDIUM:
                         level = "medium"
-                    elif height_diff <= 0.08:
+                    elif height_diff <= config.RISING_JUMP_HEIGHT_DIFF_HIGH:
                         level = "high"
                     else:
                         level = "very high"
@@ -831,11 +824,11 @@ class AnalysisInterpreter:
             if abs(ball_height1 - ball_height2) > 0.02:  # 2cm threshold
                 ball_height_diff = abs(ball_height1 - ball_height2)
                 # Determine difference level
-                if ball_height_diff <= 0.05:
+                if ball_height_diff <= config.RISING_BALL_HEIGHT_DIFF_LOW:
                     level = "low"
-                elif ball_height_diff <= 0.1:
+                elif ball_height_diff <= config.RISING_BALL_HEIGHT_DIFF_MEDIUM:
                     level = "medium"
-                elif ball_height_diff <= 0.15:
+                elif ball_height_diff <= config.RISING_BALL_HEIGHT_DIFF_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -857,11 +850,11 @@ class AnalysisInterpreter:
             if abs(ball_horizontal1 - ball_horizontal2) > 0.02:  # 2cm threshold
                 ball_horizontal_diff = abs(ball_horizontal1 - ball_horizontal2)
                 # Determine difference level
-                if ball_horizontal_diff <= 0.05:
+                if ball_horizontal_diff <= config.RISING_BALL_HORIZ_DIFF_LOW:
                     level = "low"
-                elif ball_horizontal_diff <= 0.1:
+                elif ball_horizontal_diff <= config.RISING_BALL_HORIZ_DIFF_MEDIUM:
                     level = "medium"
-                elif ball_horizontal_diff <= 0.15:
+                elif ball_horizontal_diff <= config.RISING_BALL_HORIZ_DIFF_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -887,11 +880,11 @@ class AnalysisInterpreter:
             if abs(windup1 - windup2) > 0.1:
                 windup_diff = abs(windup1 - windup2)
                 # Determine difference level
-                if windup_diff <= 0.3:
+                if windup_diff <= config.WINDUP_DIFF_LOW:
                     level = "low"
-                elif windup_diff <= 0.5:
+                elif windup_diff <= config.WINDUP_DIFF_MEDIUM:
                     level = "medium"
-                elif windup_diff <= 0.8:
+                elif windup_diff <= config.WINDUP_DIFF_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -918,11 +911,11 @@ class AnalysisInterpreter:
             if abs(curvature1 - curvature2) > 0.001:  # Small threshold for curvature
                 curvature_diff = abs(curvature1 - curvature2)
                 # Determine difference level
-                if curvature_diff <= 0.002:
+                if curvature_diff <= config.WINDUP_CURVATURE_DIFF_LOW:
                     level = "low"
-                elif curvature_diff <= 0.005:
+                elif curvature_diff <= config.WINDUP_CURVATURE_DIFF_MEDIUM:
                     level = "medium"
-                elif curvature_diff <= 0.01:
+                elif curvature_diff <= config.WINDUP_CURVATURE_DIFF_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -944,11 +937,11 @@ class AnalysisInterpreter:
             if abs(path_length1 - path_length2) > 0.01:  # Small threshold for path length
                 path_length_diff = abs(path_length1 - path_length2)
                 # Determine difference level
-                if path_length_diff <= 0.02:
+                if path_length_diff <= config.WINDUP_PATH_LENGTH_DIFF_LOW:
                     level = "low"
-                elif path_length_diff <= 0.05:
+                elif path_length_diff <= config.WINDUP_PATH_LENGTH_DIFF_MEDIUM:
                     level = "medium"
-                elif path_length_diff <= 0.1:
+                elif path_length_diff <= config.WINDUP_PATH_LENGTH_DIFF_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -975,11 +968,11 @@ class AnalysisInterpreter:
             if abs(max_time1 - max_time2) > 0.1:
                 max_timing_diff = abs(max_time1 - max_time2)
                 # Determine difference level
-                if max_timing_diff <= 0.2:
+                if max_timing_diff <= config.MAX_TIMING_DIFF_LOW:
                     level = "low"
-                elif max_timing_diff <= 0.4:
+                elif max_timing_diff <= config.MAX_TIMING_DIFF_MEDIUM:
                     level = "medium"
-                elif max_timing_diff <= 0.6:
+                elif max_timing_diff <= config.MAX_TIMING_DIFF_HIGH :
                     level = "high"
                 else:
                     level = "very high"
@@ -1008,11 +1001,11 @@ class AnalysisInterpreter:
             if abs(sew1 - sew2) > 5:  # 5 degree threshold
                 sew_diff = abs(sew1 - sew2)
                 # Determine difference level
-                if sew_diff <= 10:
+                if sew_diff <= config.DIP_SHOULDER_ELBOW_WRIST_LOW :
                     level = "low"
-                elif sew_diff <= 20:
+                elif sew_diff <= config.DIP_SHOULDER_ELBOW_WRIST_MEDIUM:
                     level = "medium"
-                elif sew_diff <= 30:
+                elif sew_diff <= config.DIP_SHOULDER_ELBOW_WRIST_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -1034,11 +1027,11 @@ class AnalysisInterpreter:
             if abs(at1 - at2) > 5:  # 5 degree threshold
                 at_diff = abs(at1 - at2)
                 # Determine difference level
-                if at_diff <= 10:
+                if at_diff <= config.DIP_ARM_TORSO_ANGLE_LOW:
                     level = "low"
-                elif at_diff <= 20:
+                elif at_diff <= config.DIP_ARM_TORSO_ANGLE_MEDIUM:
                     level = "medium"
-                elif at_diff <= 30:
+                elif at_diff <= config.DIP_ARM_TORSO_ANGLE_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -1070,11 +1063,11 @@ class AnalysisInterpreter:
                 if abs(sew1 - sew2) > 5:  # 5 degree threshold
                     sew_diff = abs(sew1 - sew2)
                     # Determine difference level
-                    if sew_diff <= 10:
+                    if sew_diff <= config.SETUP_POINT_SHOULDER_ELBOW_WRIST_LOW:
                         level = "low"
-                    elif sew_diff <= 20:
+                    elif sew_diff <= config.SETUP_POINT_SHOULDER_ELBOW_WRIST_MEDIUM:
                         level = "medium"
-                    elif sew_diff <= 30:
+                    elif sew_diff <= config.SETUP_POINT_SHOULDER_ELBOW_WRIST_HIGH:
                         level = "high"
                     else:
                         level = "very high"
@@ -1096,11 +1089,11 @@ class AnalysisInterpreter:
                 if abs(at1 - at2) > 5:  # 5 degree threshold
                     at_diff = abs(at1 - at2)
                     # Determine difference level
-                    if at_diff <= 10:
+                    if at_diff <= config.SETUP_POINT_ARM_TORSO_ANGLE_LOW:
                         level = "low"
-                    elif at_diff <= 20:
+                    elif at_diff <= config.SETUP_POINT_ARM_TORSO_ANGLE_MEDIUM:
                         level = "medium"
-                    elif at_diff <= 30:
+                    elif at_diff <= config.SETUP_POINT_ARM_TORSO_ANGLE_HIGH:
                         level = "high"
                     else:
                         level = "very high"
@@ -1127,11 +1120,11 @@ class AnalysisInterpreter:
                 if abs(rel_x1 - rel_x2) > 0.02:  # 2cm threshold
                     rel_x_diff = abs(rel_x1 - rel_x2)
                     # Determine difference level
-                    if rel_x_diff <= 0.05:
+                    if rel_x_diff <= config.SETUP_POINT_BALL_EYE_DIFF_X_LOW:
                         level = "low"
-                    elif rel_x_diff <= 0.1:
+                    elif rel_x_diff <= config.SETUP_POINT_BALL_EYE_DIFF_X_MEDIUM:
                         level = "medium"
-                    elif rel_x_diff <= 0.15:
+                    elif rel_x_diff <= config.SETUP_POINT_BALL_EYE_DIFF_X_HIGH:
                         level = "high"
                     else:
                         level = "very high"
@@ -1139,11 +1132,11 @@ class AnalysisInterpreter:
                     # Determine which video has ball more to the right relative to eyes (Video 1 is reference)
                     if rel_x1 > rel_x2:
                         interpretation['differences'].append(
-                            f"Setup point ball horizontal position relative to eyes shows {level} difference - Video 2 has ball more to the left ({rel_x_diff:.3f})"
+                            f"Setup point ball horizontal position relative to eyes shows {level} difference - Video 2 has ball more closer to the eyes ({rel_x_diff:.3f})"
                         )
                     else:
                         interpretation['differences'].append(
-                            f"Setup point ball horizontal position relative to eyes shows {level} difference - Video 2 has ball more to the right ({rel_x_diff:.3f})"
+                            f"Setup point ball horizontal position relative to eyes shows {level} difference - Video 2 has ball more away to the eyes ({rel_x_diff:.3f})"
                         )
 
                 # Compare vertical distance
@@ -1153,11 +1146,11 @@ class AnalysisInterpreter:
                 if abs(rel_y1 - rel_y2) > 0.02:  # 2cm threshold
                     rel_y_diff = abs(rel_y1 - rel_y2)
                     # Determine difference level
-                    if rel_y_diff <= 0.05:
+                    if rel_y_diff <= config.SETUP_POINT_BALL_EYE_DIFF_Y_LOW:
                         level = "low"
-                    elif rel_y_diff <= 0.1:
+                    elif rel_y_diff <= config.SETUP_POINT_BALL_EYE_DIFF_Y_MEDIUM:
                         level = "medium"
-                    elif rel_y_diff <= 0.15:
+                    elif rel_y_diff <= config.SETUP_POINT_BALL_EYE_DIFF_Y_HIGH:
                         level = "high"
                     else:
                         level = "very high"
@@ -1196,11 +1189,11 @@ class AnalysisInterpreter:
             if abs(relative_timing1 - relative_timing2) > 0.1:
                 relative_timing_diff = abs(relative_timing1 - relative_timing2)
                 # Determine difference level
-                if relative_timing_diff <= 0.2:
+                if relative_timing_diff <= config.RELEASE_TIMING_DIFF_LOW:
                     level = "low"
-                elif relative_timing_diff <= 0.4:
+                elif relative_timing_diff <= config.RELEASE_TIMING_DIFF_MEDIUM:
                     level = "medium"
-                elif relative_timing_diff <= 0.6:
+                elif relative_timing_diff <= config.RELEASE_TIMING_DIFF_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -1225,11 +1218,11 @@ class AnalysisInterpreter:
             if abs(tilt1 - tilt2) > 10:
                 tilt_diff = abs(tilt1 - tilt2)
                 # Determine difference level
-                if tilt_diff <= 15:
+                if tilt_diff <= config.RELEASE_TILT_DIFF_LOW:
                     level = "low"
-                elif tilt_diff <= 25:
+                elif tilt_diff <= config.RELEASE_TILT_DIFF_MEDIUM:
                     level = "medium"
-                elif tilt_diff <= 35:
+                elif tilt_diff <= config.RELEASE_TILT_DIFF_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -1256,11 +1249,11 @@ class AnalysisInterpreter:
                 if abs(left_thigh1 - left_thigh2) > 10:
                     thigh_diff = abs(left_thigh1 - left_thigh2)
                     # Determine difference level
-                    if thigh_diff <= 15:
+                    if thigh_diff <= config.RELEASE_THIGH_DIFF_LOW:
                         level = "low"
-                    elif thigh_diff <= 25:
+                    elif thigh_diff <= config.RELEASE_THIGH_DIFF_MEDIUM:
                         level = "medium"
-                    elif thigh_diff <= 35:
+                    elif thigh_diff <= config.RELEASE_THIGH_DIFF_HIGH:
                         level = "high"
                     else:
                         level = "very high"
@@ -1282,11 +1275,11 @@ class AnalysisInterpreter:
                 if abs(right_thigh1 - right_thigh2) > 10:
                     thigh_diff = abs(right_thigh1 - right_thigh2)
                     # Determine difference level
-                    if thigh_diff <= 15:
+                    if thigh_diff <= config.RELEASE_THIGH_DIFF_LOW:
                         level = "low"
-                    elif thigh_diff <= 25:
+                    elif thigh_diff <= config.RELEASE_THIGH_DIFF_MEDIUM:
                         level = "medium"
-                    elif thigh_diff <= 35:
+                    elif thigh_diff <= config.RELEASE_THIGH_DIFF_HIGH:
                         level = "high"
                     else:
                         level = "very high"
@@ -1308,11 +1301,11 @@ class AnalysisInterpreter:
                 if abs(left_leg1 - left_leg2) > 10:
                     leg_diff = abs(left_leg1 - left_leg2)
                     # Determine difference level
-                    if leg_diff <= 15:
+                    if leg_diff <= config.RELEASE_LEG_DIFF_LOW:
                         level = "low"
-                    elif leg_diff <= 25:
+                    elif leg_diff <= config.RELEASE_LEG_DIFF_MEDIUM:
                         level = "medium"
-                    elif leg_diff <= 35:
+                    elif leg_diff <= config.RELEASE_LEG_DIFF_HIGH:
                         level = "high"
                     else:
                         level = "very high"
@@ -1334,11 +1327,11 @@ class AnalysisInterpreter:
                 if abs(right_leg1 - right_leg2) > 10:
                     leg_diff = abs(right_leg1 - right_leg2)
                     # Determine difference level
-                    if leg_diff <= 15:
+                    if leg_diff <= config.RELEASE_LEG_DIFF_LOW:
                         level = "low"
-                    elif leg_diff <= 25:
+                    elif leg_diff <= config.RELEASE_LEG_DIFF_MEDIUM:
                         level = "medium"
-                    elif leg_diff <= 35:
+                    elif leg_diff <= config.RELEASE_LEG_DIFF_HIGH:
                         level = "high"
                     else:
                         level = "very high"
@@ -1365,11 +1358,11 @@ class AnalysisInterpreter:
             if abs(shoulder_elbow_wrist1 - shoulder_elbow_wrist2) > 10:
                 angle_diff = abs(shoulder_elbow_wrist1 - shoulder_elbow_wrist2)
                 # Determine difference level
-                if angle_diff <= 15:
+                if angle_diff <= config.RELEASE_SHOULDER_ELBOW_WRIST_LOW:
                     level = "low"
-                elif angle_diff <= 25:
+                elif angle_diff <= config.RELEASE_SHOULDER_ELBOW_WRIST_MEDIUM:
                     level = "medium"
-                elif angle_diff <= 35:
+                elif angle_diff <= config.RELEASE_SHOULDER_ELBOW_WRIST_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -1391,11 +1384,11 @@ class AnalysisInterpreter:
             if abs(wrist_shoulder_hip1 - wrist_shoulder_hip2) > 10:
                 angle_diff = abs(wrist_shoulder_hip1 - wrist_shoulder_hip2)
                 # Determine difference level
-                if angle_diff <= 15:
+                if angle_diff <= config.RELEASE_WRIST_SHOULDER_HIP_LOW:
                     level = "low"
-                elif angle_diff <= 25:
+                elif angle_diff <= config.RELEASE_WRIST_SHOULDER_HIP_MEDIUM:
                     level = "medium"
-                elif angle_diff <= 35:
+                elif angle_diff <= config.RELEASE_WRIST_SHOULDER_HIP_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -1425,11 +1418,11 @@ class AnalysisInterpreter:
                 if abs(torso_angle1 - torso_angle2) > 5:
                     arm_diff = abs(torso_angle1 - torso_angle2)
                     # Determine difference level
-                    if arm_diff <= 10:
+                    if arm_diff <= config.RELEASE_TORSO_LOW:
                         level = "low"
-                    elif arm_diff <= 20:
+                    elif arm_diff <= config.RELEASE_TORSO_MEDIUM:
                         level = "medium"
-                    elif arm_diff <= 30:
+                    elif arm_diff <= config.RELEASE_TORSO_HIGH:
                         level = "high"
                     else:
                         level = "very high"
@@ -1457,11 +1450,11 @@ class AnalysisInterpreter:
             if abs(rel_x1 - rel_x2) > 0.1:
                 ball_x_diff = abs(rel_x1 - rel_x2)
                 # Determine difference level
-                if ball_x_diff <= 0.15:
+                if ball_x_diff <= config.RELEASE_BALL_X_DIFF_LOW:
                     level = "low"
-                elif ball_x_diff <= 0.25:
+                elif ball_x_diff <= config.RELEASE_BALL_X_DIFF_MEDIUM:
                     level = "medium"
-                elif ball_x_diff <= 0.35:
+                elif ball_x_diff <= config.RELEASE_BALL_X_DIFF_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -1469,21 +1462,21 @@ class AnalysisInterpreter:
                 # Determine which video has ball further/closer horizontally (Video 1 is reference)
                 if rel_x1 > rel_x2:
                     interpretation['differences'].append(
-                        f"Ball horizontal position shows {level} difference - Video 2 has ball closer ({ball_x_diff:.3f})"
+                        f"Ball horizontal position shows {level} difference - Video 2 has ball closer to the eye({ball_x_diff:.3f})"
                     )
                 else:
                     interpretation['differences'].append(
-                        f"Ball horizontal position shows {level} difference - Video 2 has ball further ({ball_x_diff:.3f})"
+                        f"Ball horizontal position shows {level} difference - Video 2 has ball further to the eye({ball_x_diff:.3f})"
                     )
             
             if abs(rel_y1 - rel_y2) > 0.1:
                 ball_y_diff = abs(rel_y1 - rel_y2)
                 # Determine difference level
-                if ball_y_diff <= 0.15:
+                if ball_y_diff <= config.RELEASE_BALL_Y_DIFF_LOW:
                     level = "low"
-                elif ball_y_diff <= 0.25:
+                elif ball_y_diff <= config.RELEASE_BALL_Y_DIFF_MEDIUM:
                     level = "medium"
-                elif ball_y_diff <= 0.35:
+                elif ball_y_diff <= config.RELEASE_BALL_Y_DIFF_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -1491,11 +1484,11 @@ class AnalysisInterpreter:
                 # Determine which video has ball higher/lower vertically (Video 1 is reference)
                 if rel_y1 > rel_y2:
                     interpretation['differences'].append(
-                        f"Ball vertical position shows {level} difference - Video 2 has ball lower ({ball_y_diff:.3f})"
+                        f"Ball vertical position shows {level} difference - Video 2 has ball lower to the eye({ball_y_diff:.3f})"
                     )
                 else:
                     interpretation['differences'].append(
-                        f"Ball vertical position shows {level} difference - Video 2 has ball higher ({ball_y_diff:.3f})"
+                        f"Ball vertical position shows {level} difference - Video 2 has ball higher to the eye({ball_y_diff:.3f})"
                     )
         
         # Compare ball vector at release
@@ -1510,11 +1503,11 @@ class AnalysisInterpreter:
             if abs(magnitude1 - magnitude2) > 0.01:
                 magnitude_diff = abs(magnitude1 - magnitude2)
                 # Determine difference level
-                if magnitude_diff <= 0.02:
+                if magnitude_diff <= config.RELEASE_BALL_MAGNITUDE_LOW:
                     level = "low"
-                elif magnitude_diff <= 0.05:
+                elif magnitude_diff <= config.RELEASE_BALL_MAGNITUDE_MEDIUM:
                     level = "medium"
-                elif magnitude_diff <= 0.1:
+                elif magnitude_diff <= config.RELEASE_BALL_MAGNITUDE_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -1536,11 +1529,11 @@ class AnalysisInterpreter:
             if abs(angle1 - angle2) > 5:
                 angle_diff = abs(angle1 - angle2)
                 # Determine difference level
-                if angle_diff <= 10:
+                if angle_diff <= config.RELEASE_BALL_ANGLE_LOW:
                     level = "low"
-                elif angle_diff <= 20:
+                elif angle_diff <= config.RELEASE_BALL_ANGLE_MEDIUM:
                     level = "medium"
-                elif angle_diff <= 30:
+                elif angle_diff <= config.RELEASE_BALL_ANGLE_HIGH:
                     level = "high"
                 else:
                     level = "very high"
@@ -1595,7 +1588,7 @@ class AnalysisInterpreter:
             
             if overall_stable1 > 0 and overall_stable2 > 0:
                 stable_diff = abs(overall_stable1 - overall_stable2)
-                level = self._get_difference_level(stable_diff, 0.1, 0.2)
+                level = self._get_difference_level(stable_diff, config.STABLE_DIFF_LOW , config.STABLE_DIFF_MEDIUM, config.STABLE_DIFF_HIGH)
                 
                 if overall_stable1 > overall_stable2:
                     interpretation['differences'].append(
@@ -1612,7 +1605,7 @@ class AnalysisInterpreter:
             
             if arm_stable1 > 0 and arm_stable2 > 0:
                 arm_stable_diff = abs(arm_stable1 - arm_stable2)
-                level = self._get_difference_level(arm_stable_diff, 0.1, 0.2)
+                level = self._get_difference_level(arm_stable_diff, config.ARM_STABLE_DIFF_LOW, config.ARM_STABLE_DIFF_MEDIUM, config.ARM_STABLE_DIFF_HIGH)
                 
                 if arm_stable1 > arm_stable2:
                     interpretation['differences'].append(
@@ -1629,7 +1622,7 @@ class AnalysisInterpreter:
             
             if other_stable1 > 0 and other_stable2 > 0:
                 other_stable_diff = abs(other_stable1 - other_stable2)
-                level = self._get_difference_level(other_stable_diff, 0.1, 0.2)
+                level = self._get_difference_level(other_stable_diff, config.OTHER_STABLE_DIFF_LOW, config.OTHER_STABLE_DIFF_MEDIUM, config.OTHER_STABLE_DIFF_HIGH)
                 
                 if other_stable1 > other_stable2:
                     interpretation['differences'].append(
@@ -1651,7 +1644,7 @@ class AnalysisInterpreter:
             
             if max_angle1 > 0 and max_angle2 > 0:
                 angle_diff = abs(max_angle1 - max_angle2)
-                level = self._get_difference_level(angle_diff, 5.0, 10.0)
+                level = self._get_difference_level(angle_diff, config.MAX_ELBOW_ANGLE_DIFF_LOW, config.MAX_ELBOW_ANGLE_DIFF_MEDIUM, config.MAX_ELBOW_ANGLE_DIFF_HIGH)
                 
                 if max_angle1 > max_angle2:
                     interpretation['differences'].append(
@@ -1668,7 +1661,7 @@ class AnalysisInterpreter:
             
             if overall_std1 > 0 and overall_std2 > 0:
                 std_diff = abs(overall_std1 - overall_std2)
-                level = self._get_difference_level(std_diff, 2.0, 5.0)
+                level = self._get_difference_level(std_diff, config.MAX_ELBOW_ANGLE_STD_LOW, config.MAX_ELBOW_ANGLE_STD_MEDIUM, config.MAX_ELBOW_ANGLE_STD_HIGH)
                 
                 if overall_std1 < overall_std2:
                     interpretation['differences'].append(
@@ -1690,7 +1683,7 @@ class AnalysisInterpreter:
             
             if elbow_std1 > 0 and elbow_std2 > 0:
                 elbow_std_diff = abs(elbow_std1 - elbow_std2)
-                level = self._get_difference_level(elbow_std_diff, 2.0, 5.0)
+                level = self._get_difference_level(elbow_std_diff, config.ELBOW_STD_DIFF_LOW, config.ELBOW_STD_DIFF_MEDIUM, config.ELBOW_STD_DIFF_HIGH)
                 
                 if elbow_std1 < elbow_std2:
                     interpretation['differences'].append(
@@ -1707,7 +1700,7 @@ class AnalysisInterpreter:
             
             if shoulder_std1 > 0 and shoulder_std2 > 0:
                 shoulder_std_diff = abs(shoulder_std1 - shoulder_std2)
-                level = self._get_difference_level(shoulder_std_diff, 2.0, 5.0)
+                level = self._get_difference_level(shoulder_std_diff, config.SHOULDER_STD_DIFF_LOW, config.SHOULDER_STD_DIFF_MEDIUM, config.SHOULDER_STD_DIFF_HIGH)
                 
                 if shoulder_std1 < shoulder_std2:
                     interpretation['differences'].append(
@@ -1841,7 +1834,7 @@ class AnalysisInterpreter:
             
             if abs(avg_torso_angle1 - avg_torso_angle2) > 5:
                 torso_angle_diff = abs(avg_torso_angle1 - avg_torso_angle2)
-                level = self._get_difference_level(torso_angle_diff, 10.0, 20.0)
+                level = self._get_difference_level(torso_angle_diff, config.LANDING_TORSO_ANGLE_LOW , config.LANDING_TORSO_ANGLE_MEDIUM, config.LANDING_TORSO_ANGLE_HIGH)
                 
                 if avg_torso_angle1 < avg_torso_angle2:
                     interpretation['differences'].append(
@@ -1874,10 +1867,10 @@ class AnalysisInterpreter:
         #     interpretation['insights'].append("Both forms show similar landing patterns after follow-through")
         # else:
         #     interpretation['insights'].append("Landing phase reveals differences in foot positioning and body control")
-        
+    
         return interpretation
     
-    def _get_difference_level(self, diff: float, low_threshold: float, medium_threshold: float) -> str:
+    def _get_difference_level(self, diff: float, low_threshold: float, medium_threshold: float, high_threshold: float) -> str:
         """
         Determine the level of difference based on thresholds.
         
