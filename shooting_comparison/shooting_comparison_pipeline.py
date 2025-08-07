@@ -588,6 +588,7 @@ class ShootingComparisonPipeline:
             
             # Add video paths and data paths to results for visualization
             enhanced_results = dict(self.comparison_results)
+            print(self.comparison_results.keys())
             enhanced_results['video1_path'] = os.path.abspath(self.video1_path)
             enhanced_results['video2_path'] = os.path.abspath(self.video2_path)
             
@@ -746,10 +747,10 @@ class ShootingComparisonPipeline:
             print(f"    Note: {video1_setup['note']}")
         
         # Display angles
-        angles1 = video1_setup.get('hip_knee_ankle_angles', {})
-        print(f"    Hip-Knee-Ankle Angles:")
-        print(f"      Left: {angles1.get('left', {}).get('average', 'Undefined')}°")
-        print(f"      Right: {angles1.get('right', {}).get('average', 'Undefined')}°")
+        # angles1 = video1_setup.get('hip_knee_ankle_angles', {})
+        # print(f"    Hip-Knee-Ankle Angles:")
+        # print(f"      Left: {angles1.get('left', {}).get('average', 'Undefined')}°")
+        # print(f"      Right: {angles1.get('right', {}).get('average', 'Undefined')}°")
         
         # Display foot positions
         foot_pos1 = video1_setup.get('foot_positions', {})
@@ -778,10 +779,10 @@ class ShootingComparisonPipeline:
             print(f"    Note: {video2_setup['note']}")
         
         # Display angles
-        angles2 = video2_setup.get('hip_knee_ankle_angles', {})
-        print(f"    Hip-Knee-Ankle Angles:")
-        print(f"      Left: {angles2.get('left', {}).get('average', 'Undefined')}°")
-        print(f"      Right: {angles2.get('right', {}).get('average', 'Undefined')}°")
+        # angles2 = video2_setup.get('hip_knee_ankle_angles', {})
+        # print(f"    Hip-Knee-Ankle Angles:")
+        # print(f"      Left: {angles2.get('left', {}).get('average', 'Undefined')}°")
+        # print(f"      Right: {angles2.get('right', {}).get('average', 'Undefined')}°")
         
         # Display foot positions
         foot_pos2 = video2_setup.get('foot_positions', {})
@@ -872,7 +873,7 @@ class ShootingComparisonPipeline:
         """Display rising analysis results."""
         video1_rising = rising_analysis.get('video1', {})
         video2_rising = rising_analysis.get('video2', {})
-        
+
         if 'error' in video1_rising or 'error' in video2_rising:
             print("  ⚠️  Rising analysis errors:")
             if 'error' in video1_rising:
@@ -956,6 +957,29 @@ class ShootingComparisonPipeline:
         print(f"    Loading-Rising Frames: {video2_rising.get('loading_rising_frames', 'N/A')}")
         print(f"    Combined Rising Frames: {video2_rising.get('total_rising_frames', 'N/A')}")
         
+        dip_point1 = video1_rising.get('dip_point_analysis', {})
+        if 'error' not in dip_point1:
+            print(f"    Dip Point Analysis:")
+            print(f"      Dip Frame: {dip_point1.get('dip_frame_index', 'N/A')}")
+            print(f"      Arm Angles:")
+            print(f"        Shoulder-Elbow-Wrist: {dip_point1.get('dip_shoulder_elbow_wrist', 'N/A'):.2f}°")
+            print(f"        Elbow-Shoulder-Hip: {dip_point1.get('dip_elbow_shoulder_hip', 'N/A'):.2f}°")
+            print(f"        Torso Angle: {dip_point1.get('dip_torso_angle', 'N/A'):.2f}°")
+            print(f"        Arm-Torso Angle: {dip_point1.get('dip_arm_torso_angle', 'N/A'):.2f}°")
+            
+            # Ball position relative to eyes at setup point
+            ball_eye1 = setup_point1.get('dip_ball_eye_position', {})
+            if ball_eye1 and 'error' not in ball_eye1:
+                print(f"      Ball Position (Relative to Eyes):")
+                print(f"        Horizontal Distance: {ball_eye1.get('relative_x', 'N/A'):.4f}")
+                print(f"        Vertical Distance: {ball_eye1.get('relative_y', 'N/A'):.4f}")
+        
+        print("  📊 Video 2 Rising Analysis:")
+        print(f"    Total Rising Time: {video2_rising.get('total_rising_time', 'N/A')}s")
+        print(f"    Rising Frames: {video2_rising.get('rising_frames', 'N/A')}")
+        print(f"    Loading-Rising Frames: {video2_rising.get('loading_rising_frames', 'N/A')}")
+        print(f"    Combined Rising Frames: {video2_rising.get('total_rising_frames', 'N/A')}")
+
         # Windup trajectory analysis
         windup2 = video2_rising.get('windup_trajectory', {})
         if 'error' not in windup2:
@@ -1018,6 +1042,22 @@ class ShootingComparisonPipeline:
                 print(f"      Ball Position (Relative to Eyes):")
                 print(f"        Horizontal Distance: {ball_eye2.get('relative_x', 'N/A'):.4f}")
                 print(f"        Vertical Distance: {ball_eye2.get('relative_y', 'N/A'):.4f}")
+        dip_point2 = video2_rising.get('dip_point_analysis', {})
+        if 'error' not in dip_point2:
+            print(f"    Dip Point Analysis:")
+            print(f"      Dip Frame: {dip_point2.get('dip_frame_index', 'N/A')}")
+            print(f"      Arm Angles:")
+            print(f"        Shoulder-Elbow-Wrist: {dip_point2.get('dip_shoulder_elbow_wrist', 'N/A'):.2f}°")
+            print(f"        Elbow-Shoulder-Hip: {dip_point2.get('dip_elbow_shoulder_hip', 'N/A'):.2f}°")
+            print(f"        Torso Angle: {dip_point2.get('dip_torso_angle', 'N/A'):.2f}°")
+            print(f"        Arm-Torso Angle: {dip_point2.get('dip_arm_torso_angle', 'N/A'):.2f}°")
+            
+            # Ball position relative to eyes at setup point
+            ball_eye1 = setup_point1.get('dip_ball_eye_position', {})
+            if ball_eye1 and 'error' not in ball_eye1:
+                print(f"      Ball Position (Relative to Eyes):")
+                print(f"        Horizontal Distance: {ball_eye1.get('relative_x', 'N/A'):.4f}")
+                print(f"        Vertical Distance: {ball_eye1.get('relative_y', 'N/A'):.4f}")
 
     def _display_release_analysis(self, release_analysis: Dict):
         """Display release analysis results."""
@@ -1172,10 +1212,10 @@ class ShootingComparisonPipeline:
             print(f"    Arm Stability:")
             shoulder1 = arm_stability1.get('shoulder_angle', {})
             elbow1 = arm_stability1.get('elbow_angle', {})
-            wrist1 = arm_stability1.get('wrist_angle', {})
+            # wrist1 = arm_stability1.get('wrist_angle', {})
             print(f"      Shoulder Angle - Avg: {shoulder1.get('average', 'N/A'):.2f}°, Std: {shoulder1.get('std', 'N/A'):.2f}°")
             print(f"      Elbow Angle - Avg: {elbow1.get('average', 'N/A'):.2f}°, Std: {elbow1.get('std', 'N/A'):.2f}°")
-            print(f"      Wrist Angle - Avg: {wrist1.get('average', 'N/A'):.2f}°, Std: {wrist1.get('std', 'N/A'):.2f}°")
+            # print(f"      Wrist Angle - Avg: {wrist1.get('average', 'N/A'):.2f}°, Std: {wrist1.get('std', 'N/A'):.2f}°")
         
         # Overall stability analysis
         overall_stability1 = video1_follow_through.get('overall_stability', {})
@@ -1183,11 +1223,11 @@ class ShootingComparisonPipeline:
             print(f"    Overall Stability:")
             hip1 = overall_stability1.get('hip_angle', {})
             knee1 = overall_stability1.get('knee_angle', {})
-            ankle1 = overall_stability1.get('ankle_angle', {})
+            # ankle1 = overall_stability1.get('ankle_angle', {})
             torso1 = overall_stability1.get('torso_angle', {})
             print(f"      Hip Angle - Avg: {hip1.get('average', 'N/A'):.2f}°, Std: {hip1.get('std', 'N/A'):.2f}°")
             print(f"      Knee Angle - Avg: {knee1.get('average', 'N/A'):.2f}°, Std: {knee1.get('std', 'N/A'):.2f}°")
-            print(f"      Ankle Angle - Avg: {ankle1.get('average', 'N/A'):.2f}°, Std: {ankle1.get('std', 'N/A'):.2f}°")
+            # print(f"      Ankle Angle - Avg: {ankle1.get('average', 'N/A'):.2f}°, Std: {ankle1.get('std', 'N/A'):.2f}°")
             print(f"      Torso Angle - Avg: {torso1.get('average', 'N/A'):.2f}°, Std: {torso1.get('std', 'N/A'):.2f}°")
         
         print("  📊 Video 2 Follow-through Analysis:")
@@ -1223,10 +1263,10 @@ class ShootingComparisonPipeline:
             print(f"    Arm Stability:")
             shoulder2 = arm_stability2.get('shoulder_angle', {})
             elbow2 = arm_stability2.get('elbow_angle', {})
-            wrist2 = arm_stability2.get('wrist_angle', {})
+            # wrist2 = arm_stability2.get('wrist_angle', {})
             print(f"      Shoulder Angle - Avg: {shoulder2.get('average', 'N/A'):.2f}°, Std: {shoulder2.get('std', 'N/A'):.2f}°")
             print(f"      Elbow Angle - Avg: {elbow2.get('average', 'N/A'):.2f}°, Std: {elbow2.get('std', 'N/A'):.2f}°")
-            print(f"      Wrist Angle - Avg: {wrist2.get('average', 'N/A'):.2f}°, Std: {wrist2.get('std', 'N/A'):.2f}°")
+            # print(f"      Wrist Angle - Avg: {wrist2.get('average', 'N/A'):.2f}°, Std: {wrist2.get('std', 'N/A'):.2f}°")
         
         # Overall stability analysis
         overall_stability2 = video2_follow_through.get('overall_stability', {})
@@ -1234,11 +1274,11 @@ class ShootingComparisonPipeline:
             print(f"    Overall Stability:")
             hip2 = overall_stability2.get('hip_angle', {})
             knee2 = overall_stability2.get('knee_angle', {})
-            ankle2 = overall_stability2.get('ankle_angle', {})
+            # ankle2 = overall_stability2.get('ankle_angle', {})
             torso2 = overall_stability2.get('torso_angle', {})
             print(f"      Hip Angle - Avg: {hip2.get('average', 'N/A'):.2f}°, Std: {hip2.get('std', 'N/A'):.2f}°")
             print(f"      Knee Angle - Avg: {knee2.get('average', 'N/A'):.2f}°, Std: {knee2.get('std', 'N/A'):.2f}°")
-            print(f"      Ankle Angle - Avg: {ankle2.get('average', 'N/A'):.2f}°, Std: {ankle2.get('std', 'N/A'):.2f}°")
+            # print(f"      Ankle Angle - Avg: {ankle2.get('average', 'N/A'):.2f}°, Std: {ankle2.get('std', 'N/A'):.2f}°")
             print(f"      Torso Angle - Avg: {torso2.get('average', 'N/A'):.2f}°, Std: {torso2.get('std', 'N/A'):.2f}°")
 
     def _display_landing_analysis(self, landing_analysis: Dict):

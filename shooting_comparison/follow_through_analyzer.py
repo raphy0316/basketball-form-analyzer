@@ -188,13 +188,13 @@ class FollowThroughAnalyzer:
             # Calculate arm angles
             shoulder_angle = self._calculate_shoulder_angle(pose)
             elbow_angle = self._calculate_elbow_angle(pose)
-            wrist_angle = self._calculate_wrist_angle(pose)
+            # wrist_angle = self._calculate_wrist_angle(pose)
             
-            if all(angle is not None for angle in [shoulder_angle, elbow_angle, wrist_angle]):
+            if all(angle is not None for angle in [shoulder_angle, elbow_angle]):
                 arm_angles.append({
                     'shoulder_angle': shoulder_angle,
                     'elbow_angle': elbow_angle,
-                    'wrist_angle': wrist_angle
+                    # 'wrist_angle': wrist_angle
                 })
         
         if not arm_angles:
@@ -203,7 +203,7 @@ class FollowThroughAnalyzer:
         # Calculate statistics
         shoulder_angles = [angle['shoulder_angle'] for angle in arm_angles]
         elbow_angles = [angle['elbow_angle'] for angle in arm_angles]
-        wrist_angles = [angle['wrist_angle'] for angle in arm_angles]
+        # wrist_angles = [angle['wrist_angle'] for angle in arm_angles]
         
         arm_stability = {
             'shoulder_angle': {
@@ -218,12 +218,12 @@ class FollowThroughAnalyzer:
                 'min': np.min(elbow_angles),
                 'max': np.max(elbow_angles)
             },
-            'wrist_angle': {
-                'average': np.mean(wrist_angles),
-                'std': np.std(wrist_angles),
-                'min': np.min(wrist_angles),
-                'max': np.max(wrist_angles)
-            }
+            # 'wrist_angle': {
+            #     'average': np.mean(wrist_angles),
+            #     'std': np.std(wrist_angles),
+            #     'min': np.min(wrist_angles),
+            #     'max': np.max(wrist_angles)
+            # }
         }
 
         return arm_stability
@@ -246,14 +246,14 @@ class FollowThroughAnalyzer:
             # Calculate body angles (excluding arms)
             hip_angle = self._calculate_hip_angle(pose)
             knee_angle = self._calculate_knee_angle(pose)
-            ankle_angle = self._calculate_ankle_angle(pose)
+            # ankle_angle = self._calculate_ankle_angle(pose)
             torso_angle = self._calculate_torso_angle(pose)
             
-            if all(angle is not None for angle in [hip_angle, knee_angle, ankle_angle, torso_angle]):
+            if all(angle is not None for angle in [hip_angle, knee_angle, torso_angle]):
                 body_angles.append({
                     'hip_angle': hip_angle,
                     'knee_angle': knee_angle,
-                    'ankle_angle': ankle_angle,
+                    # 'ankle_angle': ankle_angle,
                     'torso_angle': torso_angle
                 })
         
@@ -263,7 +263,7 @@ class FollowThroughAnalyzer:
         # Calculate statistics
         hip_angles = [angle['hip_angle'] for angle in body_angles]
         knee_angles = [angle['knee_angle'] for angle in body_angles]
-        ankle_angles = [angle['ankle_angle'] for angle in body_angles]
+        # ankle_angles = [angle['ankle_angle'] for angle in body_angles]
         torso_angles = [angle['torso_angle'] for angle in body_angles]
         
         overall_stability = {
@@ -279,12 +279,12 @@ class FollowThroughAnalyzer:
                 'min': np.min(knee_angles),
                 'max': np.max(knee_angles)
             },
-            'ankle_angle': {
-                'average': np.mean(ankle_angles),
-                'std': np.std(ankle_angles),
-                'min': np.min(ankle_angles),
-                'max': np.max(ankle_angles)
-            },
+            # 'ankle_angle': {
+            #     'average': np.mean(ankle_angles),
+            #     'std': np.std(ankle_angles),
+            #     'min': np.min(ankle_angles),
+            #     'max': np.max(ankle_angles)
+            # },
             'torso_angle': {
                 'average': np.mean(torso_angles),
                 'std': np.std(torso_angles),
@@ -323,21 +323,21 @@ class FollowThroughAnalyzer:
             )
         return None
     
-    def _calculate_wrist_angle(self, pose: Dict) -> Optional[float]:
-        """Calculate wrist angle (elbow-wrist-finger)."""
-        elbow = pose.get(f'{self.selected_hand}_elbow', {})
-        wrist = pose.get(f'{self.selected_hand}_wrist', {})
-        # Use a point above wrist as finger reference
-        finger_x = wrist.get('x', 0)
-        finger_y = wrist.get('y', 0) - 20  # 20 pixels above wrist
+    # def _calculate_wrist_angle(self, pose: Dict) -> Optional[float]:
+    #     """Calculate wrist angle (elbow-wrist-finger)."""
+    #     elbow = pose.get(f'{self.selected_hand}_elbow', {})
+    #     wrist = pose.get(f'{self.selected_hand}_wrist', {})
+    #     # Use a point above wrist as finger reference
+    #     finger_x = wrist.get('x', 0)
+    #     finger_y = wrist.get('y', 0) - 20  # 20 pixels above wrist
         
-        if self._has_valid_coordinates(elbow, wrist):
-            return self._calculate_angle(
-                elbow.get('x', 0), elbow.get('y', 0),
-                wrist.get('x', 0), wrist.get('y', 0),
-                finger_x, finger_y
-            )
-        return None
+    #     if self._has_valid_coordinates(elbow, wrist):
+    #         return self._calculate_angle(
+    #             elbow.get('x', 0), elbow.get('y', 0),
+    #             wrist.get('x', 0), wrist.get('y', 0),
+    #             finger_x, finger_y
+    #         )
+    #     return None
     
     def _calculate_hip_angle(self, pose: Dict) -> Optional[float]:
         """Calculate hip angle (shoulder-hip-knee)."""
@@ -367,21 +367,21 @@ class FollowThroughAnalyzer:
             )
         return None
     
-    def _calculate_ankle_angle(self, pose: Dict) -> Optional[float]:
-        """Calculate ankle angle (knee-ankle-toe)."""
-        knee = pose.get(f'{self.selected_hand}_knee', {})
-        ankle = pose.get(f'{self.selected_hand}_ankle', {})
-        # Use a point below ankle as toe reference
-        toe_x = ankle.get('x', 0)
-        toe_y = ankle.get('y', 0) + 20  # 20 pixels below ankle
+    # def _calculate_ankle_angle(self, pose: Dict) -> Optional[float]:
+    #     """Calculate ankle angle (knee-ankle-toe)."""
+    #     knee = pose.get(f'{self.selected_hand}_knee', {})
+    #     ankle = pose.get(f'{self.selected_hand}_ankle', {})
+    #     # Use a point below ankle as toe reference
+    #     toe_x = ankle.get('x', 0)
+    #     toe_y = ankle.get('y', 0) + 20  # 20 pixels below ankle
         
-        if self._has_valid_coordinates(knee, ankle):
-            return self._calculate_angle(
-                knee.get('x', 0), knee.get('y', 0),
-                ankle.get('x', 0), ankle.get('y', 0),
-                toe_x, toe_y
-            )
-        return None
+    #     if self._has_valid_coordinates(knee, ankle):
+    #         return self._calculate_angle(
+    #             knee.get('x', 0), knee.get('y', 0),
+    #             ankle.get('x', 0), ankle.get('y', 0),
+    #             toe_x, toe_y
+    #         )
+    #     return None
     
     def _calculate_torso_angle(self, pose: Dict) -> Optional[float]:
         """Calculate torso angle relative to vertical."""
@@ -402,14 +402,14 @@ class FollowThroughAnalyzer:
         
         shoulder_angle = self._calculate_shoulder_angle(pose)
         elbow_angle = self._calculate_elbow_angle(pose)
-        wrist_angle = self._calculate_wrist_angle(pose)
+        # wrist_angle = self._calculate_wrist_angle(pose)
         
         if shoulder_angle is not None:
             angles.append(shoulder_angle)
         if elbow_angle is not None:
             angles.append(elbow_angle)
-        if wrist_angle is not None:
-            angles.append(wrist_angle)
+        # if wrist_angle is not None:
+        #     angles.append(wrist_angle)
         
         return np.std(angles) if angles else None
     
@@ -419,15 +419,15 @@ class FollowThroughAnalyzer:
         
         hip_angle = self._calculate_hip_angle(pose)
         knee_angle = self._calculate_knee_angle(pose)
-        ankle_angle = self._calculate_ankle_angle(pose)
+        # ankle_angle = self._calculate_ankle_angle(pose)
         torso_angle = self._calculate_torso_angle(pose)
         
         if hip_angle is not None:
             angles.append(hip_angle)
         if knee_angle is not None:
             angles.append(knee_angle)
-        if ankle_angle is not None:
-            angles.append(ankle_angle)
+        # if ankle_angle is not None:
+        #     angles.append(ankle_angle)
         if torso_angle is not None:
             angles.append(torso_angle)
         
@@ -439,14 +439,14 @@ class FollowThroughAnalyzer:
         
         hip_angle = self._calculate_hip_angle(pose)
         knee_angle = self._calculate_knee_angle(pose)
-        ankle_angle = self._calculate_ankle_angle(pose)
+        # ankle_angle = self._calculate_ankle_angle(pose)
         
         if hip_angle is not None:
             angles.append(hip_angle)
         if knee_angle is not None:
             angles.append(knee_angle)
-        if ankle_angle is not None:
-            angles.append(ankle_angle)
+        # if ankle_angle is not None:
+        #     angles.append(ankle_angle)
         
         return np.std(angles) if angles else None
     
@@ -457,17 +457,17 @@ class FollowThroughAnalyzer:
         # Arm angles
         shoulder_angle = self._calculate_shoulder_angle(pose)
         elbow_angle = self._calculate_elbow_angle(pose)
-        wrist_angle = self._calculate_wrist_angle(pose)
+        # wrist_angle = self._calculate_wrist_angle(pose)
         
         # Body angles
         hip_angle = self._calculate_hip_angle(pose)
         knee_angle = self._calculate_knee_angle(pose)
-        ankle_angle = self._calculate_ankle_angle(pose)
+        # ankle_angle = self._calculate_ankle_angle(pose)
         torso_angle = self._calculate_torso_angle(pose)
         
         # Add all valid angles
-        for angle in [shoulder_angle, elbow_angle, wrist_angle, 
-                     hip_angle, knee_angle, ankle_angle, torso_angle]:
+        for angle in [shoulder_angle, elbow_angle, 
+                     hip_angle, knee_angle, torso_angle]:
             if angle is not None:
                 angles.append(angle)
         
