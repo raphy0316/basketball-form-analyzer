@@ -46,6 +46,8 @@ const CameraScreen = ({ navigation }) => {
   }, []);
 
   useEffect(() => {
+    console.log('Recording state changed:', isRecording);
+    
     if (isRecording) {
       recordingTimerRef.current = setInterval(() => {
         setRecordingTime((prev) => {
@@ -76,6 +78,7 @@ const CameraScreen = ({ navigation }) => {
     }
 
     console.log('Starting recording...');
+    console.log('Camera ready state:', isCameraReady);
     setIsRecording(true);
     setRecordingTime(0);
     setRecordedVideo(null);
@@ -86,7 +89,9 @@ const CameraScreen = ({ navigation }) => {
     if (!isRecording) return;
     
     console.log('Stopping recording...');
+    console.log('Recording state before stop:', isRecording);
     setIsRecording(false);
+    console.log('Recording state after stop:', false);
   };
 
   const retakeVideo = () => {
@@ -240,9 +245,10 @@ const CameraScreen = ({ navigation }) => {
           console.log('Camera is ready!');
           setIsCameraReady(true);
         }}
-        onMediaCaptured={({ uri }) => {
-          console.log('Video captured:', uri);
-          setRecordedVideo(uri);
+        onMediaCaptured={(media) => {
+          console.log('Video captured:', media);
+          console.log('Video URI:', media.uri);
+          setRecordedVideo(media.uri);
           setShowPreview(true);
           setIsRecording(false);
         }}
