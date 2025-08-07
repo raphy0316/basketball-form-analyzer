@@ -1,1 +1,0 @@
-../../../../../build/generated/ios/RNTfliteSpec/RNTfliteSpec.h
