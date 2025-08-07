@@ -13,6 +13,7 @@ import { Camera } from 'expo-camera';
 import { Video } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import axios from 'axios';
+import { CONFIG, getApiUrl, getVideoQuality } from './config';
 
 const { width, height } = Dimensions.get('window');
 
@@ -28,9 +29,6 @@ const CameraScreen = () => {
   const recordingTimerRef = useRef(null);
   const videoRef = useRef(null);
 
-  const MAX_RECORDING_TIME = 5; // 5 seconds
-  const BACKEND_URL = 'http://192.168.0.165:8000';
-
   useEffect(() => {
     (async () => {
       const { status } = await Camera.requestCameraPermissionsAsync();
@@ -43,13 +41,13 @@ const CameraScreen = () => {
     if (isRecording) {
       recordingTimerRef.current = setInterval(() => {
         setRecordingTime((prev) => {
-          if (prev >= MAX_RECORDING_TIME) {
+          if (prev >= CONFIG.RECORDING.MAX_DURATION) {
             stopRecording();
             return prev;
           }
           return prev + 0.1;
         });
-      }, 100);
+      }, CONFIG.UI.RECORDING_TIMER_INTERVAL);
     } else {
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
@@ -73,9 +71,9 @@ const CameraScreen = () => {
       setShowPreview(false);
 
       const video = await camera.recordAsync({
-        quality: Camera.Constants.VideoQuality['720p'],
-        maxDuration: MAX_RECORDING_TIME,
-        mute: false,
+        quality: getVideoQuality(),
+        maxDuration: CONFIG.RECORDING.MAX_DURATION,
+        mute: CONFIG.RECORDING.MUTE,
       });
 
       setRecordedVideo(video);
@@ -115,13 +113,13 @@ const CameraScreen = () => {
 
       // Send to backend
       const response = await axios.post(
-        `${BACKEND_URL}/analysis/analyze-video`,
+        getApiUrl(CONFIG.BACKEND.ENDPOINTS.ANALYZE_VIDEO),
         formData,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
-          timeout: 30000, // 30 second timeout
+          timeout: CONFIG.BACKEND.TIMEOUT,
         }
       );
 
