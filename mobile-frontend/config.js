@@ -8,6 +8,7 @@ export const CONFIG = {
       ANALYZE_VIDEO: '/analysis/analyze-video',
     },
     TIMEOUT: 30000, // 30 seconds
+    FIELD_NAME: 'video', // Field name for video upload
   },
   
   // Recording configuration

@@ -16,7 +16,7 @@ import { CONFIG, getApiUrl } from './config';
 
 const { width, height } = Dimensions.get('window');
 
-const CameraScreen = () => {
+const CameraScreen = ({ navigation }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [isRecording, setIsRecording] = useState(false);
   const [recordedVideo, setRecordedVideo] = useState(null);
@@ -75,7 +75,7 @@ const CameraScreen = () => {
     try {
       // Create form data
       const formData = new FormData();
-      formData.append('file', {
+      formData.append('video', {
         uri: recordedVideo,
         type: 'video/mp4',
         name: 'basketball_shot.mp4',
@@ -93,20 +93,17 @@ const CameraScreen = () => {
         }
       );
 
-      Alert.alert(
-        'Analysis Complete',
-        'Your basketball shot has been analyzed successfully!',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              setRecordedVideo(null);
-              setShowPreview(false);
-              setRecordingTime(0);
-            },
-          },
-        ]
-      );
+      console.log('Analysis response:', response.data);
+
+      // Navigate to results screen
+      navigation.navigate('Results', {
+        analysisResult: response.data,
+      });
+
+      // Reset camera state
+      setRecordedVideo(null);
+      setShowPreview(false);
+      setRecordingTime(0);
     } catch (error) {
       console.error('Error analyzing video:', error);
       Alert.alert(
