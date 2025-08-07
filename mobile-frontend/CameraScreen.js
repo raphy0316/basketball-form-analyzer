@@ -9,9 +9,8 @@ import {
   Dimensions,
   SafeAreaView,
 } from 'react-native';
-import { Camera } from 'expo-camera';
+import { Camera, CameraType } from 'expo-camera';
 import { Video } from 'expo-av';
-import * as FileSystem from 'expo-file-system';
 import axios from 'axios';
 import { CONFIG, getApiUrl, getVideoQuality } from './config';
 
@@ -28,8 +27,6 @@ const CameraScreen = () => {
   
   const recordingTimerRef = useRef(null);
   const videoRef = useRef(null);
-
-
 
   useEffect(() => {
     (async () => {
@@ -244,23 +241,11 @@ const CameraScreen = () => {
     );
   }
 
-  // Check if Camera is available - only check if Camera import failed
-  if (!Camera) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Camera not available</Text>
-        <Text style={styles.errorSubtext}>
-          Please restart the app and try again.
-        </Text>
-      </View>
-    );
-  }
-
   return (
     <SafeAreaView style={styles.container}>
       <Camera
         style={styles.camera}
-        type="back"
+        type={CameraType.back}
         ref={(ref) => setCamera(ref)}
       >
         <View style={styles.overlay}>

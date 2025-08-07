@@ -37,6 +37,6 @@ export const getVideoQuality = () => {
   } catch (error) {
     console.error('Error getting video quality:', error);
     // Fallback to default quality
-    return '720p';
+    return Camera.Constants.VideoQuality['720p'];
   }
 };
