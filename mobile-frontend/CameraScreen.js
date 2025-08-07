@@ -9,27 +9,15 @@ import {
   Dimensions,
   SafeAreaView,
 } from 'react-native';
+import { Camera, useCameraPermissions } from 'expo-camera';
 import { Video } from 'expo-video';
 import axios from 'axios';
 import { CONFIG, getApiUrl } from './config';
 
 const { width, height } = Dimensions.get('window');
 
-// Try to import camera components with fallback
-let Camera = null;
-let useCameraPermissions = null;
-
-try {
-  const expoCamera = require('expo-camera');
-  Camera = expoCamera.Camera;
-  useCameraPermissions = expoCamera.useCameraPermissions;
-  console.log('Camera import successful:', !!Camera);
-} catch (error) {
-  console.error('Failed to import expo-camera:', error);
-}
-
 const CameraScreen = ({ navigation }) => {
-  const [permission, requestPermission] = useCameraPermissions ? useCameraPermissions() : [null, () => {}];
+  const [permission, requestPermission] = useCameraPermissions();
   const [isRecording, setIsRecording] = useState(false);
   const [recordedVideo, setRecordedVideo] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -169,24 +157,6 @@ const CameraScreen = ({ navigation }) => {
       setIsAnalyzing(false);
     }
   };
-
-  // Handle camera not available
-  if (!Camera) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Camera not available</Text>
-        <Text style={styles.errorSubtext}>
-          Please make sure expo-camera is properly installed and compatible with your Expo SDK version.
-        </Text>
-        <TouchableOpacity
-          style={styles.retryButton}
-          onPress={() => navigation.navigate('Camera')}
-        >
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
 
   // Handle camera permissions
   if (!permission) {
