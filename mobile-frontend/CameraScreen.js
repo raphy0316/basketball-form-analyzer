@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,36 +9,57 @@ import {
   Dimensions,
   SafeAreaView,
 } from 'react-native';
-import * as ExpoCamera from 'expo-camera';
+import { Camera, useCameraDevices, useFrameProcessor } from 'react-native-vision-camera';
+import { runOnJS } from 'react-native-reanimated';
 import { Video } from 'expo-video';
 import axios from 'axios';
 import { CONFIG, getApiUrl } from './config';
 
 const { width, height } = Dimensions.get('window');
 
-// Debug the Camera import
-console.log('ExpoCamera import:', ExpoCamera);
-console.log('CameraView component:', ExpoCamera.CameraView);
-console.log('CameraView type:', typeof ExpoCamera.CameraView);
-
 const CameraScreen = ({ navigation }) => {
-  const [permission, requestPermission] = ExpoCamera.useCameraPermissions();
+  const devices = useCameraDevices();
+  const device = devices.back;
+  
+  const [hasPermission, setHasPermission] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordedVideo, setRecordedVideo] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
   const [isCameraReady, setIsCameraReady] = useState(false);
+  const [frameCount, setFrameCount] = useState(0);
   
   const recordingTimerRef = useRef(null);
   const videoRef = useRef(null);
   const cameraRef = useRef(null);
 
-  // Monitor camera ref changes
+  // Request camera permissions
   useEffect(() => {
-    console.log('Camera ref changed:', !!cameraRef.current);
-  }, [cameraRef.current]);
+    const getPermission = async () => {
+      const permission = await Camera.requestCameraPermission();
+      setHasPermission(permission === 'granted');
+      console.log('Camera permission:', permission);
+    };
+    getPermission();
+  }, []);
 
+  // Frame processor for real-time analysis
+  const frameProcessor = useFrameProcessor((frame) => {
+    'worklet';
+    // Increment frame count for debugging
+    runOnJS(setFrameCount)((prev) => prev + 1);
+    
+    // Here you can add real-time frame processing
+    // For example: pose detection, ball tracking, etc.
+    // const poses = detectPoses(frame);
+    // const ballPosition = trackBall(frame);
+    
+    // For now, just log frame info
+    console.log('Processing frame:', frame.width, 'x', frame.height);
+  }, []);
+
+  // Recording timer
   useEffect(() => {
     console.log('Recording state changed:', isRecording);
     
@@ -65,7 +86,7 @@ const CameraScreen = ({ navigation }) => {
     };
   }, [isRecording]);
 
-  const startRecording = async () => {
+  const startRecording = useCallback(async () => {
     if (!isCameraReady) {
       Alert.alert('Error', 'Camera is not ready yet. Please wait a moment and try again.');
       return;
@@ -86,45 +107,42 @@ const CameraScreen = ({ navigation }) => {
       setRecordedVideo(null);
       setShowPreview(false);
       
-      // Start recording using recordAsync
-      const video = await cameraRef.current.recordAsync({
-        quality: CONFIG.RECORDING.QUALITY,
-        maxDuration: CONFIG.RECORDING.MAX_DURATION,
-        mute: CONFIG.RECORDING.MUTE,
+      // Start recording with react-native-vision-camera
+      const video = await cameraRef.current.startRecording({
+        onRecordingFinished: (video) => {
+          console.log('Recording finished, video:', video);
+          setRecordedVideo(video.path);
+          setShowPreview(true);
+          setIsRecording(false);
+        },
+        onRecordingError: (error) => {
+          console.error('Recording error:', error);
+          setIsRecording(false);
+        },
       });
       
-      console.log('Recording completed, video:', video);
-      if (video && video.uri) {
-        setRecordedVideo(video.uri);
-        setShowPreview(true);
-        setIsRecording(false);
-        console.log('Video URI captured:', video.uri);
-      } else {
-        console.error('No video URI received');
-        setIsRecording(false);
-      }
+      console.log('Recording started successfully');
     } catch (error) {
       console.error('Error starting recording:', error);
       Alert.alert('Error', 'Failed to start recording. Please try again.');
       setIsRecording(false);
     }
-  };
+  }, [isCameraReady]);
 
-  const stopRecording = async () => {
+  const stopRecording = useCallback(async () => {
     if (!isRecording || !cameraRef.current) return;
     
     console.log('Stopping recording...');
     console.log('Recording state before stop:', isRecording);
     
     try {
-      // Stop recording - the recordAsync promise will resolve with the video
       await cameraRef.current.stopRecording();
       console.log('Recording stopped successfully');
     } catch (error) {
       console.error('Error stopping recording:', error);
       setIsRecording(false);
     }
-  };
+  }, [isRecording]);
 
   const retakeVideo = () => {
     setRecordedVideo(null);
@@ -190,16 +208,7 @@ const CameraScreen = ({ navigation }) => {
   };
 
   // Handle camera permissions
-  if (!permission) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Loading camera...</Text>
-      </View>
-    );
-  }
-
-  if (!permission.granted) {
+  if (!hasPermission) {
     return (
       <View style={styles.container}>
         <Text style={styles.errorText}>No access to camera</Text>
@@ -208,10 +217,19 @@ const CameraScreen = ({ navigation }) => {
         </Text>
         <TouchableOpacity
           style={styles.retryButton}
-          onPress={requestPermission}
+          onPress={() => Camera.requestCameraPermission()}
         >
           <Text style={styles.retryButtonText}>Grant Permission</Text>
         </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!device) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Loading camera...</Text>
       </View>
     );
   }
@@ -264,20 +282,29 @@ const CameraScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ExpoCamera.CameraView
+      <Camera
         ref={cameraRef}
         style={styles.camera}
-        facing="back"
+        device={device}
+        isActive={true}
+        photo={false}
         video={true}
-        onCameraReady={() => {
-          console.log('Camera is ready!');
-          console.log('Camera ref in onCameraReady:', !!cameraRef.current);
+        audio={true}
+        frameProcessor={frameProcessor}
+        frameProcessorFps={30}
+        onInitialized={() => {
+          console.log('Camera initialized!');
           setIsCameraReady(true);
         }}
       />
       
       {/* Overlay positioned absolutely */}
       <View style={styles.overlay}>
+        {/* Frame counter for debugging */}
+        <View style={styles.frameCounter}>
+          <Text style={styles.frameCounterText}>Frames: {frameCount}</Text>
+        </View>
+
         {/* Recording indicator */}
         {isRecording && (
           <View style={styles.recordingIndicator}>
@@ -341,6 +368,20 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: 'transparent',
     justifyContent: 'space-between',
+  },
+  frameCounter: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+  },
+  frameCounterText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
   },
   recordingIndicator: {
     position: 'absolute',

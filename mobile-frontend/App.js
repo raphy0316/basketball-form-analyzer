@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
-import DebugCamera from './DebugCamera';
+
 import CameraScreen from './CameraScreen';
 import ResultsScreen from './ResultsScreen';
 import LoadingScreen from './LoadingScreen';
@@ -15,13 +15,13 @@ export default function App() {
     <NavigationContainer>
       <StatusBar style="light" />
       <Stack.Navigator
-        initialRouteName="Debug"
+        initialRouteName="Camera"
         screenOptions={{
           headerShown: false,
         }}
       >
 
-        <Stack.Screen name="Debug" component={DebugCamera} />
+
         <Stack.Screen name="Camera" component={CameraScreen} />
         <Stack.Screen name="Results" component={ResultsScreen} />
         <Stack.Screen name="Loading" component={LoadingScreen} />
