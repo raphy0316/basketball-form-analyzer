@@ -584,4 +584,27 @@ def main():
     print(f"\n🎉 All selected processing completed!")
 
 if __name__ == "__main__":
-    main() 
+    main()
+
+# For FastAPI: function to run pipeline directly
+def run_pipeline(video_path: str) -> dict:
+    pipeline = BasketballShootingIntegratedPipeline()
+    
+    # Run with defaults for mobile app
+    overwrite_mode = False
+    use_existing_extraction = False  # re-run model each time
+    
+    success = pipeline.run_full_pipeline(video_path, overwrite_mode, use_existing_extraction)
+    
+    if success:
+        return {
+            "status": "success",
+            "message": "Video analyzed successfully",
+            "video_filename": os.path.basename(video_path)
+        }
+    else:
+        return {
+            "status": "error",
+            "message": "Pipeline failed during analysis",
+            "video_filename": os.path.basename(video_path)
+        }
