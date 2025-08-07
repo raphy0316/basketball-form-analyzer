@@ -24,6 +24,7 @@ const CameraScreen = ({ navigation }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
+  const [isCameraReady, setIsCameraReady] = useState(false);
   
   const recordingTimerRef = useRef(null);
   const videoRef = useRef(null);
@@ -71,6 +72,11 @@ const CameraScreen = ({ navigation }) => {
   const startRecording = async () => {
     if (!cameraRef.current) {
       Alert.alert('Error', 'Camera not ready. Please try again.');
+      return;
+    }
+
+    if (!isCameraReady) {
+      Alert.alert('Error', 'Camera is not ready yet. Please wait a moment and try again.');
       return;
     }
 
@@ -257,6 +263,10 @@ const CameraScreen = ({ navigation }) => {
         style={styles.camera}
         facing="back"
         video={true}
+        onCameraReady={() => {
+          console.log('Camera is ready!');
+          setIsCameraReady(true);
+        }}
       />
       
       {/* Overlay positioned absolutely */}
@@ -279,6 +289,11 @@ const CameraScreen = ({ navigation }) => {
           <Text style={styles.instructionsText}>
             Position yourself in the frame and tap record to capture your shot
           </Text>
+          {!isCameraReady && (
+            <Text style={styles.cameraReadyText}>
+              Camera is initializing...
+            </Text>
+          )}
         </View>
 
         {/* Recording button */}
@@ -289,7 +304,7 @@ const CameraScreen = ({ navigation }) => {
               isRecording && styles.recordingButton,
             ]}
             onPress={isRecording ? stopRecording : startRecording}
-            disabled={isAnalyzing}
+            disabled={isAnalyzing || !isCameraReady}
           >
             {isRecording ? (
               <View style={styles.stopIcon} />
@@ -362,6 +377,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     opacity: 0.9,
+  },
+  cameraReadyText: {
+    color: '#FFD700',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 8,
+    fontStyle: 'italic',
   },
   buttonContainer: {
     alignItems: 'center',
