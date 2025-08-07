@@ -160,10 +160,11 @@ shooting_comparison/
 * selected hand is always right in analyzers(follow-through, rising, release)
 * swapping logic in normalization(basketball_shooting_analyzer)
 * height reversed y(rising, release)
+* dip point angles are not calculated
+* made up toes and fingers
 
 ### TODO 
-* dip point angles are not calculated
-* frame numbers in jump height is not actual frame number of the whole video, it's just the frame index of rising frames
+* frame numbers in jump height is not actual frame number of the whole video, it's just the frame index of rising frames(debug)
 ex
 ```bash
 Video 2 Rising Analysis:
@@ -178,7 +179,6 @@ Video 2 Rising Analysis:
       Setup Time: 0.000s
       Relative Timing: -0.729s
 ```
-* made up toes and fingers
 * frame numbers in follow-through is not actual frame number of the whole video, it's just the frame index of follow-through frames
 ```bash
 Video 2 Follow-through Analysis:
