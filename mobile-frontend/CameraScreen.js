@@ -28,11 +28,7 @@ const CameraScreen = () => {
   const recordingTimerRef = useRef(null);
   const videoRef = useRef(null);
 
-  // Debug: Log Camera import status
-  console.log('Camera import status:', !!ExpoCamera);
-  console.log('Camera object:', ExpoCamera);
-  console.log('Camera type:', typeof ExpoCamera);
-  console.log('Camera keys:', Object.keys(ExpoCamera || {}));
+
 
   useEffect(() => {
     (async () => {
@@ -248,7 +244,7 @@ const CameraScreen = () => {
   }
 
   // Safety check for Camera component
-  if (!ExpoCamera.Camera) {
+  if (!ExpoCamera.CameraView) {
     return (
       <View style={styles.container}>
         <Text style={styles.errorText}>Camera not available</Text>
@@ -261,9 +257,9 @@ const CameraScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ExpoCamera.Camera
+      <ExpoCamera.CameraView
         style={styles.camera}
-        type="back"
+        facing="back"
         ref={(ref) => setCamera(ref)}
       >
         <View style={styles.overlay}>
@@ -305,7 +301,7 @@ const CameraScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
-      </ExpoCamera.Camera>
+      </ExpoCamera.CameraView>
     </SafeAreaView>
   );
 };
