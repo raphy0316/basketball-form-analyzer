@@ -241,6 +241,7 @@ const CameraScreen = ({ navigation }) => {
         facing="back"
         video={true}
         isRecording={isRecording}
+        videoStabilizationMode="off"
         onCameraReady={() => {
           console.log('Camera is ready!');
           setIsCameraReady(true);
@@ -251,6 +252,12 @@ const CameraScreen = ({ navigation }) => {
           setRecordedVideo(media.uri);
           setShowPreview(true);
           setIsRecording(false);
+        }}
+        onRecordingStart={() => {
+          console.log('Recording started successfully');
+        }}
+        onRecordingStop={() => {
+          console.log('Recording stopped successfully');
         }}
         onRecordingError={(error) => {
           console.error('Recording error:', error);
