@@ -77,25 +77,37 @@ const CameraScreen = () => {
       setRecordedVideo(null);
       setShowPreview(false);
 
-      const video = await camera.recordAsync({
-        quality: getVideoQuality(),
+      // Start recording using the new CameraView API
+      await camera.startRecording({
+        quality: '720p',
         maxDuration: CONFIG.RECORDING.MAX_DURATION,
         mute: CONFIG.RECORDING.MUTE,
+        onRecordingFinished: (video) => {
+          setRecordedVideo(video);
+          setShowPreview(true);
+          setIsRecording(false);
+        },
+        onRecordingError: (error) => {
+          console.error('Recording error:', error);
+          Alert.alert('Error', 'Failed to record video. Please try again.');
+          setIsRecording(false);
+        },
       });
-
-      setRecordedVideo(video);
-      setShowPreview(true);
     } catch (error) {
-      console.error('Error recording video:', error);
-      Alert.alert('Error', 'Failed to record video. Please try again.');
-    } finally {
+      console.error('Error starting recording:', error);
+      Alert.alert('Error', 'Failed to start recording. Please try again.');
       setIsRecording(false);
     }
   };
 
   const stopRecording = async () => {
     if (camera && isRecording) {
-      await camera.stopRecording();
+      try {
+        await camera.stopRecording();
+      } catch (error) {
+        console.error('Error stopping recording:', error);
+        setIsRecording(false);
+      }
     }
   };
 
@@ -261,47 +273,48 @@ const CameraScreen = () => {
         style={styles.camera}
         facing="back"
         ref={(ref) => setCamera(ref)}
-      >
-        <View style={styles.overlay}>
-          {/* Recording indicator */}
-          {isRecording && (
-            <View style={styles.recordingIndicator}>
-              <View style={styles.recordingDot} />
-              <Text style={styles.recordingText}>
-                Recording... {recordingTime.toFixed(1)}s
-              </Text>
-            </View>
-          )}
-
-          {/* Instructions */}
-          <View style={styles.instructionsContainer}>
-            <Text style={styles.instructionsTitle}>
-              Basketball Form Analyzer
-            </Text>
-            <Text style={styles.instructionsText}>
-              Position yourself in the frame and tap record to capture your shot
+      />
+      
+      {/* Overlay positioned absolutely */}
+      <View style={styles.overlay}>
+        {/* Recording indicator */}
+        {isRecording && (
+          <View style={styles.recordingIndicator}>
+            <View style={styles.recordingDot} />
+            <Text style={styles.recordingText}>
+              Recording... {recordingTime.toFixed(1)}s
             </Text>
           </View>
+        )}
 
-          {/* Recording button */}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.recordButton,
-                isRecording && styles.recordingButton,
-              ]}
-              onPress={isRecording ? stopRecording : startRecording}
-              disabled={isAnalyzing}
-            >
-              {isRecording ? (
-                <View style={styles.stopIcon} />
-              ) : (
-                <View style={styles.recordIcon} />
-              )}
-            </TouchableOpacity>
-          </View>
+        {/* Instructions */}
+        <View style={styles.instructionsContainer}>
+          <Text style={styles.instructionsTitle}>
+            Basketball Form Analyzer
+          </Text>
+          <Text style={styles.instructionsText}>
+            Position yourself in the frame and tap record to capture your shot
+          </Text>
         </View>
-      </ExpoCamera.CameraView>
+
+        {/* Recording button */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[
+              styles.recordButton,
+              isRecording && styles.recordingButton,
+            ]}
+            onPress={isRecording ? stopRecording : startRecording}
+            disabled={isAnalyzing}
+          >
+            {isRecording ? (
+              <View style={styles.stopIcon} />
+            ) : (
+              <View style={styles.recordIcon} />
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
     </SafeAreaView>
   );
 };
@@ -315,7 +328,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   overlay: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'transparent',
     justifyContent: 'space-between',
   },
