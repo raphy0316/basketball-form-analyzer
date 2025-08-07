@@ -747,10 +747,10 @@ class ShootingComparisonPipeline:
             print(f"    Note: {video1_setup['note']}")
         
         # Display angles
-        angles1 = video1_setup.get('hip_knee_ankle_angles', {})
-        print(f"    Hip-Knee-Ankle Angles:")
-        print(f"      Left: {angles1.get('left', {}).get('average', 'Undefined')}°")
-        print(f"      Right: {angles1.get('right', {}).get('average', 'Undefined')}°")
+        # angles1 = video1_setup.get('hip_knee_ankle_angles', {})
+        # print(f"    Hip-Knee-Ankle Angles:")
+        # print(f"      Left: {angles1.get('left', {}).get('average', 'Undefined')}°")
+        # print(f"      Right: {angles1.get('right', {}).get('average', 'Undefined')}°")
         
         # Display foot positions
         foot_pos1 = video1_setup.get('foot_positions', {})
@@ -779,10 +779,10 @@ class ShootingComparisonPipeline:
             print(f"    Note: {video2_setup['note']}")
         
         # Display angles
-        angles2 = video2_setup.get('hip_knee_ankle_angles', {})
-        print(f"    Hip-Knee-Ankle Angles:")
-        print(f"      Left: {angles2.get('left', {}).get('average', 'Undefined')}°")
-        print(f"      Right: {angles2.get('right', {}).get('average', 'Undefined')}°")
+        # angles2 = video2_setup.get('hip_knee_ankle_angles', {})
+        # print(f"    Hip-Knee-Ankle Angles:")
+        # print(f"      Left: {angles2.get('left', {}).get('average', 'Undefined')}°")
+        # print(f"      Right: {angles2.get('right', {}).get('average', 'Undefined')}°")
         
         # Display foot positions
         foot_pos2 = video2_setup.get('foot_positions', {})
@@ -1212,10 +1212,10 @@ class ShootingComparisonPipeline:
             print(f"    Arm Stability:")
             shoulder1 = arm_stability1.get('shoulder_angle', {})
             elbow1 = arm_stability1.get('elbow_angle', {})
-            wrist1 = arm_stability1.get('wrist_angle', {})
+            # wrist1 = arm_stability1.get('wrist_angle', {})
             print(f"      Shoulder Angle - Avg: {shoulder1.get('average', 'N/A'):.2f}°, Std: {shoulder1.get('std', 'N/A'):.2f}°")
             print(f"      Elbow Angle - Avg: {elbow1.get('average', 'N/A'):.2f}°, Std: {elbow1.get('std', 'N/A'):.2f}°")
-            print(f"      Wrist Angle - Avg: {wrist1.get('average', 'N/A'):.2f}°, Std: {wrist1.get('std', 'N/A'):.2f}°")
+            # print(f"      Wrist Angle - Avg: {wrist1.get('average', 'N/A'):.2f}°, Std: {wrist1.get('std', 'N/A'):.2f}°")
         
         # Overall stability analysis
         overall_stability1 = video1_follow_through.get('overall_stability', {})
@@ -1223,11 +1223,11 @@ class ShootingComparisonPipeline:
             print(f"    Overall Stability:")
             hip1 = overall_stability1.get('hip_angle', {})
             knee1 = overall_stability1.get('knee_angle', {})
-            ankle1 = overall_stability1.get('ankle_angle', {})
+            # ankle1 = overall_stability1.get('ankle_angle', {})
             torso1 = overall_stability1.get('torso_angle', {})
             print(f"      Hip Angle - Avg: {hip1.get('average', 'N/A'):.2f}°, Std: {hip1.get('std', 'N/A'):.2f}°")
             print(f"      Knee Angle - Avg: {knee1.get('average', 'N/A'):.2f}°, Std: {knee1.get('std', 'N/A'):.2f}°")
-            print(f"      Ankle Angle - Avg: {ankle1.get('average', 'N/A'):.2f}°, Std: {ankle1.get('std', 'N/A'):.2f}°")
+            # print(f"      Ankle Angle - Avg: {ankle1.get('average', 'N/A'):.2f}°, Std: {ankle1.get('std', 'N/A'):.2f}°")
             print(f"      Torso Angle - Avg: {torso1.get('average', 'N/A'):.2f}°, Std: {torso1.get('std', 'N/A'):.2f}°")
         
         print("  📊 Video 2 Follow-through Analysis:")
@@ -1263,10 +1263,10 @@ class ShootingComparisonPipeline:
             print(f"    Arm Stability:")
             shoulder2 = arm_stability2.get('shoulder_angle', {})
             elbow2 = arm_stability2.get('elbow_angle', {})
-            wrist2 = arm_stability2.get('wrist_angle', {})
+            # wrist2 = arm_stability2.get('wrist_angle', {})
             print(f"      Shoulder Angle - Avg: {shoulder2.get('average', 'N/A'):.2f}°, Std: {shoulder2.get('std', 'N/A'):.2f}°")
             print(f"      Elbow Angle - Avg: {elbow2.get('average', 'N/A'):.2f}°, Std: {elbow2.get('std', 'N/A'):.2f}°")
-            print(f"      Wrist Angle - Avg: {wrist2.get('average', 'N/A'):.2f}°, Std: {wrist2.get('std', 'N/A'):.2f}°")
+            # print(f"      Wrist Angle - Avg: {wrist2.get('average', 'N/A'):.2f}°, Std: {wrist2.get('std', 'N/A'):.2f}°")
         
         # Overall stability analysis
         overall_stability2 = video2_follow_through.get('overall_stability', {})
@@ -1274,11 +1274,11 @@ class ShootingComparisonPipeline:
             print(f"    Overall Stability:")
             hip2 = overall_stability2.get('hip_angle', {})
             knee2 = overall_stability2.get('knee_angle', {})
-            ankle2 = overall_stability2.get('ankle_angle', {})
+            # ankle2 = overall_stability2.get('ankle_angle', {})
             torso2 = overall_stability2.get('torso_angle', {})
             print(f"      Hip Angle - Avg: {hip2.get('average', 'N/A'):.2f}°, Std: {hip2.get('std', 'N/A'):.2f}°")
             print(f"      Knee Angle - Avg: {knee2.get('average', 'N/A'):.2f}°, Std: {knee2.get('std', 'N/A'):.2f}°")
-            print(f"      Ankle Angle - Avg: {ankle2.get('average', 'N/A'):.2f}°, Std: {ankle2.get('std', 'N/A'):.2f}°")
+            # print(f"      Ankle Angle - Avg: {ankle2.get('average', 'N/A'):.2f}°, Std: {ankle2.get('std', 'N/A'):.2f}°")
             print(f"      Torso Angle - Avg: {torso2.get('average', 'N/A'):.2f}°, Std: {torso2.get('std', 'N/A'):.2f}°")
 
     def _display_landing_analysis(self, landing_analysis: Dict):
