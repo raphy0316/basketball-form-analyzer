@@ -1,0 +1,1 @@
+../../../../../build/generated/ios/RNVisionCameraResizePluginSpec/RNVisionCameraResizePluginSpec.h
