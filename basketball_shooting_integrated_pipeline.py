@@ -65,6 +65,9 @@ class BasketballShootingIntegratedPipeline:
         print(f"🎬 Starting Full Pipeline: {os.path.basename(video_path)}")
         print("=" * 50)
         try:
+            # Reset ShotDetector for each video in batch processing
+            self.analyzer.shot_detector.reset()
+            
             self.analyzer.current_video_path = video_path
             # STEP 1: Extract original data
             print("\n🔍 STEP 1: Extract original data")
@@ -216,8 +219,8 @@ class BasketballShootingIntegratedPipeline:
             output_dir = os.path.join("data", "visualized_video", folder_name)
             os.makedirs(output_dir, exist_ok=True)
             
-            # Include FPS in filename
-            output_path = os.path.join(output_dir, f"{base_name}_{fps_str}_analyzed.avi")
+            # Include FPS in filename - 수정: .avi → .mp4, _analyzed → _dual_analyzed
+            output_path = os.path.join(output_dir, f"{base_name}_{fps_str}_dual_analyzed.mp4")
             
             if not overwrite_mode and os.path.exists(output_path):
                 print(f"⚠️ Visualization already exists: {os.path.basename(output_path)}")
@@ -232,8 +235,8 @@ class BasketballShootingIntegratedPipeline:
             success = self.analyzer.generate_visualization(video_path, overwrite_mode)
             
             if success:
-                # Move file to correct location with FPS in filename
-                old_output_path = os.path.join("data", "visualized_video", f"{base_name}_analyzed.avi")
+                # Move file to correct location with FPS in filename - 수정: 실제 생성되는 파일명으로 변경
+                old_output_path = os.path.join("data", "visualized_video", f"{base_name}_dual_analyzed.mp4")
                 if os.path.exists(old_output_path):
                     import shutil
                     shutil.move(old_output_path, output_path)

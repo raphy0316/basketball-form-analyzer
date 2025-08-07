@@ -8,7 +8,10 @@ that can be sent to LLM for further analysis and coaching recommendations.
 import json
 from typing import Dict, List, Tuple, Optional
 import numpy as np
-import config
+try:
+    from . import config
+except ImportError:
+    import config
 
 class AnalysisInterpreter:
     """
@@ -231,6 +234,12 @@ class AnalysisInterpreter:
             right_std1 = safe_float(right_std1)
             right_std2 = safe_float(right_std2)
             
+            # Convert averages to float safely
+            left_avg1 = safe_float(left_avg1)
+            left_avg2 = safe_float(left_avg2)
+            right_avg1 = safe_float(right_avg1)
+            right_avg2 = safe_float(right_avg2)
+            
             # Check for instability (DISABLED)
             # if left_std1 > 5:
             #     interpretation['differences'].append(
@@ -356,6 +365,11 @@ class AnalysisInterpreter:
             # if vert_std1 <= 0.05 and vert_std2 <= 0.05 and horiz_std1 <= horiz_threshold and horiz_std2 <= horiz_threshold:
             
             # Always compare now
+            vert_avg1 = safe_float(vert_avg1)
+            vert_avg2 = safe_float(vert_avg2)
+            horiz_avg1 = safe_float(horiz_avg1)
+            horiz_avg2 = safe_float(horiz_avg2)
+            
             vert_diff = abs(vert_avg1 - vert_avg2)
             horiz_diff = abs(horiz_avg1 - horiz_avg2)
 

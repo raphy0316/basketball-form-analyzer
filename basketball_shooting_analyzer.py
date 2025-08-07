@@ -2709,6 +2709,9 @@ class BasketballShootingAnalyzer:
         
         self.selected_video = video_path
         
+        # Reset ShotDetector for new video analysis
+        self.shot_detector.reset()
+        
         # STEP 0.5: Overwrite existing file option
         print(f"\n📁 Overwrite file option")
         print("=" * 50)

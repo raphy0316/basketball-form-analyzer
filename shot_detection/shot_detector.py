@@ -41,6 +41,32 @@ class ShotDetector:
         # Phase tracking for current shot
         self.current_shot_phases = []  # Track all phases in current shot
     
+    def reset(self):
+        """Reset shot detector state for new video analysis."""
+        print("🔄 Resetting ShotDetector state for new video...")
+        
+        # Shot state management
+        self.is_shot_active = False
+        self.current_shot_id = 0
+        self.current_shot_start = None
+        self.current_shot_end = None
+        
+        # Torso management
+        self.current_shot_fixed_torso = None
+        self.torso_tracking_active = True
+        self.rolling_torso_values = []
+        self.rolling_torso_frames = []
+        
+        # Shot collection
+        self.shots = []
+        self.frame_shots = []
+        
+        # Phase tracking
+        self.previous_phase = "General"
+        self.current_shot_phases = []
+        
+        print("✅ ShotDetector state reset completed")
+    
     def get_shot_torso(self, pose: Dict = None) -> float:
         """
         Get torso length for current frame.
