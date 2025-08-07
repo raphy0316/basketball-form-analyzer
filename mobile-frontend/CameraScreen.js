@@ -9,7 +9,7 @@ import {
   Dimensions,
   SafeAreaView,
 } from 'react-native';
-import { Camera, useCameraPermissions } from 'expo-camera';
+import { useCameraPermissions } from 'expo-camera';
 import { Video } from 'expo-video';
 import axios from 'axios';
 import { CONFIG, getApiUrl } from './config';
@@ -18,6 +18,7 @@ const { width, height } = Dimensions.get('window');
 
 const CameraScreen = ({ navigation }) => {
   const [permission, requestPermission] = useCameraPermissions();
+  const [CameraComponent, setCameraComponent] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordedVideo, setRecordedVideo] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -27,6 +28,21 @@ const CameraScreen = ({ navigation }) => {
   const recordingTimerRef = useRef(null);
   const videoRef = useRef(null);
   const cameraRef = useRef(null);
+
+  // Load camera component dynamically
+  useEffect(() => {
+    const loadCamera = async () => {
+      try {
+        const expoCamera = await import('expo-camera');
+        setCameraComponent(() => expoCamera.CameraView);
+        console.log('Camera component loaded successfully');
+      } catch (error) {
+        console.error('Failed to load camera component:', error);
+      }
+    };
+    
+    loadCamera();
+  }, []);
 
   useEffect(() => {
     if (isRecording) {
@@ -168,6 +184,16 @@ const CameraScreen = ({ navigation }) => {
     );
   }
 
+  // Handle camera component loading
+  if (!CameraComponent) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Loading camera component...</Text>
+      </View>
+    );
+  }
+
   if (!permission.granted) {
     return (
       <View style={styles.container}>
@@ -226,10 +252,10 @@ const CameraScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Camera
+      <CameraComponent
         ref={cameraRef}
         style={styles.camera}
-        type="back"
+        facing="back"
         video={true}
       />
       
