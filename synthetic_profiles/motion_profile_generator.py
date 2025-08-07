@@ -301,6 +301,67 @@ class SyntheticProfileGenerator:
         print(f"✅ Exported: {output_file}")
         return output_file
 
+    def export_for_comparison_pipeline(self, player_name: str, frames: List[FrameData], output_dir="/tmp"):
+        """Export synthetic profile in the format expected by the comparison pipeline"""
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Convert frames to the format expected by the comparison pipeline
+        json_frames = []
+        for frame in frames:
+            json_frame = {
+                "frame_idx": frame.frame_index,
+                "phase": frame.phase.value,
+                "timestamp": frame.timestamp,
+                "keypoints": {},
+                "ball_position": list(frame.ball_position),
+                "ball_confidence": frame.ball_confidence,
+                "shot_id": 1,  # Synthetic profiles are single shots
+                "torso_length": 0.15,  # Default torso length
+                "normalized": True
+            }
+            
+            for keypoint_name, keypoint_data in frame.keypoints.items():
+                json_frame["keypoints"][keypoint_name] = {
+                    "x": keypoint_data.x,
+                    "y": keypoint_data.y,
+                    "confidence": keypoint_data.confidence
+                }
+            
+            json_frames.append(json_frame)
+        
+        # Create metadata in the format expected by the comparison pipeline
+        metadata = {
+            "video_path": f"synthetic_{player_name}",
+            "total_frames": len(frames),
+            "fps": 30,
+            "resolution": self.resolution,
+            "hand": "right",  # Default to right hand
+            "shots": {
+                "shot1": {
+                    "start_frame": 0,
+                    "end_frame": len(frames) - 1,
+                    "fixed_torso": 0.15
+                }
+            },
+            "player_name": player_name,
+            "generated_at": datetime.now().isoformat()
+        }
+        
+        # Create final JSON structure matching the comparison pipeline format
+        output_data = {
+            "metadata": metadata,
+            "frames": json_frames
+        }
+        
+        # Save to file with the naming convention expected by the comparison pipeline
+        base_name = f"{player_name.lower()}_synthetic_profile"
+        output_file = os.path.join(output_dir, f"{base_name}_normalized_output.json")
+        with open(output_file, 'w') as f:
+            json.dump(output_data, f, indent=2)
+        
+        print(f"✅ Exported for comparison pipeline: {output_file}")
+        return output_file
+
 # --- Player Style Definitions ---
 def create_lebron_style():
     """LeBron James - Power-based, athletic, consistent"""
