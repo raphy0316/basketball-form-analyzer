@@ -29,22 +29,14 @@ const CameraScreen = () => {
   const recordingTimerRef = useRef(null);
   const videoRef = useRef(null);
 
-  // Debug: Log Camera availability
-  console.log('Camera import status:', !!Camera);
-  console.log('Camera.Constants:', Camera?.Constants);
+
 
   useEffect(() => {
     (async () => {
       try {
-        console.log('Requesting camera permissions...');
         const { status } = await Camera.requestCameraPermissionsAsync();
-        console.log('Camera permission status:', status);
-        
         const audioStatus = await Camera.requestMicrophonePermissionsAsync();
-        console.log('Audio permission status:', audioStatus.status);
-        
         const hasBothPermissions = status === 'granted' && audioStatus.status === 'granted';
-        console.log('Has both permissions:', hasBothPermissions);
         setHasPermission(hasBothPermissions);
       } catch (error) {
         console.error('Error requesting permissions:', error);
