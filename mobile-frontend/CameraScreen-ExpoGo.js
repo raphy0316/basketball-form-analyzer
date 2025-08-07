@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -27,8 +27,6 @@ const CameraScreen = ({ navigation }) => {
   const recordingTimerRef = useRef(null);
   const cameraRef = useRef(null);
 
-
-
   // Recording timer
   useEffect(() => {
     console.log('Recording state changed:', isRecording);
@@ -56,7 +54,7 @@ const CameraScreen = ({ navigation }) => {
     };
   }, [isRecording]);
 
-  const startRecording = useCallback(async () => {
+  const startRecording = async () => {
     if (!isCameraReady) {
       Alert.alert('Error', 'Camera is not ready yet. Please wait a moment and try again.');
       return;
@@ -77,29 +75,31 @@ const CameraScreen = ({ navigation }) => {
       setRecordedVideo(null);
       setShowPreview(false);
       
-      // Start recording with react-native-vision-camera
-      const video = await cameraRef.current.startRecording({
-        onRecordingFinished: (video) => {
-          console.log('Recording finished, video:', video);
-          setRecordedVideo(video.path);
-          setShowPreview(true);
-          setIsRecording(false);
-        },
-        onRecordingError: (error) => {
-          console.error('Recording error:', error);
-          setIsRecording(false);
-        },
+      // Start recording using recordAsync
+      const video = await cameraRef.current.recordAsync({
+        quality: CONFIG.RECORDING.QUALITY,
+        maxDuration: CONFIG.RECORDING.MAX_DURATION,
+        mute: CONFIG.RECORDING.MUTE,
       });
       
-      console.log('Recording started successfully');
+      console.log('Recording completed, video:', video);
+      if (video && video.uri) {
+        setRecordedVideo(video.uri);
+        setShowPreview(true);
+        setIsRecording(false);
+        console.log('Video URI captured:', video.uri);
+      } else {
+        console.error('No video URI received');
+        setIsRecording(false);
+      }
     } catch (error) {
       console.error('Error starting recording:', error);
       Alert.alert('Error', 'Failed to start recording. Please try again.');
       setIsRecording(false);
     }
-  }, [isCameraReady]);
+  };
 
-  const stopRecording = useCallback(async () => {
+  const stopRecording = async () => {
     if (!isRecording || !cameraRef.current) return;
     
     console.log('Stopping recording...');
@@ -112,7 +112,7 @@ const CameraScreen = ({ navigation }) => {
       console.error('Error stopping recording:', error);
       setIsRecording(false);
     }
-  }, [isRecording]);
+  };
 
   const retakeVideo = () => {
     setRecordedVideo(null);
