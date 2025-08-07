@@ -1,0 +1,406 @@
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  Dimensions,
+  SafeAreaView,
+} from 'react-native';
+import { Camera } from 'expo-camera';
+import { Video } from 'expo-av';
+import * as FileSystem from 'expo-file-system';
+import axios from 'axios';
+
+const { width, height } = Dimensions.get('window');
+
+const CameraScreen = () => {
+  const [hasPermission, setHasPermission] = useState(null);
+  const [camera, setCamera] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedVideo, setRecordedVideo] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [showPreview, setShowPreview] = useState(false);
+  
+  const recordingTimerRef = useRef(null);
+  const videoRef = useRef(null);
+
+  const MAX_RECORDING_TIME = 5; // 5 seconds
+  const BACKEND_URL = 'http://192.168.0.165:8000';
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      const audioStatus = await Camera.requestMicrophonePermissionsAsync();
+      setHasPermission(status === 'granted' && audioStatus.status === 'granted');
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (isRecording) {
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime((prev) => {
+          if (prev >= MAX_RECORDING_TIME) {
+            stopRecording();
+            return prev;
+          }
+          return prev + 0.1;
+        });
+      }, 100);
+    } else {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+    }
+
+    return () => {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+    };
+  }, [isRecording]);
+
+  const startRecording = async () => {
+    if (!camera) return;
+
+    try {
+      setIsRecording(true);
+      setRecordingTime(0);
+      setRecordedVideo(null);
+      setShowPreview(false);
+
+      const video = await camera.recordAsync({
+        quality: Camera.Constants.VideoQuality['720p'],
+        maxDuration: MAX_RECORDING_TIME,
+        mute: false,
+      });
+
+      setRecordedVideo(video);
+      setShowPreview(true);
+    } catch (error) {
+      console.error('Error recording video:', error);
+      Alert.alert('Error', 'Failed to record video. Please try again.');
+    } finally {
+      setIsRecording(false);
+    }
+  };
+
+  const stopRecording = async () => {
+    if (camera && isRecording) {
+      await camera.stopRecording();
+    }
+  };
+
+  const retakeVideo = () => {
+    setRecordedVideo(null);
+    setShowPreview(false);
+    setRecordingTime(0);
+  };
+
+  const analyzeVideo = async () => {
+    if (!recordedVideo) return;
+
+    setIsAnalyzing(true);
+    try {
+      // Create form data
+      const formData = new FormData();
+      formData.append('file', {
+        uri: recordedVideo.uri,
+        type: 'video/mp4',
+        name: 'basketball_shot.mp4',
+      });
+
+      // Send to backend
+      const response = await axios.post(
+        `${BACKEND_URL}/analysis/analyze-video`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          timeout: 30000, // 30 second timeout
+        }
+      );
+
+      Alert.alert(
+        'Analysis Complete',
+        'Your basketball shot has been analyzed successfully!',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              setRecordedVideo(null);
+              setShowPreview(false);
+              setRecordingTime(0);
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error analyzing video:', error);
+      Alert.alert(
+        'Analysis Failed',
+        'Failed to analyze your shot. Please try again.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              setRecordedVideo(null);
+              setShowPreview(false);
+              setRecordingTime(0);
+            },
+          },
+        ]
+      );
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  if (hasPermission === null) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
+
+  if (hasPermission === false) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>No access to camera</Text>
+        <Text style={styles.errorSubtext}>
+          Please enable camera permissions in your device settings.
+        </Text>
+      </View>
+    );
+  }
+
+  if (showPreview && recordedVideo) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.previewContainer}>
+          <Video
+            ref={videoRef}
+            source={{ uri: recordedVideo.uri }}
+            style={styles.previewVideo}
+            useNativeControls
+            resizeMode="contain"
+            isLooping
+          />
+          
+          <View style={styles.previewControls}>
+            <TouchableOpacity
+              style={[styles.button, styles.retakeButton]}
+              onPress={retakeVideo}
+              disabled={isAnalyzing}
+            >
+              <Text style={styles.buttonText}>Retake</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.button, styles.analyzeButton]}
+              onPress={analyzeVideo}
+              disabled={isAnalyzing}
+            >
+              {isAnalyzing ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text style={styles.buttonText}>Analyze Shot</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <Camera
+        style={styles.camera}
+        type={Camera.Constants.Type.back}
+        ref={(ref) => setCamera(ref)}
+      >
+        <View style={styles.overlay}>
+          {/* Recording indicator */}
+          {isRecording && (
+            <View style={styles.recordingIndicator}>
+              <View style={styles.recordingDot} />
+              <Text style={styles.recordingText}>
+                Recording... {recordingTime.toFixed(1)}s
+              </Text>
+            </View>
+          )}
+
+          {/* Instructions */}
+          <View style={styles.instructionsContainer}>
+            <Text style={styles.instructionsTitle}>
+              Basketball Form Analyzer
+            </Text>
+            <Text style={styles.instructionsText}>
+              Position yourself in the frame and tap record to capture your shot
+            </Text>
+          </View>
+
+          {/* Recording button */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[
+                styles.recordButton,
+                isRecording && styles.recordingButton,
+              ]}
+              onPress={isRecording ? stopRecording : startRecording}
+              disabled={isAnalyzing}
+            >
+              {isRecording ? (
+                <View style={styles.stopIcon} />
+              ) : (
+                <View style={styles.recordIcon} />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Camera>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  camera: {
+    flex: 1,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    justifyContent: 'space-between',
+  },
+  recordingIndicator: {
+    position: 'absolute',
+    top: 60,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  recordingDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#FF3B30',
+    marginRight: 8,
+  },
+  recordingText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  instructionsContainer: {
+    position: 'absolute',
+    top: 120,
+    left: 20,
+    right: 20,
+    alignItems: 'center',
+  },
+  instructionsTitle: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  instructionsText: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+    opacity: 0.9,
+  },
+  buttonContainer: {
+    alignItems: 'center',
+    marginBottom: 50,
+  },
+  recordButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 4,
+    borderColor: '#007AFF',
+  },
+  recordingButton: {
+    backgroundColor: '#FF3B30',
+    borderColor: '#FF3B30',
+  },
+  recordIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#007AFF',
+  },
+  stopIcon: {
+    width: 24,
+    height: 24,
+    backgroundColor: 'white',
+    borderRadius: 2,
+  },
+  previewContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  previewVideo: {
+    flex: 1,
+  },
+  previewControls: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+  },
+  button: {
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 25,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  retakeButton: {
+    backgroundColor: '#8E8E93',
+  },
+  analyzeButton: {
+    backgroundColor: '#007AFF',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  errorText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 100,
+  },
+  errorSubtext: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 20,
+    paddingHorizontal: 40,
+    opacity: 0.8,
+  },
+});
+
+export default CameraScreen;
