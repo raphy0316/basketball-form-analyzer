@@ -588,6 +588,7 @@ class ShootingComparisonPipeline:
             
             # Add video paths and data paths to results for visualization
             enhanced_results = dict(self.comparison_results)
+            print(self.comparison_results.keys())
             enhanced_results['video1_path'] = os.path.abspath(self.video1_path)
             enhanced_results['video2_path'] = os.path.abspath(self.video2_path)
             
@@ -872,7 +873,7 @@ class ShootingComparisonPipeline:
         """Display rising analysis results."""
         video1_rising = rising_analysis.get('video1', {})
         video2_rising = rising_analysis.get('video2', {})
-        
+
         if 'error' in video1_rising or 'error' in video2_rising:
             print("  ⚠️  Rising analysis errors:")
             if 'error' in video1_rising:
@@ -956,6 +957,29 @@ class ShootingComparisonPipeline:
         print(f"    Loading-Rising Frames: {video2_rising.get('loading_rising_frames', 'N/A')}")
         print(f"    Combined Rising Frames: {video2_rising.get('total_rising_frames', 'N/A')}")
         
+        dip_point1 = video1_rising.get('dip_point_analysis', {})
+        if 'error' not in dip_point1:
+            print(f"    Dip Point Analysis:")
+            print(f"      Dip Frame: {dip_point1.get('dip_frame_index', 'N/A')}")
+            print(f"      Arm Angles:")
+            print(f"        Shoulder-Elbow-Wrist: {dip_point1.get('dip_shoulder_elbow_wrist', 'N/A'):.2f}°")
+            print(f"        Elbow-Shoulder-Hip: {dip_point1.get('dip_elbow_shoulder_hip', 'N/A'):.2f}°")
+            print(f"        Torso Angle: {dip_point1.get('dip_torso_angle', 'N/A'):.2f}°")
+            print(f"        Arm-Torso Angle: {dip_point1.get('dip_arm_torso_angle', 'N/A'):.2f}°")
+            
+            # Ball position relative to eyes at setup point
+            ball_eye1 = setup_point1.get('dip_ball_eye_position', {})
+            if ball_eye1 and 'error' not in ball_eye1:
+                print(f"      Ball Position (Relative to Eyes):")
+                print(f"        Horizontal Distance: {ball_eye1.get('relative_x', 'N/A'):.4f}")
+                print(f"        Vertical Distance: {ball_eye1.get('relative_y', 'N/A'):.4f}")
+        
+        print("  📊 Video 2 Rising Analysis:")
+        print(f"    Total Rising Time: {video2_rising.get('total_rising_time', 'N/A')}s")
+        print(f"    Rising Frames: {video2_rising.get('rising_frames', 'N/A')}")
+        print(f"    Loading-Rising Frames: {video2_rising.get('loading_rising_frames', 'N/A')}")
+        print(f"    Combined Rising Frames: {video2_rising.get('total_rising_frames', 'N/A')}")
+
         # Windup trajectory analysis
         windup2 = video2_rising.get('windup_trajectory', {})
         if 'error' not in windup2:
@@ -1018,6 +1042,22 @@ class ShootingComparisonPipeline:
                 print(f"      Ball Position (Relative to Eyes):")
                 print(f"        Horizontal Distance: {ball_eye2.get('relative_x', 'N/A'):.4f}")
                 print(f"        Vertical Distance: {ball_eye2.get('relative_y', 'N/A'):.4f}")
+        dip_point2 = video2_rising.get('dip_point_analysis', {})
+        if 'error' not in dip_point2:
+            print(f"    Dip Point Analysis:")
+            print(f"      Dip Frame: {dip_point2.get('dip_frame_index', 'N/A')}")
+            print(f"      Arm Angles:")
+            print(f"        Shoulder-Elbow-Wrist: {dip_point2.get('dip_shoulder_elbow_wrist', 'N/A'):.2f}°")
+            print(f"        Elbow-Shoulder-Hip: {dip_point2.get('dip_elbow_shoulder_hip', 'N/A'):.2f}°")
+            print(f"        Torso Angle: {dip_point2.get('dip_torso_angle', 'N/A'):.2f}°")
+            print(f"        Arm-Torso Angle: {dip_point2.get('dip_arm_torso_angle', 'N/A'):.2f}°")
+            
+            # Ball position relative to eyes at setup point
+            ball_eye1 = setup_point1.get('dip_ball_eye_position', {})
+            if ball_eye1 and 'error' not in ball_eye1:
+                print(f"      Ball Position (Relative to Eyes):")
+                print(f"        Horizontal Distance: {ball_eye1.get('relative_x', 'N/A'):.4f}")
+                print(f"        Vertical Distance: {ball_eye1.get('relative_y', 'N/A'):.4f}")
 
     def _display_release_analysis(self, release_analysis: Dict):
         """Display release analysis results."""

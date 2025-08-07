@@ -83,7 +83,8 @@ class RisingAnalyzer:
             'jump_analysis': self._analyze_jump_height(all_rising_frames, fps, loading_frames),
             'body_analysis': self._analyze_body_angles(all_rising_frames),
             'timing_analysis': self._analyze_timing(all_rising_frames, fps),
-            'setup_point_analysis': self._analyze_setup_point(all_rising_frames)
+            'setup_point_analysis': self._analyze_setup_point(all_rising_frames),
+            'dip_point_analysis':self._analyze_dip_arm_angles(self._find_dip_point(all_rising_frames))
         }
         
         return rising_analysis
@@ -194,7 +195,7 @@ class RisingAnalyzer:
                 return i
         return 0
 
-    def _analyze_dip_arm_angles(self, setup_frame: Dict) -> Dict:
+    def _analyze_dip_arm_angles(self, dip_frame: Dict) -> Dict:
         """
         Analyze arm angles at setup point.
         
@@ -204,7 +205,7 @@ class RisingAnalyzer:
         Returns:
             Dictionary containing arm angle measurements
         """
-        pose = setup_frame.get('normalized_pose', {})
+        pose = dip_frame.get('normalized_pose', {})
         
         # Get joint positions
         selected_shoulder = pose.get(f'{self.selected_hand}_shoulder', {})
@@ -224,7 +225,7 @@ class RisingAnalyzer:
                 selected_elbow.get('x', 0), selected_elbow.get('y', 0),
                 selected_wrist.get('x', 0), selected_wrist.get('y', 0)
             )
-            angles['shoulder_elbow_wrist'] = shoulder_elbow_wrist
+            angles['dip_shoulder_elbow_wrist'] = shoulder_elbow_wrist
         
         if self._has_valid_coordinates(selected_elbow, selected_shoulder, selected_hip):
             # Elbow-shoulder-hip angle (armpit angle)
@@ -233,17 +234,17 @@ class RisingAnalyzer:
                 selected_shoulder.get('x', 0), selected_shoulder.get('y', 0),
                 selected_hip.get('x', 0), selected_hip.get('y', 0)
             )
-            angles['elbow_shoulder_hip'] = elbow_shoulder_hip
+            angles['dip_elbow_shoulder_hip'] = elbow_shoulder_hip
         
         # Calculate torso angle (shoulder-hip line relative to vertical)
         if self._has_valid_coordinates(selected_shoulder, selected_hip):
             torso_angle = self._calculate_angle_to_vertical(selected_shoulder, selected_hip)
-            angles['torso_angle'] = torso_angle
+            angles['dip_torso_angle'] = torso_angle
         
         # Calculate arm angle relative to torso
-        if 'shoulder_elbow_wrist' in angles and 'torso_angle' in angles:
-            arm_torso_angle = angles['shoulder_elbow_wrist'] - angles['torso_angle']
-            angles['arm_torso_angle'] = arm_torso_angle
+        if 'dip_shoulder_elbow_wrist' in angles and 'dip_torso_angle' in angles:
+            arm_torso_angle = angles['dip_shoulder_elbow_wrist'] - angles['dip_torso_angle']
+            angles['dip_arm_torso_angle'] = arm_torso_angle
         
         return angles
 
@@ -1175,7 +1176,7 @@ class SetpointDetector:
         curvature_score = min(curvature_raw / self.setpoint_thresholds['ball_trajectory_curvature'], 1.0)  # Curvature is always positive
         acceleration_score = min(abs(acceleration_raw) / self.setpoint_thresholds['wrist_acceleration'], 1.0)  # Acceleration can be positive or negative
         phase_score = 1.0 if phase_transitions[frame_idx] else 0.0
-        
+
         # Weighted combination
         weights = {
             'velocity': 0.25,
@@ -1185,7 +1186,7 @@ class SetpointDetector:
             'acceleration': 0.15,
             'phase': 0.05
         }
-        
+    
         total_score = (
             velocity_score * weights['velocity'] +
             angle_score * weights['angle'] +
@@ -1196,11 +1197,11 @@ class SetpointDetector:
         )
         
         return total_score
-    
+
     def _calculate_angle(self, x1: float, y1: float, x2: float, y2: float) -> float:
         """Calculate angle between two points."""
         return np.degrees(np.arctan2(y2 - y1, x2 - x1))
-    
+
     def _calculate_curvature(self, p1: Tuple[float, float], 
                             p2: Tuple[float, float], 
                             p3: Tuple[float, float]) -> float:
@@ -1226,7 +1227,7 @@ class SetpointDetector:
             
         except:
             return 0.0
-    
+
     def _filter_setpoints_by_score(self, setpoints_with_scores: List[Tuple[int, float]], 
                                   pose_data: List[Dict], 
                                   ball_data: List[Dict]) -> List[int]:

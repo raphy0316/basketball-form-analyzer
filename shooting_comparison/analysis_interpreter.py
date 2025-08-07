@@ -905,11 +905,11 @@ class AnalysisInterpreter:
                     interpretation['differences'].append(
                         f"Windup timing shows {level} difference - Video 2 is faster ({windup_diff:.2f}s)"
                     )
-        
+
         # Compare windup trajectory curvature and path length
         windup1 = video1.get('windup_trajectory', {})
         windup2 = video2.get('windup_trajectory', {})
-        
+
         if windup1 and windup2 and 'error' not in windup1 and 'error' not in windup2:
             # Compare trajectory curvature
             curvature1 = windup1.get('trajectory_curvature', 0)
@@ -994,6 +994,65 @@ class AnalysisInterpreter:
                         f"Time to reach max jump height shows {level} difference - Video 2 is faster ({max_timing_diff:.2f}s)"
                     )
         
+        # Compare dip point analysis
+        dip1 = video1.get('dip_point_analysis', {})
+        dip2 = video2.get('dip_point_analysis', {})
+        
+        if dip1 and dip2 and 'error' not in dip1 and 'error' not in dip2:
+            # Compare arm angles at setup point
+
+                # Compare shoulder-elbow-wrist angle
+            sew1 = dip1.get('dip_shoulder_elbow_wrist', 0)
+            sew2 = dip2.get('dip_shoulder_elbow_wrist', 0)
+
+            if abs(sew1 - sew2) > 5:  # 5 degree threshold
+                sew_diff = abs(sew1 - sew2)
+                # Determine difference level
+                if sew_diff <= 10:
+                    level = "low"
+                elif sew_diff <= 20:
+                    level = "medium"
+                elif sew_diff <= 30:
+                    level = "high"
+                else:
+                    level = "very high"
+
+                # Determine which video has larger angle (Video 1 is reference)
+                if sew1 > sew2:
+                    interpretation['differences'].append(
+                        f"Dip point shoulder-elbow-wrist angle shows {level} difference - Video 2 has smaller angle ({sew_diff:.1f}°)"
+                    )
+                else:
+                    interpretation['differences'].append(
+                        f"Dip point shoulder-elbow-wrist angle shows {level} difference - Video 2 has larger angle ({sew_diff:.1f}°)"
+                    )
+
+            # Compare arm-torso angle
+            at1 = dip1.get('dip_arm_torso_angle', 0)
+            at2 = dip2.get('dip_arm_torso_angle', 0)
+            
+            if abs(at1 - at2) > 5:  # 5 degree threshold
+                at_diff = abs(at1 - at2)
+                # Determine difference level
+                if at_diff <= 10:
+                    level = "low"
+                elif at_diff <= 20:
+                    level = "medium"
+                elif at_diff <= 30:
+                    level = "high"
+                else:
+                    level = "very high"
+                
+                # Determine which video has larger arm-torso angle (Video 1 is reference)
+                if at1 > at2:
+                    interpretation['differences'].append(
+                        f"Dip point arm-torso angle shows {level} difference - Video 2 has smaller angle ({at_diff:.1f}°)"
+                    )
+                else:
+                    interpretation['differences'].append(
+                        f"Dip point arm-torso angle shows {level} difference - Video 2 has larger angle ({at_diff:.1f}°)"
+                    )
+
         # Compare setup point analysis
         setup1 = video1.get('setup_point_analysis', {})
         setup2 = video2.get('setup_point_analysis', {})
@@ -1055,7 +1114,7 @@ class AnalysisInterpreter:
                         interpretation['differences'].append(
                             f"Setup point arm-torso angle shows {level} difference - Video 2 has larger angle ({at_diff:.1f}°)"
                         )
-            
+
             # Compare ball position relative to eyes at setup point
             ball_eye1 = setup1.get('ball_eye_position', {})
             ball_eye2 = setup2.get('ball_eye_position', {})
@@ -1086,7 +1145,7 @@ class AnalysisInterpreter:
                         interpretation['differences'].append(
                             f"Setup point ball horizontal position relative to eyes shows {level} difference - Video 2 has ball more to the right ({rel_x_diff:.3f})"
                         )
-                
+
                 # Compare vertical distance
                 rel_y1 = ball_eye1.get('relative_y', 0)
                 rel_y2 = ball_eye2.get('relative_y', 0)
@@ -1112,9 +1171,7 @@ class AnalysisInterpreter:
                         interpretation['differences'].append(
                             f"Setup point ball vertical position relative to eyes shows {level} difference - Video 2 has ball higher ({rel_y_diff:.3f})"
                         )
-                
 
-        
         return interpretation
     
     def _interpret_release_analysis(self, release_analysis: Dict) -> Dict:
