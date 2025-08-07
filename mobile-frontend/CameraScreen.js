@@ -45,6 +45,11 @@ const CameraScreen = ({ navigation }) => {
     loadCamera();
   }, []);
 
+  // Monitor camera ref changes
+  useEffect(() => {
+    console.log('Camera ref changed:', !!cameraRef.current);
+  }, [cameraRef.current]);
+
   useEffect(() => {
     console.log('Recording state changed:', isRecording);
     
@@ -84,12 +89,18 @@ const CameraScreen = ({ navigation }) => {
 
     console.log('Starting recording...');
     console.log('Camera ready state:', isCameraReady);
+    console.log('Camera ref exists:', !!cameraRef.current);
     
     try {
       setIsRecording(true);
       setRecordingTime(0);
       setRecordedVideo(null);
       setShowPreview(false);
+      
+      // Add a small delay to ensure camera is fully ready
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log('About to call recordAsync...');
       
       // Start recording using recordAsync
       const video = await cameraRef.current.recordAsync({
@@ -274,6 +285,7 @@ const CameraScreen = ({ navigation }) => {
         videoStabilizationMode="off"
         onCameraReady={() => {
           console.log('Camera is ready!');
+          console.log('Camera ref in onCameraReady:', !!cameraRef.current);
           setIsCameraReady(true);
         }}
       />
