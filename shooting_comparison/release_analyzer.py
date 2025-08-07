@@ -23,8 +23,9 @@ class ReleaseAnalyzer:
     
     def __init__(self):
         self.release_data = {}
-    
-    def analyze_release_phase(self, video_data: Dict) -> Dict:
+        self.selected_hand = 'right'  # Default to right hand; can be set to 'left' as needed
+
+    def analyze_release_phase(self, video_data: Dict, selected_hand) -> Dict:
         """
         Analyze release phase information from video data.
         
@@ -34,6 +35,7 @@ class ReleaseAnalyzer:
         Returns:
             Dictionary containing release phase analysis results
         """
+        self.selected_hand = selected_hand
         frames = video_data.get('frames', [])
         if not frames:
             return {"error": "No frames available for analysis"}
@@ -543,7 +545,7 @@ class ReleaseAnalyzer:
             return None
         
         max_jump_frame = None
-        max_jump_height = -float('inf')
+        max_jump_height = float('inf')
         
         for frame in frames:
             # Calculate jump height based on foot position relative to baseline
@@ -555,7 +557,7 @@ class ReleaseAnalyzer:
                 # Use average ankle height as jump height indicator
                 ankle_height = (left_ankle.get('y', 0) + right_ankle.get('y', 0)) / 2
                 
-                if ankle_height > max_jump_height:
+                if ankle_height < max_jump_height:
                     max_jump_height = ankle_height
                     max_jump_frame = frame
         
@@ -637,36 +639,36 @@ class ReleaseAnalyzer:
     
     def _calculate_shoulder_elbow_wrist_angle(self, pose: Dict) -> Optional[float]:
         """Calculate angle between shoulder, elbow, and wrist (right arm)."""
-        right_shoulder = pose.get('right_shoulder', {})
-        right_elbow = pose.get('right_elbow', {})
-        right_wrist = pose.get('right_wrist', {})
+        selected_shoulder = pose.get(f'{self.selected_hand}_shoulder', {})
+        selected_elbow = pose.get(f'{self.selected_hand}_elbow', {})
+        selected_wrist = pose.get(f'{self.selected_hand}_wrist', {})
         
-        if not self._has_valid_coordinates(right_shoulder, right_elbow, right_wrist):
+        if not self._has_valid_coordinates(selected_shoulder, selected_elbow, selected_wrist):
             return None
         
         # Calculate angle between three points
         angle = self._calculate_angle(
-            right_shoulder.get('x', 0), right_shoulder.get('y', 0),
-            right_elbow.get('x', 0), right_elbow.get('y', 0),
-            right_wrist.get('x', 0), right_wrist.get('y', 0)
+            selected_shoulder.get('x', 0), selected_shoulder.get('y', 0),
+            selected_elbow.get('x', 0), selected_elbow.get('y', 0),
+            selected_wrist.get('x', 0), selected_wrist.get('y', 0)
         )
         
         return angle
     
     def _calculate_wrist_shoulder_hip_angle(self, pose: Dict) -> Optional[float]:
         """Calculate angle between wrist, shoulder, and hip (right side)."""
-        right_wrist = pose.get('right_wrist', {})
-        right_shoulder = pose.get('right_shoulder', {})
-        right_hip = pose.get('right_hip', {})
+        selected_wrist = pose.get(f'{self.selected_hand}_wrist', {})
+        selected_shoulder = pose.get(f'{self.selected_hand}_shoulder', {})
+        selected_hip = pose.get(f'{self.selected_hand}_hip', {})
         
-        if not self._has_valid_coordinates(right_wrist, right_shoulder, right_hip):
+        if not self._has_valid_coordinates(selected_wrist, selected_shoulder, selected_hip):
             return None
         
         # Calculate angle between three points
         angle = self._calculate_angle(
-            right_wrist.get('x', 0), right_wrist.get('y', 0),
-            right_shoulder.get('x', 0), right_shoulder.get('y', 0),
-            right_hip.get('x', 0), right_hip.get('y', 0)
+            selected_wrist.get('x', 0), selected_wrist.get('y', 0),
+            selected_shoulder.get('x', 0), selected_shoulder.get('y', 0),
+            selected_hip.get('x', 0), selected_hip.get('y', 0)
         )
         
         return angle 

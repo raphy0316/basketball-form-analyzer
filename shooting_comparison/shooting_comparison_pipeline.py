@@ -39,10 +39,10 @@ class ShootingComparisonPipeline:
         self.video_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "video")
         self.results_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "results")
         self.comparison_results_dir = os.path.join(os.path.dirname(__file__), "results")
-        
+        self.selected_hand = 'right'  # Default hand
         # Create comparison results directory if it doesn't exist
         os.makedirs(self.comparison_results_dir, exist_ok=True)
-        
+
         # Initialize analyzers
         self.setup_analyzer = SetupAnalyzer()
         self.loading_analyzer = LoadingAnalyzer()
@@ -50,14 +50,14 @@ class ShootingComparisonPipeline:
         self.release_analyzer = ReleaseAnalyzer()
         self.follow_through_analyzer = FollowThroughAnalyzer()
         self.landing_analyzer = LandingAnalyzer()
-        
+
         # Initialize analysis interpreter
         self.analysis_interpreter = AnalysisInterpreter()
-        
+
         # Initialize DTW processor
         self.dtw_processor = DTWProcessor()
         self.analysis_utils = get_analysis_utils()
-        
+
         # Video and data storage
         self.video1_path = None
         self.video2_path = None
@@ -66,7 +66,7 @@ class ShootingComparisonPipeline:
         self.video1_metadata = None
         self.video2_metadata = None
         self.comparison_results = None
-        
+
     def select_videos(self) -> Tuple[Optional[str], Optional[str]]:
         """
         Select two videos for comparison using file dialog.
@@ -273,7 +273,7 @@ class ShootingComparisonPipeline:
             # Get selected hand
             selected_hand = filtered_video1_data.get('metadata', {}).get('hand', 'right')
             print(f"🔍 [DEBUG] Selected hand: {selected_hand}")
-            
+            self.selected_hand = selected_hand  # Store for analyzers
             # Perform Set-up phase analysis
             print("📊 Performing set-up phase analysis...")
             setup_analysis1 = self.setup_analyzer.analyze_setup_phase(filtered_video1_data)
@@ -296,8 +296,8 @@ class ShootingComparisonPipeline:
             
             # Perform Rising phase analysis
             print("📊 Performing rising phase analysis...")
-            rising_analysis1 = self.rising_analyzer.analyze_rising_phase(filtered_video1_data)
-            rising_analysis2 = self.rising_analyzer.analyze_rising_phase(filtered_video2_data)
+            rising_analysis1 = self.rising_analyzer.analyze_rising_phase(filtered_video1_data, self.selected_hand)
+            rising_analysis2 = self.rising_analyzer.analyze_rising_phase(filtered_video2_data, self.selected_hand)
             comparison_results['rising_analysis'] = {
                 'video1': rising_analysis1,
                 'video2': rising_analysis2
@@ -306,8 +306,8 @@ class ShootingComparisonPipeline:
             
             # Perform Release phase analysis
             print("📊 Performing release phase analysis...")
-            release_analysis1 = self.release_analyzer.analyze_release_phase(filtered_video1_data)
-            release_analysis2 = self.release_analyzer.analyze_release_phase(filtered_video2_data)
+            release_analysis1 = self.release_analyzer.analyze_release_phase(filtered_video1_data, self.selected_hand)
+            release_analysis2 = self.release_analyzer.analyze_release_phase(filtered_video2_data, self.selected_hand)
             comparison_results['release_analysis'] = {
                 'video1': release_analysis1,
                 'video2': release_analysis2
@@ -316,8 +316,8 @@ class ShootingComparisonPipeline:
             
             # Perform Follow-through phase analysis
             print("📊 Performing follow-through phase analysis...")
-            follow_through_analysis1 = self.follow_through_analyzer.analyze_follow_through_phase(filtered_video1_data)
-            follow_through_analysis2 = self.follow_through_analyzer.analyze_follow_through_phase(filtered_video2_data)
+            follow_through_analysis1 = self.follow_through_analyzer.analyze_follow_through_phase(filtered_video1_data, self.selected_hand)
+            follow_through_analysis2 = self.follow_through_analyzer.analyze_follow_through_phase(filtered_video2_data, self.selected_hand)
             comparison_results['follow_through_analysis'] = {
                 'video1': follow_through_analysis1,
                 'video2': follow_through_analysis2
@@ -558,7 +558,7 @@ class ShootingComparisonPipeline:
         # Create filtered data
         filtered_data = data.copy()
         filtered_data['frames'] = filtered_frames
-        
+        print(filtered_data)
         print(f"✅ Filtered {len(filtered_frames)} frames for shot '{selected_shot}'")
         
         return filtered_data

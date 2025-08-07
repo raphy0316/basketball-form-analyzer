@@ -30,8 +30,8 @@ class RisingAnalyzer:
     
     def __init__(self):
         self.rising_data = {}
-    
-    def analyze_rising_phase(self, video_data: Dict) -> Dict:
+
+    def analyze_rising_phase(self, video_data: Dict, selected_hand = "right") -> Dict:
         """
         Analyze rising phase information from video data.
         
@@ -47,7 +47,7 @@ class RisingAnalyzer:
         
         # Get FPS from metadata (default to 30fps)
         fps = video_data.get('metadata', {}).get('fps', 30.0)
-        
+        self.selected_hand = selected_hand.lower()
         # Find all Rising and Loading-Rising frames
         rising_frames = []
         loading_rising_frames = []
@@ -143,16 +143,110 @@ class RisingAnalyzer:
     def _find_dip_point(self, frames: List[Dict]) -> Optional[Dict]:
         """Find the frame with the lowest ball position (dip point)."""
         lowest_frame = None
-        lowest_y = float('inf')
+        lowest_y = float('-inf')
         
         for frame in frames:
             ball_pos = self._get_ball_position(frame)
-            if ball_pos and ball_pos['y'] < lowest_y:
+            if ball_pos and ball_pos['y'] > lowest_y:
                 lowest_y = ball_pos['y']
                 lowest_frame = frame
         
         return lowest_frame
+
+    def _get_dip(self, rising_ball, release_y):
+        """
+        Get the dip frame index based on the last frame before the ball begins moving upward
+
+        Args:
+            rising_pose: The first frame's pose dict.
+
+        Returns:
+            Dip value (float).
+        """
+        fps_ratio = self._get_fps_ratio()
+        if not rising_ball or len(rising_ball) < 2 * fps_ratio:
+            return 0
+
+        lookback = max(1, (int) (2 * fps_ratio))
+
+        # Step 1: Compute distances to rim
+        distances = []
+        for ball in rising_ball:
+            if not ball or "center_y" not in ball:
+                distances.append(-1)
+                continue
+            distances.append(abs(ball.get("center_y", 0) - release_y))
     
+        # Step 2: Traverse backward to get the last frame where the vertical distance is decreasing 
+        for i in range(len(distances) - lookback, lookback, -1):
+            look_back_arr = []
+            look_ahead_arr = []
+            for j in range(i - lookback, i):
+                if distances[j] == -1:
+                    continue
+                look_back_arr.append(distances[j])
+            for j in range(i + 1, i + lookback):
+                if distances[j] == -1:
+                    continue
+                look_ahead_arr.append(distances[j])
+        
+            if np.mean(look_back_arr) < np.mean(look_ahead_arr):
+                return i
+        return 0
+
+    def _analyze_dip_arm_angles(self, setup_frame: Dict) -> Dict:
+        """
+        Analyze arm angles at setup point.
+        
+        Args:
+            setup_frame: Setup point frame data
+            
+        Returns:
+            Dictionary containing arm angle measurements
+        """
+        pose = setup_frame.get('normalized_pose', {})
+        
+        # Get joint positions
+        selected_shoulder = pose.get(f'{self.selected_hand}_shoulder', {})
+        selected_elbow = pose.get(f'{self.selected_hand}_elbow', {})
+        selected_wrist = pose.get(f'{self.selected_hand}_wrist', {})
+        # left_shoulder = pose.get('left_shoulder', {})
+        # left_hip = pose.get('left_hip', {})
+        selected_hip = pose.get(f'{self.selected_hand}_hip', {})
+        
+        angles = {}
+        
+        # Right arm angles
+        if self._has_valid_coordinates(selected_shoulder, selected_elbow, selected_wrist):
+            # Shoulder-elbow-wrist angle
+            shoulder_elbow_wrist = self._calculate_angle(
+                selected_shoulder.get('x', 0), selected_shoulder.get('y', 0),
+                selected_elbow.get('x', 0), selected_elbow.get('y', 0),
+                selected_wrist.get('x', 0), selected_wrist.get('y', 0)
+            )
+            angles['shoulder_elbow_wrist'] = shoulder_elbow_wrist
+        
+        if self._has_valid_coordinates(selected_elbow, selected_shoulder, selected_hip):
+            # Elbow-shoulder-hip angle (armpit angle)
+            elbow_shoulder_hip = self._calculate_angle(
+                selected_elbow.get('x', 0), selected_elbow.get('y', 0),
+                selected_shoulder.get('x', 0), selected_shoulder.get('y', 0),
+                selected_hip.get('x', 0), selected_hip.get('y', 0)
+            )
+            angles['elbow_shoulder_hip'] = elbow_shoulder_hip
+        
+        # Calculate torso angle (shoulder-hip line relative to vertical)
+        if self._has_valid_coordinates(selected_shoulder, selected_hip):
+            torso_angle = self._calculate_angle_to_vertical(selected_shoulder, selected_hip)
+            angles['torso_angle'] = torso_angle
+        
+        # Calculate arm angle relative to torso
+        if 'shoulder_elbow_wrist' in angles and 'torso_angle' in angles:
+            arm_torso_angle = angles['shoulder_elbow_wrist'] - angles['torso_angle']
+            angles['arm_torso_angle'] = arm_torso_angle
+        
+        return angles
+
     def _find_setup_point_using_setpoint_detector(self, frames: List[Dict]) -> Optional[Dict]:
         """Find setup point using SetpointDetector instead of eye level detection."""
         if not frames:
@@ -324,18 +418,18 @@ class RisingAnalyzer:
             return {"error": "No valid hip positions found"}
         
         # Find maximum hip height (highest point)
-        max_height_idx = np.argmax(hip_positions)
+        max_height_idx = np.argmin(hip_positions) # the top left is (0, 0) so use argmin
         max_hip_height = hip_positions[max_height_idx]
         max_height_frame_idx = frame_indices[max_height_idx]
         
         # Calculate jump height relative to loading foot height
         if loading_foot_height is not None:
-            jump_height = max_hip_height - loading_foot_height
+            jump_height = - (max_hip_height - loading_foot_height)
             baseline_height = loading_foot_height
         else:
             # Fallback to relative to initial hip height
             initial_height = hip_positions[0]
-            jump_height = max_hip_height - initial_height
+            jump_height = - (max_hip_height - initial_height)
             baseline_height = initial_height
         
         # Check if jump is significant (more than 0.01 difference)
@@ -418,7 +512,7 @@ class RisingAnalyzer:
     
     def _find_max_jump_frame(self, rising_frames: List[Dict]) -> Optional[Dict]:
         """Find the frame with maximum jump height based on hip height."""
-        max_height = -float('inf')
+        max_height = float('inf')
         max_jump_frame = None
         
         for frame in rising_frames:
@@ -432,7 +526,7 @@ class RisingAnalyzer:
                 # Calculate average hip height
                 hip_height = (left_hip.get('y', 0) + right_hip.get('y', 0)) / 2
                 
-                if hip_height > max_height:
+                if hip_height < max_height:
                     max_height = hip_height
                     max_jump_frame = frame
         
@@ -678,37 +772,37 @@ class RisingAnalyzer:
         pose = setup_frame.get('normalized_pose', {})
         
         # Get joint positions
-        right_shoulder = pose.get('right_shoulder', {})
-        right_elbow = pose.get('right_elbow', {})
-        right_wrist = pose.get('right_wrist', {})
+        selected_shoulder = pose.get(f'{self.selected_hand}_shoulder', {})
+        selected_elbow = pose.get(f'{self.selected_hand}_elbow', {})
+        selected_wrist = pose.get(f'{self.selected_hand}_wrist', {})
         left_shoulder = pose.get('left_shoulder', {})
         left_hip = pose.get('left_hip', {})
-        right_hip = pose.get('right_hip', {})
+        selected_hip = pose.get(f'{self.selected_hand}_hip', {})
         
         angles = {}
         
         # Right arm angles
-        if self._has_valid_coordinates(right_shoulder, right_elbow, right_wrist):
+        if self._has_valid_coordinates(selected_shoulder, selected_elbow, selected_wrist):
             # Shoulder-elbow-wrist angle
             shoulder_elbow_wrist = self._calculate_angle(
-                right_shoulder.get('x', 0), right_shoulder.get('y', 0),
-                right_elbow.get('x', 0), right_elbow.get('y', 0),
-                right_wrist.get('x', 0), right_wrist.get('y', 0)
+                selected_shoulder.get('x', 0), selected_shoulder.get('y', 0),
+                selected_elbow.get('x', 0), selected_elbow.get('y', 0),
+                selected_wrist.get('x', 0), selected_wrist.get('y', 0)
             )
             angles['shoulder_elbow_wrist'] = shoulder_elbow_wrist
         
-        if self._has_valid_coordinates(right_elbow, right_shoulder, right_hip):
+        if self._has_valid_coordinates(selected_elbow, selected_shoulder, selected_hip):
             # Elbow-shoulder-hip angle (armpit angle)
             elbow_shoulder_hip = self._calculate_angle(
-                right_elbow.get('x', 0), right_elbow.get('y', 0),
-                right_shoulder.get('x', 0), right_shoulder.get('y', 0),
-                right_hip.get('x', 0), right_hip.get('y', 0)
+                selected_elbow.get('x', 0), selected_elbow.get('y', 0),
+                selected_shoulder.get('x', 0), selected_shoulder.get('y', 0),
+                selected_hip.get('x', 0), selected_hip.get('y', 0)
             )
             angles['elbow_shoulder_hip'] = elbow_shoulder_hip
         
         # Calculate torso angle (shoulder-hip line relative to vertical)
-        if self._has_valid_coordinates(right_shoulder, right_hip):
-            torso_angle = self._calculate_angle_to_vertical(right_shoulder, right_hip)
+        if self._has_valid_coordinates(selected_shoulder, selected_hip):
+            torso_angle = self._calculate_angle_to_vertical(selected_shoulder, selected_hip)
             angles['torso_angle'] = torso_angle
         
         # Calculate arm angle relative to torso

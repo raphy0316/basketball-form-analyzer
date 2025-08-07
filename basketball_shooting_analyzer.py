@@ -486,12 +486,10 @@ class BasketballShootingAnalyzer:
                         'confidence': kp.get('confidence', 0)
                     }
             
-            # Step 4: Direction normalization (keypoint names and horizontal flip)
-            direction_normalized_pose = self._normalize_keypoint_names(coordinate_normalized_pose, facing_direction)
             
             # Final pose with horizontal flip applied for left-facing shooters
             normalized_pose = {}
-            for key, kp in direction_normalized_pose.items():
+            for key, kp in coordinate_normalized_pose.items():
                 if isinstance(kp, dict) and 'x' in kp and 'y' in kp:
                     norm_x = kp['x']
                     norm_y = kp['y']
@@ -506,7 +504,7 @@ class BasketballShootingAnalyzer:
                         'confidence': kp.get('confidence', 0)
                     }
             
-            # Step 5: Normalize ball position with same shot-specific transformations
+            # Step 4: Normalize ball position with same shot-specific transformations
             normalized_ball = {}
             ball_detected = False
             
