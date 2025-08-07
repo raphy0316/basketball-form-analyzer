@@ -1,14 +1,12 @@
 {
   "metadata": {
-    "video_path": "data/video\\Standard\\stephen_curry_part.mp4",
-    "analysis_date": "2025-08-07T04:08:00.848436",
     "total_frames": 84,
-    "phases_detected": [
-      "Set-up",
-      "General",
-      "Rising",
-      "Loading-Rising"
-    ],
+    "normalization_time": "2025-08-07T04:08:00.814953",
+    "coordinate_system": "shot_based_torso_with_direction_normalization",
+    "fallback_torso_length": 0.1106917277776471,
+    "facing_direction": "right",
+    "reference_hip_side": "right",
+    "normalization_method": "shot_based_individual_torso",
     "shots_detected": 22,
     "shots": [
       {
@@ -165,18 +163,11 @@
         "total_frames": 119,
         "fixed_torso": 0.13000802829015276
       }
-    ],
-    "normalization_method": "shot_based_individual_torso",
-    "phase_detection_method": "sequential_transition",
-    "hand": "right",
-    "fps": 24.28915896762978,
-    "shot_frames_only": true
+    ]
   },
-  "frames": [
+  "normalized_pose_data": [
     {
       "frame_index": 0,
-      "phase": "General",
-      "shot": 21,
       "normalized_pose": {},
       "normalized_ball": {
         "center_x": 4.674009594296766,
@@ -184,14 +175,21 @@
         "width": 0.9022779786056898,
         "height": 0.8406857146978065
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1106917277776471,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 1,
-      "phase": "General",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.8741833099023202,
@@ -265,14 +263,21 @@
         "width": 0.9246831022653393,
         "height": 0.9445481591387511
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1106917277776471,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 2,
-      "phase": "General",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.4432829445936397,
@@ -366,14 +371,21 @@
         "width": 0.7322003403114572,
         "height": 0.7265506747501306
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 3,
-      "phase": "General",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.4389202240399674,
@@ -467,14 +479,21 @@
         "width": 0.7061117986847881,
         "height": 0.6960593835225759
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 4,
-      "phase": "General",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.4394957808412423,
@@ -568,14 +587,21 @@
         "width": 0.7403083389354731,
         "height": 0.7320197268739469
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 5,
-      "phase": "General",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.4596606918691792,
@@ -669,14 +695,21 @@
         "width": 0.7424430234123607,
         "height": 0.7498092592839711
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 6,
-      "phase": "General",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.4545144714118328,
@@ -770,14 +803,21 @@
         "width": 0.7455716759187037,
         "height": 0.7362870163966988
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 7,
-      "phase": "Set-up",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.4668681483290307,
@@ -871,14 +911,21 @@
         "width": 0.7961541326382389,
         "height": 0.7217241668127193
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 8,
-      "phase": "Set-up",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.4664574607017977,
@@ -972,14 +1019,21 @@
         "width": 0.790338855248932,
         "height": 0.7541401199837412
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 9,
-      "phase": "Set-up",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.465325284774642,
@@ -1073,14 +1127,21 @@
         "width": 0.7644451860153639,
         "height": 0.7408140862666591
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 10,
-      "phase": "Set-up",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.4507766941462554,
@@ -1174,14 +1235,21 @@
         "width": 0.7038992840752877,
         "height": 0.7373646072594753
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 11,
-      "phase": "Set-up",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.4558965503888333,
@@ -1275,14 +1343,21 @@
         "width": 0.7066756215538552,
         "height": 0.7379080814106672
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 12,
-      "phase": "Set-up",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.4669201341046296,
@@ -1376,14 +1451,21 @@
         "width": 0.744224204615175,
         "height": 0.7564952241491698
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 13,
-      "phase": "Set-up",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.4698714408507865,
@@ -1477,14 +1559,21 @@
         "width": 0.729816718234842,
         "height": 0.7749379949622937
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 14,
-      "phase": "Set-up",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.458130082104753,
@@ -1578,14 +1667,21 @@
         "width": 0.7238636042748049,
         "height": 0.7532468558281605
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 15,
-      "phase": "Set-up",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.4517993286176845,
@@ -1679,14 +1775,21 @@
         "width": 0.74590260251309,
         "height": 0.7523304208697419
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 16,
-      "phase": "Set-up",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.4443363992034595,
@@ -1780,14 +1883,21 @@
         "width": 0.737022243794458,
         "height": 0.7607898433368077
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 17,
-      "phase": "Set-up",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.4545928214022004,
@@ -1881,14 +1991,21 @@
         "width": 0.765005444145536,
         "height": 0.7476416009722744
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 18,
-      "phase": "Set-up",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.4606762711282055,
@@ -1982,14 +2099,21 @@
         "width": 0.7667991019344935,
         "height": 0.781435325727461
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 19,
-      "phase": "Set-up",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.4189732819425789,
@@ -2083,14 +2207,21 @@
         "width": 0.792326791307842,
         "height": 0.770882510342412
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 20,
-      "phase": "Set-up",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.3850963799464333,
@@ -2184,14 +2315,21 @@
         "width": 0.7770714911928818,
         "height": 0.7565492893557929
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 21,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.3295421521793855,
@@ -2285,14 +2423,21 @@
         "width": 0.774926706622449,
         "height": 0.7675720561522582
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 22,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.295778504908653,
@@ -2386,14 +2531,21 @@
         "width": 0.7405816355843362,
         "height": 0.7751958444092655
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 23,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.22299136385746,
@@ -2487,14 +2639,21 @@
         "width": 0.757366802809786,
         "height": 0.7604930788235309
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 24,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.1678455957558347,
@@ -2588,14 +2747,21 @@
         "width": 0.7981438510665976,
         "height": 0.7529625679010274
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 25,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.089306228634599,
@@ -2689,14 +2855,21 @@
         "width": 0.787873244177658,
         "height": 0.7187588981725446
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 26,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.0210507619077767,
@@ -2790,14 +2963,21 @@
         "width": 0.7814882026877846,
         "height": 0.7483790563318453
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 27,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.0159075120661791,
@@ -2891,14 +3071,21 @@
         "width": 0.7849504553426879,
         "height": 0.7353759285466271
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 28,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.9984506886199895,
@@ -2992,14 +3179,21 @@
         "width": 0.8239053278993566,
         "height": 0.7697458042262394
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 29,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.0768998232878646,
@@ -3093,14 +3287,21 @@
         "width": 0.7637767974719465,
         "height": 0.7615659167011093
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 30,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.078425977128668,
@@ -3194,14 +3395,21 @@
         "width": 0.7741487023579117,
         "height": 0.8356192084497155
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 31,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.1060515896090166,
@@ -3295,14 +3503,21 @@
         "width": 0.7753919050486674,
         "height": 0.7497188040344287
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 32,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.1347982382074644,
@@ -3391,14 +3606,21 @@
         "width": 0.8002066466423716,
         "height": 0.713777695420029
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 33,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.1191906230647293,
@@ -3492,14 +3714,21 @@
         "width": 0.7960929379538183,
         "height": 0.7442723285903008
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 34,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.118757284492414,
@@ -3593,14 +3822,21 @@
         "width": 0.8363257694055016,
         "height": 0.7407600210600358
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 35,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.0251958848578697,
@@ -3694,14 +3930,21 @@
         "width": 0.8513472820610528,
         "height": 0.7522488774674446
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 36,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.0130627761600008,
@@ -3795,14 +4038,21 @@
         "width": 0.8312870109728591,
         "height": 0.7696680483590218
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 37,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.0927807350794634,
@@ -3896,14 +4146,21 @@
         "width": 0.8464820075881238,
         "height": 0.8515596068216784
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 38,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.0378068913642835,
@@ -3997,14 +4254,21 @@
         "width": 0.7795290816016344,
         "height": 0.7210103278483494
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 39,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 1.1131420780737704,
@@ -4093,14 +4357,21 @@
         "width": 0.7993989362203487,
         "height": 0.7341747600687122
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 40,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.9654434343842242,
@@ -4184,14 +4455,21 @@
         "width": 0.7651198128518534,
         "height": 0.7531832103857486
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 41,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.9463642834123727,
@@ -4280,14 +4558,21 @@
         "width": 0.783856971685657,
         "height": 0.7914160005193455
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 42,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.9219116598784138,
@@ -4376,14 +4661,21 @@
         "width": 0.8032363776442892,
         "height": 0.805091118719576
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 43,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.9811761867153654,
@@ -4472,14 +4764,21 @@
         "width": 0.8039778433351205,
         "height": 0.8419267540012491
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 44,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.9392845634297071,
@@ -4568,14 +4867,21 @@
         "width": 0.7966478489756427,
         "height": 0.813456855392473
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 45,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.9389860165469814,
@@ -4669,14 +4975,21 @@
         "width": 0.8410404336599806,
         "height": 0.80976107520704
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 46,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.90769614954083,
@@ -4765,14 +5078,21 @@
         "width": 0.810326643312862,
         "height": 0.7891076835519564
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 47,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.916117473860921,
@@ -4866,14 +5186,21 @@
         "width": 0.8373663761022091,
         "height": 0.8065224356526076
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 48,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.9184278702593351,
@@ -4967,14 +5294,21 @@
         "width": 0.7987596597112667,
         "height": 0.8043239757688686
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1426826246198259,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 49,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.8127064950877285,
@@ -5068,14 +5402,21 @@
         "width": 0.7654479463584939,
         "height": 0.7775358448537676
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 50,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.844145586918752,
@@ -5169,14 +5510,21 @@
         "width": 0.7480056845494285,
         "height": 0.6806744928241862
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 51,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.8208570010893519,
@@ -5270,14 +5618,21 @@
         "width": 0.7519148437154141,
         "height": 0.5961388570268567
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 52,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.8589040531953174,
@@ -5371,14 +5726,21 @@
         "width": 0.7623132952030691,
         "height": 0.48756597415085196
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 53,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.8434180229593133,
@@ -5472,14 +5834,21 @@
         "width": 0.7550293956583359,
         "height": 0.3702070853436571
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 54,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.84203551377054,
@@ -5573,14 +5942,21 @@
         "width": 0.7212156369364244,
         "height": 0.25379361668621564
       },
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": true,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 55,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.8379791898225992,
@@ -5669,14 +6045,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 56,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.8648911405360931,
@@ -5765,14 +6148,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 57,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.8403133141238834,
@@ -5861,14 +6251,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 58,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.8888222816693121,
@@ -5957,14 +6354,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 59,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.8462105745046715,
@@ -6053,14 +6457,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 60,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.8572159258438283,
@@ -6149,14 +6560,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 61,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.8059711939116552,
@@ -6245,14 +6663,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 62,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.7845755133693473,
@@ -6336,14 +6761,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 63,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.7865451673617176,
@@ -6422,14 +6854,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 64,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.7580538453095933,
@@ -6513,14 +6952,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 65,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.789006288399535,
@@ -6604,14 +7050,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 66,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.7867571727538722,
@@ -6700,14 +7153,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 67,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.79617110699348,
@@ -6796,14 +7256,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 68,
-      "phase": "Rising",
-      "shot": 21,
       "normalized_pose": {
         "nose": {
           "x": 0.7960971116049844,
@@ -6892,14 +7359,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 21,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 69,
-      "phase": "Rising",
-      "shot": 22,
       "normalized_pose": {
         "nose": {
           "x": 0.7857060940726388,
@@ -6988,14 +7462,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 22,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 70,
-      "phase": "Rising",
-      "shot": 22,
       "normalized_pose": {
         "nose": {
           "x": 0.7770142171589072,
@@ -7084,14 +7565,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 22,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 71,
-      "phase": "Rising",
-      "shot": 22,
       "normalized_pose": {
         "nose": {
           "x": 0.7689979353503684,
@@ -7180,14 +7668,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 22,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 72,
-      "phase": "Rising",
-      "shot": 22,
       "normalized_pose": {
         "nose": {
           "x": 0.7777149362797289,
@@ -7276,14 +7771,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 22,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 73,
-      "phase": "Rising",
-      "shot": 22,
       "normalized_pose": {
         "nose": {
           "x": 0.7983293631853634,
@@ -7367,14 +7869,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 22,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 74,
-      "phase": "Rising",
-      "shot": 22,
       "normalized_pose": {
         "nose": {
           "x": 0.8050391961812098,
@@ -7458,14 +7967,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 22,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 75,
-      "phase": "Rising",
-      "shot": 22,
       "normalized_pose": {
         "nose": {
           "x": 0.7719580950547833,
@@ -7549,14 +8065,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 22,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 76,
-      "phase": "Loading-Rising",
-      "shot": 22,
       "normalized_pose": {
         "nose": {
           "x": 0.8117631399255618,
@@ -7640,14 +8163,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 22,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 77,
-      "phase": "Loading-Rising",
-      "shot": 22,
       "normalized_pose": {
         "nose": {
           "x": 0.7968711377851063,
@@ -7736,14 +8266,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 22,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 78,
-      "phase": "Loading-Rising",
-      "shot": 22,
       "normalized_pose": {
         "nose": {
           "x": 0.8041071984507653,
@@ -7832,14 +8369,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 22,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 79,
-      "phase": "Loading-Rising",
-      "shot": 22,
       "normalized_pose": {
         "nose": {
           "x": 0.789028659098383,
@@ -7928,14 +8472,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 22,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 80,
-      "phase": "Loading-Rising",
-      "shot": 22,
       "normalized_pose": {
         "nose": {
           "x": 0.7835351037906424,
@@ -8024,14 +8575,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.15394351083256724,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 22,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 81,
-      "phase": "Loading-Rising",
-      "shot": 22,
       "normalized_pose": {
         "nose": {
           "x": 1.1898936821403963,
@@ -8120,14 +8678,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1049064238142706,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 22,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 82,
-      "phase": "Loading-Rising",
-      "shot": 22,
       "normalized_pose": {
         "nose": {
           "x": 1.0993951172618637,
@@ -8216,14 +8781,21 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1049064238142706,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 22,
       "shot_normalization_applied": true
     },
     {
       "frame_index": 83,
-      "phase": "Loading-Rising",
-      "shot": 22,
       "normalized_pose": {
         "nose": {
           "x": 1.106758595762062,
@@ -8312,8 +8884,17 @@
         }
       },
       "normalized_ball": {},
+      "stable_reference_hip": [
+        0.5106197463141546,
+        0.5942597587903341
+      ],
       "scaling_factor": 0.1049064238142706,
+      "facing_direction": "right",
+      "reference_hip_side": "right",
       "ball_detected": false,
+      "hip_center_valid": true,
+      "consecutive_missing_hip": 0,
+      "shot": 22,
       "shot_normalization_applied": true
     }
   ]

@@ -85,7 +85,7 @@ class BasketballShootingAnalyzer:
                 videos.extend(glob.glob(pattern))
         
         # Check test folder
-        test_video_dir = os.path.join(self.video_dir, "Test")
+        test_video_dir = os.path.join(self.video_dir, "test")  # "Test" → "test"로 수정
         if os.path.exists(test_video_dir):
             # Check combined_output.mov
             combined_video = os.path.join(test_video_dir, "combined_output.mov")
@@ -93,7 +93,7 @@ class BasketballShootingAnalyzer:
                 videos.append(combined_video)
             
             # Check clips folder
-            clips_dir = os.path.join(test_video_dir, "Clips")
+            clips_dir = os.path.join(test_video_dir, "clips")  # "Clips" → "clips"로 수정
             if os.path.exists(clips_dir):
                 for ext in video_extensions:
                     pattern = os.path.join(clips_dir, ext)
@@ -109,15 +109,21 @@ class BasketballShootingAnalyzer:
             print("❌ No video files found in data/video/Standard or data/video/EdgeCase folders.")
             return None
         
-        # Categorize videos by folder
+        # 실제 디렉토리에 있는 파일들만 정확히 카운트
         standard_videos = []
         edgecase_videos = []
+        bakke_videos = []
+        test_videos = []
         
         for video in self.available_videos:
             if self.standard_video_dir in video:
                 standard_videos.append(video)
             elif self.edgecase_video_dir in video:
                 edgecase_videos.append(video)
+            elif 'Bakke' in video:
+                bakke_videos.append(video)
+            elif 'test' in video.lower():
+                test_videos.append(video)
         
         print("\n🎬 STEP 0: Select processing mode")
         print("=" * 50)
@@ -125,12 +131,14 @@ class BasketballShootingAnalyzer:
         print(f"[1] Single video selection ({len(self.available_videos)} total videos)")
         print(f"[2] Process all Standard videos ({len(standard_videos)} videos)")
         print(f"[3] Process all EdgeCase videos ({len(edgecase_videos)} videos)")
-        print(f"[4] Process all videos ({len(self.available_videos)} videos)")
-        print("[5] Cancel")
+        print(f"[4] Process all Bakke videos ({len(bakke_videos)} videos)")
+        print(f"[5] Process all Test videos ({len(test_videos)} videos)")
+        print(f"[6] Process all videos ({len(self.available_videos)} videos)")
+        print("[7] Cancel")
         
         while True:
             try:
-                choice = input("\nEnter your choice (1-5): ").strip()
+                choice = input("\nEnter your choice (1-7): ").strip()
                 
                 if choice == "1":
                     # Single video selection
@@ -153,6 +161,22 @@ class BasketballShootingAnalyzer:
                         continue
                 
                 elif choice == "4":
+                    if bakke_videos:
+                        print(f"✅ Selected: Process all Bakke videos ({len(bakke_videos)} videos)")
+                        return "bakke_all"
+                    else:
+                        print("❌ No videos found in Bakke folder.")
+                        continue
+                
+                elif choice == "5":
+                    if test_videos:
+                        print(f"✅ Selected: Process all Test videos ({len(test_videos)} videos)")
+                        return "test_all"
+                    else:
+                        print("❌ No videos found in Test folder.")
+                        continue
+                
+                elif choice == "6":
                     if self.available_videos:
                         print(f"✅ Selected: Process all videos ({len(self.available_videos)} videos)")
                         return "all_videos"
@@ -160,12 +184,12 @@ class BasketballShootingAnalyzer:
                         print("❌ No videos found.")
                         continue
                 
-                elif choice == "5":
+                elif choice == "7":
                     print("❌ Analysis canceled.")
                     return None
                 
                 else:
-                    print("❌ Invalid choice. Please enter 1-5.")
+                    print("❌ Invalid choice. Please enter 1-7.")
                     continue
                     
             except KeyboardInterrupt:
@@ -594,7 +618,7 @@ class BasketballShootingAnalyzer:
     
     def _calculate_stable_torso_length(self) -> float:
         """Calculate stable torso length using same method as phase detection (first 4 frames)"""
-        confidence_threshold = 0.3  # Same as phase detection
+        confidence_threshold = 0.2  # 낮춘 confidence 임계값 (0.3 → 0.2)
         fps = getattr(self, 'video_fps', 30.0)
         required_frames = max(3, int(4 * (fps / 30.0)))  # 30fps 기준 4프레임
         
@@ -658,12 +682,12 @@ class BasketballShootingAnalyzer:
                 frames_used.append(i)
                 print(f"   Frame {i}: Final torso {frame_torso:.4f} (average of {len(valid_torso_lengths)} measurements)")
         
-        if len(torso_values) >= 3:  # Minimum 3 frames
+        if len(torso_values) >= 1:  # 최소 1프레임으로 변경 (3 → 1)
             stable_torso = np.mean(torso_values)
             print(f"   ✅ Stable torso: {stable_torso:.4f} (from frames {frames_used})")
             return stable_torso
         else:
-            print(f"   ⚠️ Not enough valid torso measurements ({len(torso_values)}/3), using default")
+            print(f"   ⚠️ Not enough valid torso measurements ({len(torso_values)}/1), using default")
             return 0.1  # Default fallback
     
     def _determine_facing_direction(self) -> tuple:
@@ -1217,7 +1241,7 @@ class BasketballShootingAnalyzer:
                         hip_y_values.append(reference_hip['y'])
                         frames_used.append(frame_idx)
         
-        if len(hip_x_values) >= 3:  # Minimum 3 frames
+        if len(hip_x_values) >= 1:  # 최소 1프레임으로 변경 (3 → 1)
             stable_hip_x = np.mean(hip_x_values)
             stable_hip_y = np.mean(hip_y_values)
             return stable_hip_x, stable_hip_y
@@ -1339,7 +1363,7 @@ class BasketballShootingAnalyzer:
             else:
                 continue
         
-        if len(hip_x_values) >= 3:
+        if len(hip_x_values) >= 1:  # 최소 1프레임으로 변경 (3 → 1)
             stable_hip_x = np.mean(hip_x_values)
             stable_hip_y = np.mean(hip_y_values)
             print(f"   ✅ First frames hip: ({stable_hip_x:.4f}, {stable_hip_y:.4f})")
@@ -1437,6 +1461,9 @@ class BasketballShootingAnalyzer:
             self.current_detector = self.torso_detector
         elif detector_type == "hybrid_fps":
             self.current_detector = self.hybrid_fps_detector
+            # Set actual video FPS for proper threshold adjustment
+            if hasattr(self, 'video_fps'):
+                self.hybrid_fps_detector.set_fps(self.video_fps)
         elif detector_type == "resolution":
             self.current_detector = self.resolution_detector
         else:
@@ -1662,7 +1689,7 @@ class BasketballShootingAnalyzer:
         left_hip = pose['left_hip']
         left_torso_length = 0.0
         
-        if (left_shoulder.get('confidence', 0) > 0.3 and left_hip.get('confidence', 0) > 0.3):
+        if (left_shoulder.get('confidence', 0) > 0.2 and left_hip.get('confidence', 0) > 0.2):  # 0.3 → 0.2로 낮춤
             left_dx = left_shoulder['x'] - left_hip['x']
             left_dy = left_shoulder['y'] - left_hip['y']
             left_torso_length = np.sqrt(left_dx**2 + left_dy**2)
@@ -1672,7 +1699,7 @@ class BasketballShootingAnalyzer:
         right_hip = pose['right_hip']
         right_torso_length = 0.0
         
-        if (right_shoulder.get('confidence', 0) > 0.3 and right_hip.get('confidence', 0) > 0.3):
+        if (right_shoulder.get('confidence', 0) > 0.2 and right_hip.get('confidence', 0) > 0.2):  # 0.3 → 0.2로 낮춤
             right_dx = right_shoulder['x'] - right_hip['x']
             right_dy = right_shoulder['y'] - right_hip['y']
             right_torso_length = np.sqrt(right_dx**2 + right_dy**2)
@@ -3020,6 +3047,21 @@ class BasketballShootingAnalyzer:
             return frame
         
         shot_id = self.shot_detector.frame_shots[frame_idx]
+        
+        # Debug: Print frame shot assignment every 30 frames
+        if frame_idx % 30 == 0:
+            print(f"   🎬 Frame {frame_idx}: shot_id = {shot_id}, total_shots = {len(self.shot_detector.shots)}")
+            if shot_id is not None:
+                # Find the shot info
+                shot_found = False
+                for shot in self.shot_detector.shots:
+                    if shot['shot_id'] == shot_id:
+                        print(f"      📍 Shot {shot_id}: frames {shot['start_frame']}-{shot['end_frame']}")
+                        shot_found = True
+                        break
+                if not shot_found:
+                    print(f"      ⚠️ Shot {shot_id} NOT FOUND in shots list!")
+        
         if shot_id is None:
             return frame
         
@@ -3032,6 +3074,19 @@ class BasketballShootingAnalyzer:
             if shot['shot_id'] == shot_id:
                 shot_info = shot
                 break
+        
+        # Validate that current frame is actually within shot range
+        if shot_info:
+            if not (shot_info['start_frame'] <= frame_idx <= shot_info['end_frame']):
+                # Current frame is outside the shot range - this shouldn't happen!
+                if frame_idx % 30 == 0:  # Debug print
+                    print(f"      ⚠️ Frame {frame_idx} outside Shot {shot_id} range ({shot_info['start_frame']}-{shot_info['end_frame']})")
+                return frame  # Don't display shot info if frame is outside range
+        else:
+            # Shot ID exists but shot info not found - this shouldn't happen!
+            if frame_idx % 30 == 0:  # Debug print
+                print(f"      ❌ Shot {shot_id} not found in shots list!")
+            return frame
         
         # Create shot label text with torso info
         shot_text = f"Shot {shot_id}"

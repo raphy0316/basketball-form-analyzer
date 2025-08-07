@@ -15,21 +15,20 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
     
     # Base thresholds (relative to torso length)
     BASE_THRESHOLDS = {
-        "movement": 0.020,      # 2% of torso length for Set-up→Loading (hip/shoulder movement)
-        "elbow_relative": 0.040, # 1% of torso length for elbow relative movement
-        "wrist_relative": 0.050, # 1.5% of torso length for wrist relative movement
-        "ball_relative": 0.055,  # 1.8% of torso length for ball relative movement
         "ball_size_multiplier": 1.6,  # Ball radius multiplier for threshold
         "min_elbow_angle": 110,  # Minimum elbow angle (degrees)
-        "wrist_absolute": 0.070, # 2% of torso length for wrist absolute movement (Rising detection)
-        "rise_cancellation": 0.010, # 1.5% of torso length for shoulder/hip rising loading cancellation (optimized)
-        "rising_cancel_relative": 0.020, # 0.75% of torso length for rising cancellation relative movement
-        "rising_cancel_absolute": 0.030, # 1.5% of torso length for rising cancellation absolute movement
-        "ball_cancel_relative": 0.030, # 1% of torso length for ball rising cancellation relative movement
-        "ball_cancel_absolute": 0.040, # 2% of torso length for ball rising cancellation absolute movement
-        "rising_to_loading_rising": 0.013, # 3% of torso length for Rising→Loading-Rising transition (separate from movement)
+        "movement": 0.025,      # 2% of torso length for Set-up→Loading (hip/shoulder movement)
+        "rise_cancellation": 0.017, #  13 1.5% of torso length for shoulder/hip rising loading cancellation (optimized)
+        "wrist_relative": 0.037, # 1.5% of torso length for wrist relative movement
+        "wrist_absolute": 0, #0.055, # 2% of torso length for wrist absolute movement (Rising detection)
+        "rising_cancel_relative": 0.010, # 0.75% of torso length for rising cancellation relative movement
+        "rising_cancel_absolute": 0, #0.012, # 1.5% of torso length for rising cancellation absolute movement
+        "elbow_relative": 0.035, # 1% of torso length for elbow relative movement
+        "ball_relative": 0.045,  # 1.8% of torso length for ball relative movement
+        "ball_cancel_relative": 0.015, # 1% of torso length for ball rising cancellation relative movement
+        "ball_cancel_absolute": 0,#0.025, # 2% of torso length for ball rising cancellation absolute movement
+        "rising_to_loading_rising": 0.019, # safe threshold. 0.013 for detect noise
     }
-    
     def __init__(self, min_phase_duration: int = 1, noise_threshold: int = 4, shot_detector=None):
         """
         Initialize the hybrid FPS phase detector.
@@ -45,8 +44,18 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         self.shot_detector = shot_detector
         
         # FPS adjustment factor
-        self.fps = 30.0
+        self.fps = 30.0  # Default FPS, should be updated with actual video FPS
         self.fps_factor = 1.0
+    
+    def set_fps(self, fps: float):
+        """
+        Set the actual FPS for proper threshold adjustment.
+        
+        Args:
+            fps: Actual video FPS
+        """
+        self.fps = fps
+        print(f"   📹 Phase detector FPS set to {fps}")
         
         # Tracking variables for cancellation conditions
         self.ball_drop_frames = 0
@@ -55,13 +64,7 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         # New tracking variable for loading-rising phase
         self.loading_rising_start_frame = None
         
-        # Dynamic torso measurement variables (4 frames before first transition)
-        self.stable_torso_length = None
-        self.torso_measurement_complete = False
-        self.recent_torso_values = []  # Rolling 4-frame window
-        self.recent_torso_frames = []  # Corresponding frame indices
-        self.first_transition_detected = False
-        self.transition_reference_torso = None
+        # Transition tracking (only for analyzer compatibility)
         self.first_transition_frame = None  # Frame index where first meaningful transition occurred
         
     def set_fps(self, fps: float):
@@ -76,84 +79,29 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
     
     def update_rolling_torso_measurement(self, frame_idx: int, pose: Dict) -> None:
         """
-        Update rolling 4-frame torso measurement window.
-        Delegates to shot detector if available, otherwise uses legacy method.
+        Update rolling torso measurement - delegates to shot detector.
         
         Args:
             frame_idx: Current frame index
             pose: Pose data for current frame
         """
-        # Delegate to shot detector if available
+        # All torso management is now handled by shot detector
         if self.shot_detector is not None:
             self.shot_detector.update_rolling_torso(frame_idx, pose)
-            return
-        
-        # Legacy method for backward compatibility
-        if self.first_transition_detected:
-            return  # No more updates needed after first transition
-            
-        # Calculate torso length for current frame
-        torso_length = self.calculate_torso_length(pose)
-        
-        required_frames = self.calculate_required_measurement_frames()
-        
-        if torso_length > 0:
-            # Add new measurement
-            self.recent_torso_values.append(torso_length)
-            self.recent_torso_frames.append(frame_idx)
-            
-            # Keep only the most recent N frames
-            if len(self.recent_torso_values) > required_frames:
-                self.recent_torso_values.pop(0)
-                self.recent_torso_frames.pop(0)
         else:
-            # If no valid measurement, keep previous values but update frame index
-            if self.recent_torso_values and len(self.recent_torso_frames) > 0:
-                # Use the last valid torso measurement
-                last_torso = self.recent_torso_values[-1]
-                self.recent_torso_values.append(last_torso)
-                self.recent_torso_frames.append(frame_idx)
-                
-                # Keep only the most recent N frames
-                if len(self.recent_torso_values) > required_frames:
-                    self.recent_torso_values.pop(0)
-                    self.recent_torso_frames.pop(0)
-                
-                print(f"Frame {frame_idx}: Using previous torso {last_torso:.4f} (no valid measurement)")
+            print("⚠️ Warning: Shot detector not available for torso measurement")
     
     def reset_for_new_shot(self) -> None:
         """
-        Reset torso measurement for new shot detection.
-        Only resets if this is a completely new shot (not just continuation).
-        Keeps fixed torso if already finalized.
+        Reset for new shot - delegates to shot detector.
         
         Called when a new shot starts (General → Set-up transition).
         """
-        print(f"🔄 Resetting torso measurement for new shot...")
+        # All shot state management is now handled by shot detector
+        # Phase detector only tracks transition frame for analyzer compatibility
+        self.first_transition_frame = None
         
-        # Only reset if this is a completely new shot (not just continuation)
-        if not self.torso_measurement_complete:
-            # Reset transition detection flags
-            self.first_transition_detected = False
-            self.torso_measurement_complete = False
-            self.transition_reference_torso = None
-            self.stable_torso_length = None
-            self.first_transition_frame = None
-            
-            # Clear rolling measurements for fresh start
-            self.recent_torso_values = []
-            self.recent_torso_frames = []
-            
-            print(f"   ✅ Torso measurement reset complete (new shot)")
-        else:
-            # Keep existing fixed torso for continuation
-            print(f"   🔒 Keeping existing fixed torso: {self.stable_torso_length:.4f}")
-            
-            # Only clear rolling measurements for fresh tracking
-            self.recent_torso_values = []
-            self.recent_torso_frames = []
-            
-            print(f"   ✅ Rolling measurements cleared, fixed torso maintained")
+        # Shot detector handles its own reset through shot lifecycle
     
     def finalize_transition_reference_torso(self, transition_frame: int) -> None:
         """
@@ -162,56 +110,11 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         Args:
             transition_frame: Frame index where first meaningful transition occurred (after cancellation processing)
         """
-        if self.first_transition_detected:
-            return  # Already finalized
-            
-        # Store the first transition frame for direction calculation
+        # Store the first transition frame for analyzer compatibility
         self.first_transition_frame = transition_frame
-            
-        required_frames = self.calculate_required_measurement_frames()
         
-        # Find torso measurements from frames before the transition
-        start_frame = max(0, transition_frame - required_frames)
-        end_frame = transition_frame
-        
-        # Collect torso measurements from the specified range
-        torso_values = []
-        torso_frames = []
-        
-        for frame_idx in range(start_frame, end_frame):
-            if frame_idx < len(self.recent_torso_frames):
-                # Find if this frame is in our recorded measurements
-                try:
-                    measurement_idx = self.recent_torso_frames.index(frame_idx)
-                    torso_values.append(self.recent_torso_values[measurement_idx])
-                    torso_frames.append(frame_idx)
-                except ValueError:
-                    # Frame not in recorded measurements, skip
-                    continue
-        
-        if len(torso_values) >= 3:  # Need at least 3 measurements
-            self.transition_reference_torso = np.mean(torso_values)
-            self.stable_torso_length = self.transition_reference_torso
-            self.torso_measurement_complete = True
-            self.first_transition_detected = True
-            
-            print(f"🎯 Post-processed first transition at frame {transition_frame}!")
-            print(f"   Reference torso from frames {torso_frames}: {[f'{v:.4f}' for v in torso_values]}")
-            print(f"   ✅ Transition reference torso: {self.transition_reference_torso:.4f}")
-        else:
-            # Fallback: use any available measurements
-            if self.recent_torso_values:
-                self.transition_reference_torso = np.mean(self.recent_torso_values[-required_frames:])
-                self.stable_torso_length = self.transition_reference_torso
-                self.torso_measurement_complete = True
-                self.first_transition_detected = True
-                
-                print(f"⚠️ Post-processed transition at frame {transition_frame} with limited measurements")
-                print(f"   Using recent measurements: {[f'{v:.4f}' for v in self.recent_torso_values[-required_frames:]]}")
-                print(f"   ✅ Transition reference torso: {self.transition_reference_torso:.4f}")
-            else:
-                print(f"❌ No valid torso measurements available for transition at frame {transition_frame}")
-                return
+        # Torso finalization is now handled by shot detector
+        print(f"   📍 Phase detector: First transition frame set to {transition_frame}")
         
     def calculate_torso_length(self, pose: Dict) -> float:
         """
@@ -249,7 +152,7 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         right_hip = pose['right_hip']
         
         # Confidence threshold for valid measurements
-        confidence_threshold = 0.3  # 30% 이하는 제외
+        confidence_threshold = 0.2  # 10% 이하는 제외 (0.3 → 0.2로 낮춤)
         
         valid_torso_lengths = []
         
@@ -309,30 +212,38 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
     
     def get_stable_torso_length(self, pose: Dict) -> float:
         """
-        Get stable torso length. Uses shot detector's torso if available,
-        otherwise falls back to legacy torso measurement.
+        Get stable torso length from shot detector.
         
         Args:
             pose: Current pose data
             
         Returns:
-            Stable torso length from shot detector or legacy measurement
+            Stable torso length from shot detector
         """
-        # Priority 1: Use shot detector's torso (shot-aware)
+        # Use shot detector's torso management exclusively
         if self.shot_detector is not None:
-            shot_torso = self.shot_detector.get_shot_torso(pose)
-            if shot_torso > 0:
-                return shot_torso
-        
-        # Priority 2: Legacy fixed torso (for backward compatibility)
-        if self.torso_measurement_complete and self.stable_torso_length is not None:
-            return self.stable_torso_length
-        elif len(self.recent_torso_values) >= 4:  # Use 4-frame rolling average
-            return np.mean(self.recent_torso_values[-4:])
-        elif len(self.recent_torso_values) > 0:  # Use all available measurements
-            return np.mean(self.recent_torso_values)
+            return self.shot_detector.get_shot_torso(pose)
         else:
-            return 0.0  # No measurements available
+            # Fallback if shot detector is not available (shouldn't happen in normal flow)
+            print("⚠️ Warning: Shot detector not available, using fallback torso calculation")
+            return self._calculate_fallback_torso(pose)
+    
+    def _calculate_fallback_torso(self, pose: Dict) -> float:
+        """
+        Calculate torso length as fallback when shot detector is not available.
+        
+        Args:
+            pose: Pose data
+            
+        Returns:
+            Calculated torso length or default value
+        """
+        # Use shot detector's calculation method if possible
+        if hasattr(self.shot_detector, '_calculate_torso_from_pose'):
+            return self.shot_detector._calculate_torso_from_pose(pose)
+        else:
+            # Last resort: fixed default value
+            return 0.15  # Default torso length
     
     def calculate_fps_adjusted_threshold(self, base_threshold: float) -> float:
         """
