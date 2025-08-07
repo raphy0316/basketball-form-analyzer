@@ -71,31 +71,30 @@ const CameraScreen = () => {
   const startRecording = async () => {
     if (!camera) return;
 
+    // Debug: Log available methods on camera
+    console.log('Camera object:', camera);
+    console.log('Camera methods:', Object.getOwnPropertyNames(camera));
+    console.log('Camera prototype methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(camera)));
+
     try {
       setIsRecording(true);
       setRecordingTime(0);
       setRecordedVideo(null);
       setShowPreview(false);
 
-      // Start recording using the new CameraView API
-      await camera.startRecording({
+      // Use the new CameraView recording API
+      const video = await camera.recordAsync({
         quality: '720p',
         maxDuration: CONFIG.RECORDING.MAX_DURATION,
         mute: CONFIG.RECORDING.MUTE,
-        onRecordingFinished: (video) => {
-          setRecordedVideo(video);
-          setShowPreview(true);
-          setIsRecording(false);
-        },
-        onRecordingError: (error) => {
-          console.error('Recording error:', error);
-          Alert.alert('Error', 'Failed to record video. Please try again.');
-          setIsRecording(false);
-        },
       });
+
+      setRecordedVideo(video);
+      setShowPreview(true);
     } catch (error) {
-      console.error('Error starting recording:', error);
-      Alert.alert('Error', 'Failed to start recording. Please try again.');
+      console.error('Error recording video:', error);
+      Alert.alert('Error', 'Failed to record video. Please try again.');
+    } finally {
       setIsRecording(false);
     }
   };
