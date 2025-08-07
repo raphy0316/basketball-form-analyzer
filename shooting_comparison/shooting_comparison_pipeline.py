@@ -757,24 +757,24 @@ class ShootingComparisonPipeline:
         left_foot1 = foot_pos1.get('left_foot', {})
         right_foot1 = foot_pos1.get('right_foot', {})
         print(f"    Foot Positions:")
-        print(f"      Left: ({left_foot1.get('average_x', 'Undefined')}, {left_foot1.get('average_y', 'Undefined')})")
-        print(f"      Right: ({right_foot1.get('average_x', 'Undefined')}, {right_foot1.get('average_y', 'Undefined')})")
+        print(f"      Left: ({left_foot1.get('average_x', None)}, {left_foot1.get('average_y', None)})")
+        print(f"      Right: ({right_foot1.get('average_x', None)}, {right_foot1.get('average_y', None)})")
         
         # Display shoulder tilt
         shoulder_tilt1 = video1_setup.get('shoulder_tilt', {})
-        print(f"    Shoulder Tilt: {shoulder_tilt1.get('average', 'Undefined')}°")
+        print(f"    Shoulder Tilt: {shoulder_tilt1.get('average', None)}°")
         
         # Display ball-hip distances
         ball_dist1 = video1_setup.get('ball_hip_distances', {})
         print(f"    Ball-Hip Distances:")
-        print(f"      Vertical: {ball_dist1.get('average_vertical', 'Undefined')}")
-        print(f"      Horizontal: {ball_dist1.get('average_horizontal', 'Undefined')}")
+        print(f"      Vertical: {ball_dist1.get('average_vertical', None)}")
+        print(f"      Horizontal: {ball_dist1.get('average_horizontal', None)}")
         
         print("  📊 Video 2 Set-up Analysis:")
-        print(f"    Frame Range: {video2_setup.get('frame_range', 'N/A')}")
-        print(f"    Frame Count: {video2_setup.get('frame_count', 'N/A')}")
-        print(f"    FPS: {video2_setup.get('fps', 'N/A')}")
-        print(f"    Duration: {video2_setup.get('target_duration', 'N/A')}s")
+        print(f"    Frame Range: {video2_setup.get('frame_range', None)}")
+        print(f"    Frame Count: {video2_setup.get('frame_count', None)}")
+        print(f"    FPS: {video2_setup.get('fps', None)}")
+        print(f"    Duration: {video2_setup.get('target_duration', None)}s")
         if 'note' in video2_setup:
             print(f"    Note: {video2_setup['note']}")
         
@@ -789,7 +789,7 @@ class ShootingComparisonPipeline:
         left_foot2 = foot_pos2.get('left_foot', {})
         right_foot2 = foot_pos2.get('right_foot', {})
         print(f"    Foot Positions:")
-        print(f"      Left: ({left_foot2.get('average_x', 'Undefined')}, {left_foot2.get('average_y', 'Undefined')})")
+        print(f"      Left: ({left_foot2.get('average_x', None)}, {left_foot2.get('average_y', 'Undefined')})")
         print(f"      Right: ({right_foot2.get('average_x', 'Undefined')}, {right_foot2.get('average_y', 'Undefined')})")
         
         # Display shoulder tilt
