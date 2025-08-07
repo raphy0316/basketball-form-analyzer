@@ -22,6 +22,9 @@ from phase_detection.torso_based_phase_detector import TorsoBasedPhaseDetector
 from phase_detection.resolution_based_phase_detector import ResolutionBasedPhaseDetector
 from phase_detection.hybrid_fps_phase_detector import HybridFPSPhaseDetector
 
+# Import shot detection module
+from shot_detection.shot_detector import ShotDetector
+
 class BasketballShootingAnalyzer:
     def __init__(self):
         """Initialize the analyzer"""
@@ -40,25 +43,15 @@ class BasketballShootingAnalyzer:
         self.phases = []
         self.video_fps = 30.0
 
-        # Real-time shot and torso tracking
-        self.shots = []  # List of completed shots with metadata
-        self.frame_shots = []  # Shot assignment for each frame
-        self.current_shot_id = 0  # Current shot number (1, 2, 3...)
-        self.current_shot_start = None  # Start frame of current shot
-        self.current_shot_fixed_torso = None  # Fixed torso for current shot
-        self.is_shot_active = False  # Whether we're currently in a shot
-        
-        # Rolling torso tracking (4-frame window)
-        self.rolling_torso_values = []  # Last 4 torso measurements
-        self.rolling_torso_frames = []  # Corresponding frame indices
-        self.torso_tracking_active = True  # Whether to update rolling torso
+        # Shot detection (replaces all shot tracking variables)
+        self.shot_detector = ShotDetector()
         self.fallback_torso_length = None  # Fallback torso for non-shot frames
         self.shot_normalization_data = {}  # Shot-specific normalization data (direction, hip, torso)
 
-        # Detectors
+        # Detectors (inject shot_detector into phase detectors)
         self.ball_detector = BallBasedPhaseDetector()
         self.torso_detector = TorsoBasedPhaseDetector()
-        self.hybrid_fps_detector = HybridFPSPhaseDetector()
+        self.hybrid_fps_detector = HybridFPSPhaseDetector(shot_detector=self.shot_detector)
         self.resolution_detector = ResolutionBasedPhaseDetector()
         self.current_detector = self.ball_detector
         
@@ -345,10 +338,10 @@ class BasketballShootingAnalyzer:
         
         # Step 1: Check if we have shot-based data
         print("📊 Checking shot-based data...")
-        has_shots = hasattr(self, 'shots') and self.shots
+        has_shots = len(self.shot_detector.shots) > 0
         if has_shots:
-            print(f"   ✅ Found {len(self.shots)} shots with individual measurements")
-            for shot in self.shots:
+            print(f"   ✅ Found {len(self.shot_detector.shots)} shots with individual measurements")
+            for shot in self.shot_detector.shots:
                 print(f"   📏 Shot {shot['shot_id']}: frames {shot['start_frame']}-{shot['end_frame']}, torso: {shot['fixed_torso']:.4f}")
         else:
             print("   ⚠️ No shot data found, using global measurements")
@@ -365,7 +358,7 @@ class BasketballShootingAnalyzer:
         self.shot_normalization_data = {}  # Store shot-specific normalization info
         
         if has_shots:
-            for shot in self.shots:
+            for shot in self.shot_detector.shots:
                 shot_id = shot['shot_id']
                 start_frame = shot['start_frame']
                 end_frame = shot['end_frame']
@@ -549,8 +542,8 @@ class BasketballShootingAnalyzer:
             
             # Get shot information for this frame
             shot_id = None
-            if hasattr(self, 'frame_shots') and i < len(self.frame_shots):
-                shot_id = self.frame_shots[i]
+            if i < len(self.shot_detector.frame_shots):
+                shot_id = self.shot_detector.frame_shots[i]
             
             normalized_frame = {
                 'frame_index': i,
@@ -954,8 +947,8 @@ class BasketballShootingAnalyzer:
         Uses shot-based fixed torso if frame belongs to a shot, otherwise fallback
         """
         # Check if frame belongs to any shot
-        if hasattr(self, 'shots') and self.shots:
-            for shot in self.shots:
+        if len(self.shot_detector.shots) > 0:
+            for shot in self.shot_detector.shots:
                 if shot['start_frame'] <= frame_idx <= shot['end_frame']:
                     return shot['fixed_torso']
         
@@ -971,8 +964,8 @@ class BasketballShootingAnalyzer:
         Get shot information for a specific frame
         Returns shot dict if frame belongs to a shot, None otherwise
         """
-        if hasattr(self, 'shots') and self.shots:
-            for shot in self.shots:
+        if len(self.shot_detector.shots) > 0:
+            for shot in self.shot_detector.shots:
                 if shot['start_frame'] <= frame_idx <= shot['end_frame']:
                     return shot
         return None
@@ -1365,18 +1358,8 @@ class BasketballShootingAnalyzer:
             
         base_name = os.path.splitext(os.path.basename(video_path))[0]
         
-        # Prepare shots metadata for normalized data
-        shots_metadata = []
-        if hasattr(self, 'shots') and self.shots:
-            for shot in self.shots:
-                shot_meta = {
-                    "shot_id": shot['shot_id'],
-                    "start_frame": shot['start_frame'],
-                    "end_frame": shot['end_frame'],
-                    "total_frames": shot['total_frames'],
-                    "fixed_torso": shot['fixed_torso']
-                }
-                shots_metadata.append(shot_meta)
+        # Get shots metadata from ShotDetector
+        shots_metadata = self.shot_detector.get_shots_metadata()
         
         # Save normalized pose data
         pose_normalized_file = os.path.join(self.extracted_data_dir, f"{base_name}_pose_normalized.json")
@@ -1569,8 +1552,11 @@ class BasketballShootingAnalyzer:
             
 
             
-            # Update rolling torso tracking
-            self._update_rolling_torso(i, pose)
+            # Update rolling torso tracking (delegated to ShotDetector)  
+            self.shot_detector.update_rolling_torso(i, pose)
+            
+            # Real-time shot detection - detect shot transitions
+            self.shot_detector.detect_shot_transitions(i, next_phase)
             
             # Minimum phase duration disabled - transition immediately when conditions are met
             if next_phase != current_phase:
@@ -1600,11 +1586,10 @@ class BasketballShootingAnalyzer:
         # Find first meaningful transition after cancellation processing
         self._find_first_meaningful_transition()
         
-        # Process shots from final phases (after cancellation)
-        self._process_shots_from_final_phases()
+        # Finalize ShotDetector results - assign shot info to frames
+        self.shot_detector.finalize_frame_shots(len(self.phases))
         
-        # Assign shot information to frames
-        self._assign_shot_to_frames()
+        print(f"\n🎯 Real-time shot detection completed: {len(self.shot_detector.shots)} shots detected")
     
     def _find_first_meaningful_transition(self):
         """Find first meaningful transition from Set-up to Loading/Rising/Loading-Rising after cancellation processing"""
@@ -1709,215 +1694,12 @@ class BasketballShootingAnalyzer:
     def _get_current_torso_for_thresholds(self) -> float:
         """
         Get current torso length for phase detection thresholds
-        Uses fixed torso if shot is active, otherwise rolling average
+        Uses ShotDetector's torso management
         """
-        if self.is_shot_active and self.current_shot_fixed_torso is not None:
-            return self.current_shot_fixed_torso
-        elif len(self.rolling_torso_values) >= 4:
-            return np.mean(self.rolling_torso_values)
-        else:
-            return 0.0
+        # Get torso from ShotDetector (includes shot-aware torso management)
+        return self.shot_detector.get_shot_torso()
     
-    def _check_shot_transitions(self, frame_idx: int, current_phase: str, prev_phase: str):
-        """
-        Check for shot start/end transitions and manage torso fixing
-        """
-        # DEBUG: Print transition information (disabled for cleaner output)
-        # print(f"   🔍 Frame {frame_idx}: {prev_phase} → {current_phase} (shot_active: {self.is_shot_active})")
-        
-        # Shot start: General → Set-up OR first frame is Set-up (새로운 shot 시작)
-        if ((prev_phase == "General" and current_phase == "Set-up" and not self.is_shot_active) or
-            (frame_idx == 0 and current_phase == "Set-up" and not self.is_shot_active)):
-            print(f"   🏀 SHOT START detected: {prev_phase} → Set-up at frame {frame_idx}")
-            self._start_new_shot(frame_idx)
-        # Shot cancel: Set-up → General (shot 감지 취소)
-        elif (prev_phase == "Set-up" and current_phase == "General" and self.is_shot_active):
-            print(f"   ❌ SHOT CANCEL detected: Set-up → General at frame {frame_idx}")
-            self._cancel_current_shot(frame_idx)
-        # Shot end: Follow-through → General (shot 완료)
-        elif (prev_phase == "Follow-through" and current_phase == "General" and self.is_shot_active):
-            print(f"   🎯 SHOT END detected: Follow-through → General at frame {frame_idx}")
-            self._complete_current_shot(frame_idx)
-        # Meaningful transition within shot: Set-up → Loading/Rising (fix torso)
-        elif (self.is_shot_active and prev_phase == "Set-up" and current_phase in ["Loading", "Rising", "Loading-Rising"] and self.torso_tracking_active):
-            print(f"   🔒 MEANINGFUL TRANSITION detected: Set-up → {current_phase} at frame {frame_idx}")
-            self._fix_shot_torso_at_meaningful_transition(frame_idx)
-    
-    def _start_new_shot(self, frame_idx: int):
-        """
-        Start a new shot: initialize shot tracking (torso will be fixed later when meaningful transition is found)
-        """
-        self.current_shot_id += 1
-        self.current_shot_start = frame_idx
-        self.is_shot_active = True
-        self.torso_tracking_active = True  # Keep tracking until meaningful transition
-        
-        # Reset phase detector torso measurement for new shot
-        if hasattr(self, 'phase_detector') and self.phase_detector:
-            self.phase_detector.reset_for_new_shot()
-        
-        print(f"\n🏀 Shot {self.current_shot_id} started at frame {frame_idx}")
-        print(f"   🔍 Waiting for meaningful transition to fix torso...")
-    
-    def _cancel_current_shot(self, frame_idx: int):
-        """
-        Cancel current shot: reset shot tracking and wait for next General → Set-up
-        """
-        if self.is_shot_active:
-            print(f"\n❌ Shot {self.current_shot_id} cancelled at frame {frame_idx}")
-            print(f"   📊 Cancelled shot: frames {self.current_shot_start}-{frame_idx}")
-            
-            # Reset shot tracking
-            self.is_shot_active = False
-            self.current_shot_start = None
-            self.current_shot_fixed_torso = None
-            self.torso_tracking_active = True  # Resume rolling torso tracking
-            self.rolling_torso_values = []  # Clear rolling window
-            self.rolling_torso_frames = []
-            
-            print(f"   🔄 Waiting for next General → Set-up to start new shot...")
-    
-    def _fix_shot_torso_at_meaningful_transition(self, frame_idx: int):
-        """
-        Fix torso for current shot when meaningful transition is found
-        """
-        if not self.is_shot_active:
-            return
-        
-        # Use available torso data from rolling window
-        if len(self.rolling_torso_values) > 0:
-            self.current_shot_fixed_torso = np.mean(self.rolling_torso_values)
-            self.torso_tracking_active = False  # Stop updating rolling torso
-            print(f"   🔒 Fixed torso for shot {self.current_shot_id}: {self.current_shot_fixed_torso:.4f}")
-            print(f"   ⏸️ Rolling torso tracking paused")
-        else:
-            # Use fallback torso if no rolling data available
-            self.current_shot_fixed_torso = self._get_torso_from_phase_detection()
-            self.torso_tracking_active = False
-            print(f"   🔒 Fixed torso for shot {self.current_shot_id} (fallback): {self.current_shot_fixed_torso:.4f}")
-            print(f"   ⏸️ Rolling torso tracking paused")
-    
-    def _complete_current_shot(self, frame_idx: int):
-        """
-        Complete current shot and resume torso tracking
-        Register shots that reach Follow-through (complete phase sequence)
-        """
-        if self.is_shot_active and self.current_shot_start is not None:
-            # Check if this shot reached Follow-through (complete sequence)
-            shot_phases = self.phases[self.current_shot_start:frame_idx+1]
-            reached_follow_through = "Follow-through" in shot_phases
-            
-            # DEBUG: Print detailed shot information (disabled for cleaner output)
-            # print(f"\n🔍 DEBUG: Shot {self.current_shot_id} completion check:")
-            # print(f"   📊 Shot range: frames {self.current_shot_start}-{frame_idx}")
-            # print(f"   📊 Phases in shot: {shot_phases}")
-            # print(f"   📊 Follow-through found: {reached_follow_through}")
-            # print(f"   📊 Total phases in shot: {len(shot_phases)}")
-            # print(f"   📊 Current phase: {self.phases[frame_idx] if frame_idx < len(self.phases) else 'OUT_OF_RANGE'}")
-            # print(f"   📊 Phases array length: {len(self.phases)}")
-            
-            if reached_follow_through:
-                # Record completed shot (regardless of meaningful transition)
-                shot_info = {
-                    "shot_id": self.current_shot_id,
-                    "start_frame": self.current_shot_start,
-                    "end_frame": frame_idx,
-                    "total_frames": frame_idx - self.current_shot_start + 1,
-                    "fixed_torso": self.current_shot_fixed_torso
-                }
-                self.shots.append(shot_info)
-                
-                print(f"\n🎯 Shot {self.current_shot_id} completed at frame {frame_idx}")
-                print(f"   📊 Shot {self.current_shot_id}: frames {self.current_shot_start}-{frame_idx} ({shot_info['total_frames']} frames)")
-                if self.current_shot_fixed_torso is not None:
-                    print(f"   📏 Used fixed torso: {self.current_shot_fixed_torso:.4f}")
-                else:
-                    print(f"   📏 No meaningful transition found (using fallback)")
-            else:
-                print(f"\n⚠️ Incomplete shot {self.current_shot_id} discarded (did not reach Follow-through)")
-                print(f"   📊 Incomplete shot: frames {self.current_shot_start}-{frame_idx}")
-                # print(f"   📊 Missing phases: {[p for p in ['Set-up', 'Loading', 'Rising', 'Release', 'Follow-through'] if p not in shot_phases]}")
-            
-            # Reset for next shot
-            self.is_shot_active = False
-            self.current_shot_start = None
-            self.current_shot_fixed_torso = None
-            self.torso_tracking_active = True  # Resume rolling torso tracking
-            self.rolling_torso_values = []  # Clear rolling window
-            self.rolling_torso_frames = []
-            
-            # print(f"   ▶️ Rolling torso tracking resumed")
-    
-    def _process_shots_from_final_phases(self):
-        """
-        Process shots from final phases (after cancellation processing)
-        Reset all shot tracking and reprocess with clean phase data
-        """
-        # print(f"\n🏀 Processing shots from final phases...")
-        
-        # Reset shot tracking
-        self.shots = []
-        self.current_shot_id = 0
-        self.current_shot_start = None
-        self.current_shot_fixed_torso = None
-        self.is_shot_active = False
-        self.torso_tracking_active = True
-        self.rolling_torso_values = []
-        self.rolling_torso_frames = []
-        
-        # Process each frame with final phases
-        for i, phase in enumerate(self.phases):
-            prev_phase = self.phases[i-1] if i > 0 else "General"  # Handle frame 0
-            current_phase = phase
-            
-            # Get pose for torso tracking
-            if i < len(self.pose_data):
-                pose = self.pose_data[i].get('pose', {})
-                self._update_rolling_torso(i, pose)
-            
-            # Check shot transitions
-            self._check_shot_transitions(i, current_phase, prev_phase)
-        
-        # Handle case where video ends during an active shot
-        if self.is_shot_active:
-            print(f"\n⚠️ Video ended during active shot {self.current_shot_id}")
-            print(f"   Completing shot at final frame {len(self.phases)-1}")
-            self._complete_current_shot(len(self.phases)-1)
-        
-        # print(f"   🎯 Total shots processed: {len(self.shots)}")
-    
-    def _assign_shot_to_frames(self):
-        """
-        Assign shot information to each frame based on completed shots
-        """
-        # print(f"\n🎯 Assigning shot information to frames...")
-        
-        # Initialize frame_shots list - same length as phases
-        self.frame_shots = [None] * len(self.phases)
-        
-        # Assign shot_id to frames within each shot range
-        for shot in self.shots:
-            shot_id = shot['shot_id']
-            start_frame = shot['start_frame']
-            end_frame = shot['end_frame']
-            
-            for frame_idx in range(start_frame, end_frame + 1):
-                if frame_idx < len(self.frame_shots):
-                    self.frame_shots[frame_idx] = shot_id
-        
-        # Count assignments
-        assigned_frames = sum(1 for shot in self.frame_shots if shot is not None)
-        total_frames = len(self.frame_shots)
-        
-        # print(f"   ✅ Shot assignment completed: {assigned_frames}/{total_frames} frames assigned to shots")
-        
-        # Print shot statistics
-        for shot in self.shots:
-            torso_value = shot['fixed_torso']
-            # if torso_value is not None:
-            #     print(f"   📊 Shot {shot['shot_id']}: {shot['total_frames']} frames (torso: {torso_value:.4f})")
-            # else:
-            #     print(f"   📊 Shot {shot['shot_id']}: {shot['total_frames']} frames (torso: None)")
+    # Shot-related methods removed - now handled by ShotDetector
     
     def _is_trend_based_transition(self, frame_idx: int, current_phase: str, next_phase: str, noise_threshold: int) -> bool:
         """Trend-based transition determination (always returns True)"""
@@ -2006,8 +1788,8 @@ class BasketballShootingAnalyzer:
         
         # Prepare shots metadata
         shots_metadata = []
-        if hasattr(self, 'shots') and self.shots:
-            for shot in self.shots:
+        if len(self.shot_detector.shots) > 0:
+            for shot in self.shot_detector.shots:
                 shot_meta = {
                     "shot_id": shot['shot_id'],
                     "start_frame": shot['start_frame'],
@@ -2039,8 +1821,8 @@ class BasketballShootingAnalyzer:
         for i, frame_data in enumerate(self.normalized_data):
             # Get shot information for this frame
             shot_id = None
-            if hasattr(self, 'frame_shots') and i < len(self.frame_shots):
-                shot_id = self.frame_shots[i]
+            if i < len(self.shot_detector.frame_shots):
+                shot_id = self.shot_detector.frame_shots[i]
             
             # Only include frames that belong to a shot
             if shot_id is not None:
@@ -2787,8 +2569,8 @@ class BasketballShootingAnalyzer:
         
         # Get facing direction from shot-specific data for current frame
         facing_direction = 'Unknown'
-        if hasattr(self, 'frame_shots') and frame_idx < len(self.frame_shots):
-            shot_id = self.frame_shots[frame_idx]
+        if hasattr(self.shot_detector, 'frame_shots') and frame_idx < len(self.shot_detector.frame_shots):
+            shot_id = self.shot_detector.frame_shots[frame_idx]
             if shot_id is not None and hasattr(self, 'shot_normalization_data'):
                 shot_data = self.shot_normalization_data.get(shot_id, {})
                 facing_direction = shot_data.get('facing_direction', 'Unknown')
@@ -2805,13 +2587,13 @@ class BasketballShootingAnalyzer:
         # Get shot information for current frame
         shot_text = ""
         torso_text = ""
-        if hasattr(self, 'frame_shots') and frame_idx < len(self.frame_shots):
-            shot_id = self.frame_shots[frame_idx]
+        if hasattr(self.shot_detector, 'frame_shots') and frame_idx < len(self.shot_detector.frame_shots):
+            shot_id = self.shot_detector.frame_shots[frame_idx]
             if shot_id is not None:
                 shot_text = f"Shot {shot_id}"
                 # Get torso information for this shot
-                if hasattr(self, 'shots'):
-                    for shot in self.shots:
+                if hasattr(self.shot_detector, 'shots'):
+                    for shot in self.shot_detector.shots:
                         if shot['shot_id'] == shot_id:
                             torso_value = shot.get('fixed_torso', 0.0)
                             torso_text = f"Torso: {torso_value:.4f}"
@@ -3236,26 +3018,41 @@ class BasketballShootingAnalyzer:
 
     def _draw_shot_info_label(self, frame: np.ndarray, frame_idx: int) -> np.ndarray:
         """Draw shot information label in bottom-left corner"""
-        if not hasattr(self, 'frame_shots') or frame_idx >= len(self.frame_shots):
+        if not hasattr(self.shot_detector, 'frame_shots') or frame_idx >= len(self.shot_detector.frame_shots):
             return frame
         
-        shot_id = self.frame_shots[frame_idx]
+        shot_id = self.shot_detector.frame_shots[frame_idx]
         if shot_id is None:
             return frame
         
         # Get frame dimensions
         h, w = frame.shape[:2]
         
-        # Create shot label text
-        shot_text = f"Shot {shot_id}"
+        # Get shot metadata for torso info
+        shot_info = None
+        for shot in self.shot_detector.shots:
+            if shot['shot_id'] == shot_id:
+                shot_info = shot
+                break
         
+        # Create shot label text with torso info
+        shot_text = f"Shot {shot_id}"
+        if shot_info and shot_info.get('fixed_torso'):
+            torso_text = f"Torso: {shot_info['fixed_torso']:.3f}"
+        else:
+            torso_text = "Torso: Not Fixed"
+            
         # Font settings
-        font_scale = 0.7
+        font_scale = 0.6
         font_thickness = 2
         font = cv2.FONT_HERSHEY_SIMPLEX
         
-        # Calculate text size
-        (text_width, text_height), baseline = cv2.getTextSize(shot_text, font, font_scale, font_thickness)
+        # Calculate text size for both lines
+        (shot_text_width, shot_text_height), _ = cv2.getTextSize(shot_text, font, font_scale, font_thickness)
+        (torso_text_width, torso_text_height), _ = cv2.getTextSize(torso_text, font, font_scale, font_thickness)
+        
+        text_width = max(shot_text_width, torso_text_width)
+        text_height = shot_text_height + torso_text_height + 3  # 3px spacing between lines
         
         # Add padding to the background rectangle
         padding = 3
@@ -3289,11 +3086,16 @@ class BasketballShootingAnalyzer:
                     (bg_x + indicator_width, bg_y + bg_height), 
                     shot_color, -1)
         
-        # Draw shot text
+        # Draw shot text (first line)
         text_x = bg_x + padding
-        text_y = bg_y + text_height + padding - 1
+        text_y = bg_y + shot_text_height + padding - 1
         cv2.putText(frame, shot_text, (text_x, text_y), 
                 font, font_scale, (255, 255, 255), font_thickness)
+        
+        # Draw torso text (second line)
+        text_y2 = text_y + torso_text_height + 3
+        cv2.putText(frame, torso_text, (text_x, text_y2), 
+                font, font_scale, (200, 200, 200), font_thickness)
         
         return frame
 

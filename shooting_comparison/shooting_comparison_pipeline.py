@@ -166,10 +166,15 @@ class ShootingComparisonPipeline:
                             print("📋 Shot Information:")
                             for i, shot_info in enumerate(shots):
                                 if isinstance(shot_info, dict):
+                                    shot_id = shot_info.get('shot_id', i+1)
+                                    original_id = shot_info.get('original_shot_id', 'N/A')
                                     start_frame = shot_info.get('start_frame', 'N/A')
                                     end_frame = shot_info.get('end_frame', 'N/A')
                                     fixed_torso = shot_info.get('fixed_torso', 'N/A')
-                                    print(f"   shot{i+1}: Frames {start_frame}-{end_frame}, Torso: {fixed_torso}")
+                                    if original_id != 'N/A' and original_id != shot_id:
+                                        print(f"   shot{shot_id}: Frames {start_frame}-{end_frame}, Torso: {fixed_torso} (Original ID: {original_id})")
+                                    else:
+                                        print(f"   shot{shot_id}: Frames {start_frame}-{end_frame}, Torso: {fixed_torso}")
                                 else:
                                     print(f"   shot{i+1}: {shot_info}")
                     else:

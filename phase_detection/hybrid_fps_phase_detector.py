@@ -30,15 +30,19 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
         "rising_to_loading_rising": 0.013, # 3% of torso length for Rising→Loading-Rising transition (separate from movement)
     }
     
-    def __init__(self, min_phase_duration: int = 1, noise_threshold: int = 4):
+    def __init__(self, min_phase_duration: int = 1, noise_threshold: int = 4, shot_detector=None):
         """
         Initialize the hybrid FPS phase detector.
         
         Args:
             min_phase_duration: Minimum frames a phase must last
             noise_threshold: Threshold for filtering noise in phase transitions
+            shot_detector: ShotDetector instance for shot-aware torso management
         """
         super().__init__(min_phase_duration, noise_threshold)
+        
+        # Shot detector integration
+        self.shot_detector = shot_detector
         
         # FPS adjustment factor
         self.fps = 30.0
@@ -73,12 +77,18 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
     def update_rolling_torso_measurement(self, frame_idx: int, pose: Dict) -> None:
         """
         Update rolling 4-frame torso measurement window.
-        Keeps track of recent 4 frames until first transition is detected.
+        Delegates to shot detector if available, otherwise uses legacy method.
         
         Args:
             frame_idx: Current frame index
             pose: Pose data for current frame
         """
+        # Delegate to shot detector if available
+        if self.shot_detector is not None:
+            self.shot_detector.update_rolling_torso(frame_idx, pose)
+            return
+        
+        # Legacy method for backward compatibility
         if self.first_transition_detected:
             return  # No more updates needed after first transition
             
@@ -96,8 +106,6 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
             if len(self.recent_torso_values) > required_frames:
                 self.recent_torso_values.pop(0)
                 self.recent_torso_frames.pop(0)
-            
-            # print(f"Frame {frame_idx}: Rolling torso {torso_length:.4f} (window: {len(self.recent_torso_values)}/{required_frames})")  # 로그 제거
         else:
             # If no valid measurement, keep previous values but update frame index
             if self.recent_torso_values and len(self.recent_torso_frames) > 0:
@@ -301,15 +309,22 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
     
     def get_stable_torso_length(self, pose: Dict) -> float:
         """
-        Get stable torso length. Uses pre-calculated average if available,
-        otherwise uses rolling 4-frame average, or 0 if no measurements available.
+        Get stable torso length. Uses shot detector's torso if available,
+        otherwise falls back to legacy torso measurement.
         
         Args:
             pose: Current pose data
             
         Returns:
-            Stable torso length, rolling average, or 0 if no measurements
+            Stable torso length from shot detector or legacy measurement
         """
+        # Priority 1: Use shot detector's torso (shot-aware)
+        if self.shot_detector is not None:
+            shot_torso = self.shot_detector.get_shot_torso(pose)
+            if shot_torso > 0:
+                return shot_torso
+        
+        # Priority 2: Legacy fixed torso (for backward compatibility)
         if self.torso_measurement_complete and self.stable_torso_length is not None:
             return self.stable_torso_length
         elif len(self.recent_torso_values) >= 4:  # Use 4-frame rolling average
