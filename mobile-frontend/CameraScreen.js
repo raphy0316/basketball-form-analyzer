@@ -9,7 +9,7 @@ import {
   Dimensions,
   SafeAreaView,
 } from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Camera, useCameraPermissions } from 'expo-camera';
 import { Video } from 'expo-video';
 import axios from 'axios';
 import { CONFIG, getApiUrl } from './config';
@@ -26,6 +26,7 @@ const CameraScreen = ({ navigation }) => {
   
   const recordingTimerRef = useRef(null);
   const videoRef = useRef(null);
+  const cameraRef = useRef(null);
 
   useEffect(() => {
     if (isRecording) {
@@ -51,15 +52,47 @@ const CameraScreen = ({ navigation }) => {
     };
   }, [isRecording]);
 
-  const startRecording = () => {
-    setIsRecording(true);
-    setRecordingTime(0);
-    setRecordedVideo(null);
-    setShowPreview(false);
+  const startRecording = async () => {
+    if (!cameraRef.current) {
+      Alert.alert('Error', 'Camera not ready. Please try again.');
+      return;
+    }
+
+    try {
+      setIsRecording(true);
+      setRecordingTime(0);
+      setRecordedVideo(null);
+      setShowPreview(false);
+      
+      console.log('Starting recording...');
+      const video = await cameraRef.current.recordAsync({
+        quality: CONFIG.RECORDING.QUALITY,
+        maxDuration: CONFIG.RECORDING.MAX_DURATION,
+        mute: CONFIG.RECORDING.MUTE,
+      });
+      
+      console.log('Recording completed:', video.uri);
+      setRecordedVideo(video.uri);
+      setShowPreview(true);
+      setIsRecording(false);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      Alert.alert('Error', 'Failed to start recording. Please try again.');
+      setIsRecording(false);
+    }
   };
 
-  const stopRecording = () => {
-    setIsRecording(false);
+  const stopRecording = async () => {
+    if (!cameraRef.current || !isRecording) return;
+    
+    try {
+      console.log('Stopping recording...');
+      await cameraRef.current.stopRecording();
+      setIsRecording(false);
+    } catch (error) {
+      console.error('Error stopping recording:', error);
+      setIsRecording(false);
+    }
   };
 
   const retakeVideo = () => {
@@ -193,22 +226,11 @@ const CameraScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <CameraView
+      <Camera
+        ref={cameraRef}
         style={styles.camera}
-        facing="back"
+        type={Camera.Constants.Type.back}
         video={true}
-        isRecording={isRecording}
-        onMediaCaptured={({ uri }) => {
-          console.log('Video captured:', uri);
-          setRecordedVideo(uri);
-          setShowPreview(true);
-          setIsRecording(false);
-        }}
-        onRecordingError={(error) => {
-          console.error('Recording error:', error);
-          Alert.alert('Error', 'Failed to record video. Please try again.');
-          setIsRecording(false);
-        }}
       />
       
       {/* Overlay positioned absolutely */}
