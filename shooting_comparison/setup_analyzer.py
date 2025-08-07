@@ -20,10 +20,11 @@ class SetupAnalyzer:
     - Shoulder tilt relative to hip vertical line
     - Ball position relative to hip (vertical and horizontal distance)
     """
-    
-    def __init__(self):
+
+    def __init__(self, selected_hand: str = 'right'):
         self.setup_data = {}
-    
+        self.selected_hand = selected_hand  # 'right' or 'left'
+
     def analyze_setup_phase(self, video_data: Dict) -> Dict:
         """
         Analyze set-up phase information from video data.
@@ -147,13 +148,13 @@ class SetupAnalyzer:
         return {
             'left': {
                 'angles': left_angles,
-                'average': np.mean(left_angles) if left_angles else 'Undefined',
-                'std': np.std(left_angles) if len(left_angles) > 1 else 'Undefined'
+                'average': np.mean(left_angles) if left_angles else None,
+                'std': np.std(left_angles) if len(left_angles) > 1 else None
             },
             'right': {
                 'angles': right_angles,
-                'average': np.mean(right_angles) if right_angles else 'Undefined',
-                'std': np.std(right_angles) if len(right_angles) > 1 else 'Undefined'
+                'average': np.mean(right_angles) if right_angles else None,
+                'std': np.std(right_angles) if len(right_angles) > 1 else None
             }
         }
     
@@ -192,17 +193,17 @@ class SetupAnalyzer:
         return {
             'left_foot': {
                 'positions': left_foot_positions,
-                'average_x': np.mean([pos['x'] for pos in left_foot_positions]) if left_foot_positions else 'Undefined',
-                'average_y': np.mean([pos['y'] for pos in left_foot_positions]) if left_foot_positions else 'Undefined',
-                'std_x': np.std([pos['x'] for pos in left_foot_positions]) if len(left_foot_positions) > 1 else 'Undefined',
-                'std_y': np.std([pos['y'] for pos in left_foot_positions]) if len(left_foot_positions) > 1 else 'Undefined'
+                'average_x': np.mean([pos['x'] for pos in left_foot_positions]) if left_foot_positions else None,
+                'average_y': np.mean([pos['y'] for pos in left_foot_positions]) if left_foot_positions else None,
+                'std_x': np.std([pos['x'] for pos in left_foot_positions]) if len(left_foot_positions) > 1 else None,
+                'std_y': np.std([pos['y'] for pos in left_foot_positions]) if len(left_foot_positions) > 1 else None
             },
             'right_foot': {
                 'positions': right_foot_positions,
-                'average_x': np.mean([pos['x'] for pos in right_foot_positions]) if right_foot_positions else 'Undefined',
-                'average_y': np.mean([pos['y'] for pos in right_foot_positions]) if right_foot_positions else 'Undefined',
-                'std_x': np.std([pos['x'] for pos in right_foot_positions]) if len(right_foot_positions) > 1 else 'Undefined',
-                'std_y': np.std([pos['y'] for pos in right_foot_positions]) if len(right_foot_positions) > 1 else 'Undefined'
+                'average_x': np.mean([pos['x'] for pos in right_foot_positions]) if right_foot_positions else None,
+                'average_y': np.mean([pos['y'] for pos in right_foot_positions]) if right_foot_positions else None,
+                'std_x': np.std([pos['x'] for pos in right_foot_positions]) if len(right_foot_positions) > 1 else None,
+                'std_y': np.std([pos['y'] for pos in right_foot_positions]) if len(right_foot_positions) > 1 else None
             }
         }
     
@@ -247,8 +248,8 @@ class SetupAnalyzer:
         
         return {
             'angles': shoulder_tilts,
-            'average': np.mean(shoulder_tilts) if shoulder_tilts else 'Undefined',
-            'std': np.std(shoulder_tilts) if len(shoulder_tilts) > 1 else 'Undefined'
+            'average': np.mean(shoulder_tilts) if shoulder_tilts else None,
+            'std': np.std(shoulder_tilts) if len(shoulder_tilts) > 1 else None
         }
     
     def _analyze_ball_hip_distances(self, setup_frames: List[Dict]) -> Dict:
@@ -305,10 +306,10 @@ class SetupAnalyzer:
         return {
             'vertical_distances': vertical_distances,
             'horizontal_distances': horizontal_distances,
-            'average_vertical': np.mean(vertical_distances) if vertical_distances else 'Undefined',
-            'average_horizontal': np.mean(horizontal_distances) if horizontal_distances else 'Undefined',
-            'std_vertical': np.std(vertical_distances) if len(vertical_distances) > 1 else 'Undefined',
-            'std_horizontal': np.std(horizontal_distances) if len(horizontal_distances) > 1 else 'Undefined'
+            'average_vertical': np.mean(vertical_distances) if vertical_distances else None,
+            'average_horizontal': np.mean(horizontal_distances) if horizontal_distances else None,
+            'std_vertical': np.std(vertical_distances) if len(vertical_distances) > 1 else None,
+            'std_horizontal': np.std(horizontal_distances) if len(horizontal_distances) > 1 else None
         }
     
     def _has_valid_coordinates(self, *points) -> bool:

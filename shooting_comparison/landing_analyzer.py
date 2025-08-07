@@ -116,13 +116,13 @@ class LandingAnalyzer:
         return {
             'left_foot': {
                 'positions': left_foot_positions,
-                'average_x': np.mean([pos['x'] for pos in left_foot_positions]) if left_foot_positions else 'Undefined',
-                'average_y': np.mean([pos['y'] for pos in left_foot_positions]) if left_foot_positions else 'Undefined'
+                'average_x': np.mean([pos['x'] for pos in left_foot_positions]) if left_foot_positions else None,
+                'average_y': np.mean([pos['y'] for pos in left_foot_positions]) if left_foot_positions else None
             },
             'right_foot': {
                 'positions': right_foot_positions,
-                'average_x': np.mean([pos['x'] for pos in right_foot_positions]) if right_foot_positions else 'Undefined',
-                'average_y': np.mean([pos['y'] for pos in right_foot_positions]) if right_foot_positions else 'Undefined'
+                'average_x': np.mean([pos['x'] for pos in right_foot_positions]) if right_foot_positions else None,
+                'average_y': np.mean([pos['y'] for pos in right_foot_positions]) if right_foot_positions else None
             }
         }
     
@@ -183,8 +183,8 @@ class LandingAnalyzer:
         setup_right_y = setup_foot_positions.get('right_foot', {}).get('average_y', 0)
         
         # Check if setup positions are valid
-        if (setup_left_x == 'Undefined' or setup_left_y == 'Undefined' or 
-            setup_right_x == 'Undefined' or setup_right_y == 'Undefined'):
+        if (setup_left_x == None or setup_left_y == None or 
+            setup_right_x == None or setup_right_y == None):
             return {"error": "Invalid setup foot positions"}
         
         # Analyze foot positions in post follow-through frames
@@ -277,8 +277,8 @@ class LandingAnalyzer:
         setup_right_y = setup_foot_positions.get('right_foot', {}).get('average_y', 0)
         
         # Check if setup positions are valid
-        if (setup_left_x == 'Undefined' or setup_left_y == 'Undefined' or 
-            setup_right_x == 'Undefined' or setup_right_y == 'Undefined'):
+        if (setup_left_x == None or setup_left_y == None or 
+            setup_right_x == None or setup_right_y == None):
             return {"error": "Invalid setup foot positions"}
         
         # Analyze all post follow-through frames

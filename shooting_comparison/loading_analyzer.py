@@ -118,15 +118,15 @@ class LoadingAnalyzer:
         return {
             'left': {
                 'angles': left_angles,
-                'max_angle': max(left_angles) if left_angles else 'Undefined',
-                'min_angle': min(left_angles) if left_angles else 'Undefined',
-                'average': np.mean(left_angles) if left_angles else 'Undefined'
+                'max_angle': max(left_angles) if left_angles else None,
+                'min_angle': min(left_angles) if left_angles else None,
+                'average': np.mean(left_angles) if left_angles else None
             },
             'right': {
                 'angles': right_angles,
-                'max_angle': max(right_angles) if right_angles else 'Undefined',
-                'min_angle': min(right_angles) if right_angles else 'Undefined',
-                'average': np.mean(right_angles) if right_angles else 'Undefined'
+                'max_angle': max(right_angles) if right_angles else None,
+                'min_angle': min(right_angles) if right_angles else None,
+                'average': np.mean(right_angles) if right_angles else None
             }
         }
     
@@ -171,9 +171,9 @@ class LoadingAnalyzer:
         
         return {
             'angles': shoulder_tilts,
-            'max_tilt': max(shoulder_tilts) if shoulder_tilts else 'Undefined',
-            'min_tilt': min(shoulder_tilts) if shoulder_tilts else 'Undefined',
-            'average': np.mean(shoulder_tilts) if shoulder_tilts else 'Undefined'
+            'max_tilt': max(shoulder_tilts) if shoulder_tilts else None,
+            'min_tilt': min(shoulder_tilts) if shoulder_tilts else None,
+            'average': np.mean(shoulder_tilts) if shoulder_tilts else None
         }
     
     def _analyze_max_angle_to_transition(self, loading_frames: List[Dict], all_frames: List[Dict], fps: float) -> Dict:
@@ -252,14 +252,14 @@ class LoadingAnalyzer:
             time_to_transition = self._calculate_timing_to_transition(both_max_frame, next_transition_frame, all_frames, fps)
         
         return {
-            'left_max_angle': max_left_angle if max_left_angle is not None else 'Undefined',
-            'right_max_angle': max_right_angle if max_right_angle is not None else 'Undefined',
-            'left_max_frame': max_left_idx if max_left_idx is not None else 'Undefined',
-            'right_max_frame': max_right_idx if max_right_idx is not None else 'Undefined',
-            'both_max_frame': both_max_frame_idx if both_max_frame_idx is not None else 'Undefined',
+            'left_max_angle': max_left_angle if max_left_angle is not None else None,
+            'right_max_angle': max_right_angle if max_right_angle is not None else None,
+            'left_max_frame': max_left_idx if max_left_idx is not None else None,
+            'right_max_frame': max_right_idx if max_right_idx is not None else None,
+            'both_max_frame': both_max_frame_idx if both_max_frame_idx is not None else None,
             'time_to_transition': time_to_transition,
-            'next_transition_frame': next_transition_frame.get('frame_index', 0) if next_transition_frame else 'Undefined',
-            'next_transition_phase': next_transition_frame.get('phase', 'Unknown') if next_transition_frame else 'Undefined'
+            'next_transition_frame': next_transition_frame.get('frame_index', 0) if next_transition_frame else None,
+            'next_transition_phase': next_transition_frame.get('phase', 'Unknown') if next_transition_frame else None
         }
     
     def _find_next_transition_after_loading(self, all_frames: List[Dict], loading_frames: List[Dict]) -> Optional[Dict]:

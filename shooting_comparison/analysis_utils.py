@@ -374,7 +374,6 @@ class ShootingAnalysisUtils:
         
         return summary
 
-
 def get_analysis_utils() -> ShootingAnalysisUtils:
     """Get a singleton instance of ShootingAnalysisUtils"""
     return ShootingAnalysisUtils()

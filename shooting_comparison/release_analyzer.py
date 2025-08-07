@@ -136,26 +136,26 @@ class ReleaseAnalyzer:
             return {
                 'left_arm': {
                     'torso_angle': {
-                        'average': np.mean(left_torso_angles) if left_torso_angles else 'Undefined',
-                        'min': min(left_torso_angles) if left_torso_angles else 'Undefined',
-                        'max': max(left_torso_angles) if left_torso_angles else 'Undefined'
+                        'average': np.mean(left_torso_angles) if left_torso_angles else None,
+                        'min': min(left_torso_angles) if left_torso_angles else None,
+                        'max': max(left_torso_angles) if left_torso_angles else None
                     },
                     'vertical_angle': {
-                        'average': np.mean(left_vertical_angles) if left_vertical_angles else 'Undefined',
-                        'min': min(left_vertical_angles) if left_vertical_angles else 'Undefined',
-                        'max': max(left_vertical_angles) if left_vertical_angles else 'Undefined'
+                        'average': np.mean(left_vertical_angles) if left_vertical_angles else None,
+                        'min': min(left_vertical_angles) if left_vertical_angles else None,
+                        'max': max(left_vertical_angles) if left_vertical_angles else None
                     }
                 },
                 'right_arm': {
                     'torso_angle': {
-                        'average': np.mean(right_torso_angles) if right_torso_angles else 'Undefined',
-                        'min': min(right_torso_angles) if right_torso_angles else 'Undefined',
-                        'max': max(right_torso_angles) if right_torso_angles else 'Undefined'
+                        'average': np.mean(right_torso_angles) if right_torso_angles else None,
+                        'min': min(right_torso_angles) if right_torso_angles else None,
+                        'max': max(right_torso_angles) if right_torso_angles else None
                     },
                     'vertical_angle': {
-                        'average': np.mean(right_vertical_angles) if right_vertical_angles else 'Undefined',
-                        'min': min(right_vertical_angles) if right_vertical_angles else 'Undefined',
-                        'max': max(right_vertical_angles) if right_vertical_angles else 'Undefined'
+                        'average': np.mean(right_vertical_angles) if right_vertical_angles else None,
+                        'min': min(right_vertical_angles) if right_vertical_angles else None,
+                        'max': max(right_vertical_angles) if right_vertical_angles else None
                     }
                 }
             }
@@ -379,56 +379,56 @@ class ReleaseAnalyzer:
             
             return {
                 'body_tilt': {
-                    'average': np.mean(body_tilts) if body_tilts else 'Undefined',
-                    'min': min(body_tilts) if body_tilts else 'Undefined',
-                    'max': max(body_tilts) if body_tilts else 'Undefined'
+                    'average': np.mean(body_tilts) if body_tilts else None,
+                    'min': min(body_tilts) if body_tilts else None,
+                    'max': max(body_tilts) if body_tilts else None
                 },
                 'leg_angles': {
                     'left_thigh_angle': {
-                        'average': np.mean(left_thigh_angles) if left_thigh_angles else 'Undefined',
-                        'min': min(left_thigh_angles) if left_thigh_angles else 'Undefined',
-                        'max': max(left_thigh_angles) if left_thigh_angles else 'Undefined'
+                        'average': np.mean(left_thigh_angles) if left_thigh_angles else None,
+                        'min': min(left_thigh_angles) if left_thigh_angles else None,
+                        'max': max(left_thigh_angles) if left_thigh_angles else None
                     },
                     'left_leg_angle': {
-                        'average': np.mean(left_leg_angles) if left_leg_angles else 'Undefined',
-                        'min': min(left_leg_angles) if left_leg_angles else 'Undefined',
-                        'max': max(left_leg_angles) if left_leg_angles else 'Undefined'
+                        'average': np.mean(left_leg_angles) if left_leg_angles else None,
+                        'min': min(left_leg_angles) if left_leg_angles else None,
+                        'max': max(left_leg_angles) if left_leg_angles else None
                     },
                     'right_thigh_angle': {
-                        'average': np.mean(right_thigh_angles) if right_thigh_angles else 'Undefined',
-                        'min': min(right_thigh_angles) if right_thigh_angles else 'Undefined',
-                        'max': max(right_thigh_angles) if right_thigh_angles else 'Undefined'
+                        'average': np.mean(right_thigh_angles) if right_thigh_angles else None,
+                        'min': min(right_thigh_angles) if right_thigh_angles else None,
+                        'max': max(right_thigh_angles) if right_thigh_angles else None
                     },
                     'right_leg_angle': {
-                        'average': np.mean(right_leg_angles) if right_leg_angles else 'Undefined',
-                        'min': min(right_leg_angles) if right_leg_angles else 'Undefined',
-                        'max': max(right_leg_angles) if right_leg_angles else 'Undefined'
+                        'average': np.mean(right_leg_angles) if right_leg_angles else None,
+                        'min': min(right_leg_angles) if right_leg_angles else None,
+                        'max': max(right_leg_angles) if right_leg_angles else None
                     }
                 },
                 'upper_body_angle': {
-                    'average': np.mean(upper_body_angles) if upper_body_angles else 'Undefined',
-                    'min': min(upper_body_angles) if upper_body_angles else 'Undefined',
-                    'max': max(upper_body_angles) if upper_body_angles else 'Undefined'
+                    'average': np.mean(upper_body_angles) if upper_body_angles else None,
+                    'min': min(upper_body_angles) if upper_body_angles else None,
+                    'max': max(upper_body_angles) if upper_body_angles else None
                 },
                 'waist_angle': {
-                    'average': np.mean(waist_angles) if waist_angles else 'Undefined',
-                    'min': min(waist_angles) if waist_angles else 'Undefined',
-                    'max': max(waist_angles) if waist_angles else 'Undefined'
+                    'average': np.mean(waist_angles) if waist_angles else None,
+                    'min': min(waist_angles) if waist_angles else None,
+                    'max': max(waist_angles) if waist_angles else None
                 },
                 'thigh_angle': {
-                    'average': np.mean(thigh_angles) if thigh_angles else 'Undefined',
-                    'min': min(thigh_angles) if thigh_angles else 'Undefined',
-                    'max': max(thigh_angles) if thigh_angles else 'Undefined'
+                    'average': np.mean(thigh_angles) if thigh_angles else None,
+                    'min': min(thigh_angles) if thigh_angles else None,
+                    'max': max(thigh_angles) if thigh_angles else None
                 },
                 'shoulder_elbow_wrist_angle': {
-                    'average': np.mean(shoulder_elbow_wrist_angles) if shoulder_elbow_wrist_angles else 'Undefined',
-                    'min': min(shoulder_elbow_wrist_angles) if shoulder_elbow_wrist_angles else 'Undefined',
-                    'max': max(shoulder_elbow_wrist_angles) if shoulder_elbow_wrist_angles else 'Undefined'
+                    'average': np.mean(shoulder_elbow_wrist_angles) if shoulder_elbow_wrist_angles else None,
+                    'min': min(shoulder_elbow_wrist_angles) if shoulder_elbow_wrist_angles else None,
+                    'max': max(shoulder_elbow_wrist_angles) if shoulder_elbow_wrist_angles else None
                 },
                 'wrist_shoulder_hip_angle': {
-                    'average': np.mean(wrist_shoulder_hip_angles) if wrist_shoulder_hip_angles else 'Undefined',
-                    'min': min(wrist_shoulder_hip_angles) if wrist_shoulder_hip_angles else 'Undefined',
-                    'max': max(wrist_shoulder_hip_angles) if wrist_shoulder_hip_angles else 'Undefined'
+                    'average': np.mean(wrist_shoulder_hip_angles) if wrist_shoulder_hip_angles else None,
+                    'min': min(wrist_shoulder_hip_angles) if wrist_shoulder_hip_angles else None,
+                    'max': max(wrist_shoulder_hip_angles) if wrist_shoulder_hip_angles else None
                 }
             }
         

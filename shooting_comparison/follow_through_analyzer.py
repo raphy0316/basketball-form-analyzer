@@ -294,7 +294,7 @@ class FollowThroughAnalyzer:
         }
         
         return overall_stability
-    
+
     def _calculate_elbow_angle(self, pose: Dict) -> Optional[float]:
         """Calculate elbow angle (shoulder-elbow-wrist)."""
         shoulder = pose.get(f'{self.selected_hand}_shoulder', {})
@@ -308,7 +308,7 @@ class FollowThroughAnalyzer:
                 wrist.get('x', 0), wrist.get('y', 0)
             )
         return None
-    
+
     def _calculate_shoulder_angle(self, pose: Dict) -> Optional[float]:
         """Calculate shoulder angle (hip-shoulder-elbow)."""
         hip = pose.get(f'{self.selected_hand}_hip', {})
@@ -352,7 +352,7 @@ class FollowThroughAnalyzer:
                 knee.get('x', 0), knee.get('y', 0)
             )
         return None
-    
+
     def _calculate_knee_angle(self, pose: Dict) -> Optional[float]:
         """Calculate knee angle (hip-knee-ankle)."""
         hip = pose.get(f'{self.selected_hand}_hip', {})
@@ -366,7 +366,7 @@ class FollowThroughAnalyzer:
                 ankle.get('x', 0), ankle.get('y', 0)
             )
         return None
-    
+
     # def _calculate_ankle_angle(self, pose: Dict) -> Optional[float]:
     #     """Calculate ankle angle (knee-ankle-toe)."""
     #     knee = pose.get(f'{self.selected_hand}_knee', {})
