@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,14 +9,14 @@ import {
   Dimensions,
   SafeAreaView,
 } from 'react-native';
-import * as ExpoCamera from 'expo-camera';
+import { Camera, useCameraPermissions } from 'expo-camera';
 import axios from 'axios';
 import { CONFIG, getApiUrl } from './config';
 
 const { width, height } = Dimensions.get('window');
 
 const CameraScreen = ({ navigation }) => {
-  const [permission, requestPermission] = ExpoCamera.useCameraPermissions();
+  const [permission, requestPermission] = useCameraPermissions();
   const [isRecording, setIsRecording] = useState(false);
   const [recordedVideo, setRecordedVideo] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -56,7 +56,7 @@ const CameraScreen = ({ navigation }) => {
     };
   }, [isRecording]);
 
-  const startRecording = useCallback(async () => {
+  const startRecording = async () => {
     if (!isCameraReady) {
       Alert.alert('Error', 'Camera is not ready yet. Please wait a moment and try again.');
       return;
@@ -97,9 +97,9 @@ const CameraScreen = ({ navigation }) => {
       Alert.alert('Error', 'Failed to start recording. Please try again.');
       setIsRecording(false);
     }
-  }, [isCameraReady]);
+  };
 
-  const stopRecording = useCallback(async () => {
+  const stopRecording = async () => {
     if (!isRecording || !cameraRef.current) return;
     
     console.log('Stopping recording...');
@@ -112,7 +112,7 @@ const CameraScreen = ({ navigation }) => {
       console.error('Error stopping recording:', error);
       setIsRecording(false);
     }
-  }, [isRecording]);
+  };
 
   const retakeVideo = () => {
     setRecordedVideo(null);
@@ -242,7 +242,7 @@ const CameraScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ExpoCamera.Camera
+      <Camera
         ref={cameraRef}
         style={styles.camera}
         type="back"
