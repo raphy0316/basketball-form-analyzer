@@ -35,7 +35,7 @@ const CameraScreen = ({ navigation }) => {
     const loadCamera = async () => {
       try {
         const expoCamera = await import('expo-camera');
-        setCameraComponent(() => expoCamera.CameraView);
+        setCameraComponent(() => expoCamera.Camera); // Use Camera instead of CameraView
         console.log('Camera component loaded successfully');
       } catch (error) {
         console.error('Failed to load camera component:', error);
@@ -97,22 +97,7 @@ const CameraScreen = ({ navigation }) => {
       setRecordedVideo(null);
       setShowPreview(false);
       
-      // Add a small delay to ensure camera is fully ready
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      console.log('About to call recordAsync...');
-      
-      // Start recording using recordAsync
-      const video = await cameraRef.current.recordAsync({
-        quality: CONFIG.RECORDING.QUALITY,
-        maxDuration: CONFIG.RECORDING.MAX_DURATION,
-        mute: CONFIG.RECORDING.MUTE,
-      });
-      
-      console.log('Recording completed:', video.uri);
-      setRecordedVideo(video.uri);
-      setShowPreview(true);
-      setIsRecording(false);
+      console.log('Recording started successfully');
     } catch (error) {
       console.error('Error starting recording:', error);
       Alert.alert('Error', 'Failed to start recording. Please try again.');
@@ -127,9 +112,13 @@ const CameraScreen = ({ navigation }) => {
     console.log('Recording state before stop:', isRecording);
     
     try {
-      await cameraRef.current.stopRecording();
-      setIsRecording(false);
+      const video = await cameraRef.current.stopRecordingAsync();
       console.log('Recording stopped successfully');
+      console.log('Video captured:', video.uri);
+      
+      setRecordedVideo(video.uri);
+      setShowPreview(true);
+      setIsRecording(false);
     } catch (error) {
       console.error('Error stopping recording:', error);
       setIsRecording(false);
@@ -277,18 +266,18 @@ const CameraScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <CameraComponent
-        ref={cameraRef}
-        style={styles.camera}
-        facing="back"
-        video={true}
-        videoStabilizationMode="off"
-        onCameraReady={() => {
-          console.log('Camera is ready!');
-          console.log('Camera ref in onCameraReady:', !!cameraRef.current);
-          setIsCameraReady(true);
-        }}
-      />
+              <CameraComponent
+          ref={cameraRef}
+          style={styles.camera}
+          type="back"
+          video={true}
+          isRecording={isRecording}
+          onCameraReady={() => {
+            console.log('Camera is ready!');
+            console.log('Camera ref in onCameraReady:', !!cameraRef.current);
+            setIsCameraReady(true);
+          }}
+        />
       
       {/* Overlay positioned absolutely */}
       <View style={styles.overlay}>
