@@ -9,8 +9,8 @@ import {
   Dimensions,
   SafeAreaView,
 } from 'react-native';
-import { Camera } from 'expo-camera';
-import { Video } from 'expo-av';
+import * as ExpoCamera from 'expo-camera';
+import { Video } from 'expo-video';
 import axios from 'axios';
 import { CONFIG, getApiUrl, getVideoQuality } from './config';
 
@@ -29,14 +29,16 @@ const CameraScreen = () => {
   const videoRef = useRef(null);
 
   // Debug: Log Camera import status
-  console.log('Camera import status:', !!Camera);
-  console.log('Camera object:', Camera);
+  console.log('Camera import status:', !!ExpoCamera);
+  console.log('Camera object:', ExpoCamera);
+  console.log('Camera type:', typeof ExpoCamera);
+  console.log('Camera keys:', Object.keys(ExpoCamera || {}));
 
   useEffect(() => {
     (async () => {
       try {
-        const { status } = await Camera.requestCameraPermissionsAsync();
-        const audioStatus = await Camera.requestMicrophonePermissionsAsync();
+        const { status } = await ExpoCamera.Camera.requestCameraPermissionsAsync();
+        const audioStatus = await ExpoCamera.Camera.requestMicrophonePermissionsAsync();
         const hasBothPermissions = status === 'granted' && audioStatus.status === 'granted';
         setHasPermission(hasBothPermissions);
       } catch (error) {
@@ -190,8 +192,8 @@ const CameraScreen = () => {
             // Retry permission request
             (async () => {
               try {
-                const { status } = await Camera.requestCameraPermissionsAsync();
-                const audioStatus = await Camera.requestMicrophonePermissionsAsync();
+                const { status } = await ExpoCamera.Camera.requestCameraPermissionsAsync();
+                const audioStatus = await ExpoCamera.Camera.requestMicrophonePermissionsAsync();
                 setHasPermission(status === 'granted' && audioStatus.status === 'granted');
               } catch (error) {
                 console.error('Error requesting permissions:', error);
@@ -246,7 +248,7 @@ const CameraScreen = () => {
   }
 
   // Safety check for Camera component
-  if (!Camera) {
+  if (!ExpoCamera.Camera) {
     return (
       <View style={styles.container}>
         <Text style={styles.errorText}>Camera not available</Text>
@@ -259,7 +261,7 @@ const CameraScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Camera
+      <ExpoCamera.Camera
         style={styles.camera}
         type="back"
         ref={(ref) => setCamera(ref)}
@@ -303,7 +305,7 @@ const CameraScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
-      </Camera>
+      </ExpoCamera.Camera>
     </SafeAreaView>
   );
 };
