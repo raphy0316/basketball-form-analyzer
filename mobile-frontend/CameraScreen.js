@@ -86,7 +86,23 @@ const CameraScreen = ({ navigation }) => {
       setRecordedVideo(null);
       setShowPreview(false);
       
-      console.log('Recording started successfully');
+      // Start recording using recordAsync
+      const video = await cameraRef.current.recordAsync({
+        quality: CONFIG.RECORDING.QUALITY,
+        maxDuration: CONFIG.RECORDING.MAX_DURATION,
+        mute: CONFIG.RECORDING.MUTE,
+      });
+      
+      console.log('Recording completed, video:', video);
+      if (video && video.uri) {
+        setRecordedVideo(video.uri);
+        setShowPreview(true);
+        setIsRecording(false);
+        console.log('Video URI captured:', video.uri);
+      } else {
+        console.error('No video URI received');
+        setIsRecording(false);
+      }
     } catch (error) {
       console.error('Error starting recording:', error);
       Alert.alert('Error', 'Failed to start recording. Please try again.');
@@ -101,9 +117,8 @@ const CameraScreen = ({ navigation }) => {
     console.log('Recording state before stop:', isRecording);
     
     try {
-      // For CameraView, just set isRecording to false to stop recording
-      // The video URI will come from onRecordingFinish callback
-      setIsRecording(false);
+      // Stop recording - the recordAsync promise will resolve with the video
+      await cameraRef.current.stopRecording();
       console.log('Recording stopped successfully');
     } catch (error) {
       console.error('Error stopping recording:', error);
@@ -202,6 +217,7 @@ const CameraScreen = ({ navigation }) => {
   }
 
   if (showPreview && recordedVideo) {
+    console.log('Showing video preview with URI:', recordedVideo);
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.previewContainer}>
@@ -212,6 +228,12 @@ const CameraScreen = ({ navigation }) => {
             useNativeControls
             resizeMode="contain"
             isLooping
+            onError={(error) => {
+              console.error('Video playback error:', error);
+            }}
+            onLoad={() => {
+              console.log('Video loaded successfully');
+            }}
           />
           
           <View style={styles.previewControls}>
@@ -247,23 +269,10 @@ const CameraScreen = ({ navigation }) => {
         style={styles.camera}
         facing="back"
         video={true}
-        isRecording={isRecording}
         onCameraReady={() => {
           console.log('Camera is ready!');
           console.log('Camera ref in onCameraReady:', !!cameraRef.current);
           setIsCameraReady(true);
-        }}
-        onRecordingFinish={(video) => {
-          console.log('Recording finished, video:', video);
-          if (video && video.uri) {
-            setRecordedVideo(video.uri);
-            setShowPreview(true);
-            setIsRecording(false);
-          }
-        }}
-        onRecordingError={(error) => {
-          console.error('Recording error:', error);
-          setIsRecording(false);
         }}
       />
       
