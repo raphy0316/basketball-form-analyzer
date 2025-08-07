@@ -70,51 +70,23 @@ const CameraScreen = ({ navigation }) => {
   }, [isRecording]);
 
   const startRecording = async () => {
-    if (!cameraRef.current) {
-      Alert.alert('Error', 'Camera not ready. Please try again.');
-      return;
-    }
-
     if (!isCameraReady) {
       Alert.alert('Error', 'Camera is not ready yet. Please wait a moment and try again.');
       return;
     }
 
-    try {
-      setIsRecording(true);
-      setRecordingTime(0);
-      setRecordedVideo(null);
-      setShowPreview(false);
-      
-      console.log('Starting recording...');
-      const video = await cameraRef.current.recordAsync({
-        quality: CONFIG.RECORDING.QUALITY,
-        maxDuration: CONFIG.RECORDING.MAX_DURATION,
-        mute: CONFIG.RECORDING.MUTE,
-      });
-      
-      console.log('Recording completed:', video.uri);
-      setRecordedVideo(video.uri);
-      setShowPreview(true);
-      setIsRecording(false);
-    } catch (error) {
-      console.error('Error starting recording:', error);
-      Alert.alert('Error', 'Failed to start recording. Please try again.');
-      setIsRecording(false);
-    }
+    console.log('Starting recording...');
+    setIsRecording(true);
+    setRecordingTime(0);
+    setRecordedVideo(null);
+    setShowPreview(false);
   };
 
   const stopRecording = async () => {
-    if (!cameraRef.current || !isRecording) return;
+    if (!isRecording) return;
     
-    try {
-      console.log('Stopping recording...');
-      await cameraRef.current.stopRecording();
-      setIsRecording(false);
-    } catch (error) {
-      console.error('Error stopping recording:', error);
-      setIsRecording(false);
-    }
+    console.log('Stopping recording...');
+    setIsRecording(false);
   };
 
   const retakeVideo = () => {
@@ -263,9 +235,21 @@ const CameraScreen = ({ navigation }) => {
         style={styles.camera}
         facing="back"
         video={true}
+        isRecording={isRecording}
         onCameraReady={() => {
           console.log('Camera is ready!');
           setIsCameraReady(true);
+        }}
+        onMediaCaptured={({ uri }) => {
+          console.log('Video captured:', uri);
+          setRecordedVideo(uri);
+          setShowPreview(true);
+          setIsRecording(false);
+        }}
+        onRecordingError={(error) => {
+          console.error('Recording error:', error);
+          Alert.alert('Error', 'Failed to record video. Please try again.');
+          setIsRecording(false);
         }}
       />
       
