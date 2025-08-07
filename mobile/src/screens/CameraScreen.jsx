@@ -1,8 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Camera, useCameraDevice } from 'react-native-vision-camera';
+import { CONFIG, getApiUrl } from '../utils/config';
 
-const CameraScreen = ({navigation}) => {
+const CameraScreen = ({navigation, route}) => {
+  const { selectedPlayer } = route.params || {};
   const cameraRef = useRef(null);
   const [cameraPosition, setCameraPosition] = useState('back');
   const device = useCameraDevice(cameraPosition);
@@ -60,24 +62,42 @@ const CameraScreen = ({navigation}) => {
   const uploadVideo = async (videoPath) => {
     try {
       const formData = new FormData();
-      formData.append('file', {
+      formData.append('video', {
         uri: videoPath.startsWith('file://') ? videoPath : `file://${videoPath}`,
         type: 'video/mp4',
-        name: 'video.mp4',
+        name: 'basketball_shot.mp4',
       });
 
-      const response = await fetch('http://192.168.3.73:8000/api/upload-video', {
+      if (selectedPlayer) {
+        formData.append('player_id', selectedPlayer.id);
+        formData.append('player_style', selectedPlayer.style);
+        console.log('Sending video to backend with player:', selectedPlayer.name);
+      } else {
+        console.log('Sending video to backend for basic analysis');
+      }
+
+      // Choose endpoint based on whether player is selected
+      const endpoint = selectedPlayer 
+        ? CONFIG.BACKEND.ENDPOINTS.COMPARE_WITH_PLAYER
+        : '/api/upload-video'; // Fallback to existing endpoint
+
+      const response = await fetch(getApiUrl(endpoint), {
         method: 'POST',
         body: formData,
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        timeout: CONFIG.BACKEND.TIMEOUT,
       });
 
       const result = await response.json();
       console.log('Upload successful:', result);
       
-      navigation.navigate('Results');
+      // Navigate to results with player comparison
+      navigation.navigate('Results', {
+        analysisResult: result,
+        selectedPlayer: selectedPlayer,
+      });
     } catch (error) {
       console.error('Upload failed:', error);
       Alert.alert('Error', 'Failed to upload video.');
@@ -102,6 +122,16 @@ const CameraScreen = ({navigation}) => {
         video={true}
         audio={false}
       />
+      {selectedPlayer && (
+        <View style={styles.playerInfoContainer}>
+          <Text style={styles.playerInfoText}>
+            Comparing with: {selectedPlayer.name}
+          </Text>
+          <Text style={styles.playerStyleText}>
+            Style: {selectedPlayer.description}
+          </Text>
+        </View>
+      )}
       {processing && (
         <View style={styles.overlay}>
           <Text style={styles.processingText}>Analyzing shots...</Text>
@@ -171,6 +201,30 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  playerInfoContainer: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0, 122, 255, 0.2)',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+  },
+  playerInfoText: {
+    color: '#007AFF',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  playerStyleText: {
+    color: '#007AFF',
+    fontSize: 14,
+    textAlign: 'center',
+    opacity: 0.8,
   },
   
 });

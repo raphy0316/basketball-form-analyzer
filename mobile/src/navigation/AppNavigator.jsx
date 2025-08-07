@@ -5,6 +5,7 @@ import MainScreen from '../screens/MainScreen';
 import ResultsScreen from '../screens/ResultsScreen';
 import ResultsDisplayScreen from '../screens/ResultsDisplayScreen';
 import CameraScreen from '../screens/CameraScreen';
+import PlayerSelectionScreen from '../screens/PlayerSelectionScreen';
 
 const Stack = createStackNavigator();
 
@@ -25,6 +26,11 @@ const AppNavigator = () => {
       <Stack.Screen
         name="Landing"
         component={LandingScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="PlayerSelection"
+        component={PlayerSelectionScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

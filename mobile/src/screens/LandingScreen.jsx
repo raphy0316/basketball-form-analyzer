@@ -3,7 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 
 const LandingScreen = ({ navigation }) => {
   const handleStartFilming = () => {
-    navigation.navigate('Main'); // Navigate to the MainScreen
+    navigation.navigate('PlayerSelection'); // Navigate to player selection first
+  };
+
+  const handleBasicAnalysis = () => {
+    navigation.navigate('Main'); // Navigate directly to camera for basic analysis
   };
 
   return (
@@ -25,7 +29,12 @@ const LandingScreen = ({ navigation }) => {
 
       {/* Start Filming Button */}
       <TouchableOpacity style={styles.startButton} onPress={handleStartFilming}>
-        <Text style={styles.startButtonText}>Start Filming</Text>
+        <Text style={styles.startButtonText}>Compare with NBA Players</Text>
+      </TouchableOpacity>
+
+      {/* Basic Analysis Button */}
+      <TouchableOpacity style={styles.basicButton} onPress={handleBasicAnalysis}>
+        <Text style={styles.basicButtonText}>Basic Analysis</Text>
       </TouchableOpacity>
     </View>
   );
@@ -68,6 +77,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
+  },
+  basicButton: {
+    backgroundColor: 'transparent',
+    paddingVertical: 15,
+    paddingHorizontal: 40,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#4ECDC4',
+    marginTop: 15,
+  },
+  basicButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4ECDC4',
   },
 });
 

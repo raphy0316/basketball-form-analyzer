@@ -1,132 +1,219 @@
-# Basketball Shooting Form Analysis System (MoveNet-based)
+# Basketball Form Analyzer with Synthetic Motion Profiles
 
-This system analyzes basketball shooting form using MoveNet and provides integrated pose/ball extraction, phase segmentation, and visualization.
+A comprehensive basketball shooting form analysis system that compares user videos with synthetic NBA player motion profiles. This system provides real-time feedback and detailed phase-by-phase analysis of shooting mechanics.
 
-## Features
+## 🏀 Features
 
-- **Pose Extraction**: Extracts player pose data from video using MoveNet.
-- **Ball Trajectory Extraction**: Detects and tracks the basketball in video frames.
-- **Shooting Phase Segmentation**: Automatically segments the shooting motion into phases (General, Set-up, Loading, Rising, Release, Follow-through) based on 2D keypoint and ball trajectory analysis.
-- **Visualization**: Generates side-by-side videos showing original and normalized pose/ball data with phase labels.
-- **Reference Comparison**: Compare extracted data with reference datasets for advanced analysis.
+### **Synthetic Motion Profiles**
+- **5 NBA Player Styles**: LeBron James, Stephen Curry, Kevin Durant, Kawhi Leonard, James Harden
+- **Realistic Biomechanics**: Each player has unique motion characteristics and phase distributions
+- **6 Shooting Phases**: General, Set-up, Loading, Rising, Release, Follow-through
+- **Motion Curves**: Power, Quick, Smooth, Linear acceleration patterns
 
-## Installation
+### **Mobile App Integration**
+- **Player Selection**: Choose from 5 NBA player styles to compare against
+- **Real-time Recording**: Capture basketball shots with camera integration
+- **Instant Analysis**: Get immediate feedback and similarity scores
+- **Phase Breakdown**: Detailed analysis of each shooting phase
+- **Recommendations**: Personalized improvement suggestions
 
-### 1. Install Dependencies
+### **Backend API**
+- **FastAPI Server**: High-performance backend with synthetic profiles integration
+- **Video Analysis**: Pose detection and ball tracking
+- **Comparison Engine**: Compare user videos with synthetic player data
+- **RESTful Endpoints**: Easy integration with mobile and web clients
+
+## 🚀 Quick Start
+
+### **1. Backend Setup**
 
 ```bash
+# Install dependencies
+cd backend
 pip install -r requirements.txt
+
+# Start the server
+python main.py
 ```
 
-### 2. Download MoveNet Model
+The backend will be available at `http://localhost:8000`
 
-The MoveNet model will be downloaded automatically on first run.
-
-## Usage
-
-### Integrated Pipeline (Recommended)
-
-Run the full pipeline (extraction → normalization → phase segmentation → visualization):
+### **2. Mobile App Setup**
 
 ```bash
-python basketball_shooting_integrated_pipeline.py
+# Install dependencies
+cd mobile-frontend
+npm install
+
+# Start the development server
+npx expo start
 ```
 
-You will be prompted to select a video and choose overwrite options for existing data.
+### **3. Generate Synthetic Profiles**
 
-### Main Classes
-
-- `BasketballShootingIntegratedPipeline`: One-click pipeline for extraction, normalization, phase segmentation, and visualization.
-- `BasketballShootingAnalyzer`: Core analysis and phase segmentation logic.
-- `PoseExtractionPipeline`, `BallExtractionPipeline`: For separate pose/ball extraction.
-
-### Example: Programmatic Use
-
-```python
-from basketball_shooting_integrated_pipeline import BasketballShootingIntegratedPipeline
-
-pipeline = BasketballShootingIntegratedPipeline()
-pipeline.run_full_pipeline("data/video/your_video.mp4", overwrite_mode=True)
+```bash
+# Generate profiles for all players
+cd synthetic_profiles
+python motion_profile_generator.py
 ```
 
-## Output Data Format
+## 📱 Mobile App Flow
 
-### Normalized Pose/Ball Data (JSON)
+1. **Player Selection**: Choose an NBA player to compare against
+2. **Video Recording**: Record your basketball shot
+3. **Analysis**: Backend processes video and compares with synthetic data
+4. **Results**: View similarity scores and recommendations
+5. **Improvement**: Get specific feedback for each shooting phase
 
-```json
-{
-  "metadata": {
-    "video_path": "path/to/video.mp4",
-    "total_frames": 300,
-    "normalization_method": "ball_radius_based",
-    "phase_detection_method": "hybrid_fps"
-  },
-  "frames": [
-    {
-      "frame_index": 0,
-      "phase": "Set-up",
-      "normalized_pose": { ... },
-      "normalized_ball": { ... },
-      "original_hip_center": [x, y],
-      "scaling_factor": 12.3,
-      "ball_detected": true
-    }
-  ]
-}
+## 🔧 API Endpoints
+
+### **Analysis Endpoints**
+- `POST /analysis/analyze-video` - Basic video analysis
+- `POST /analysis/compare-with-player` - Compare with specific player
+
+### **Synthetic Data Endpoints**
+- `GET /synthetic/player-profiles` - Get available player profiles
+- `POST /synthetic/generate-profile` - Generate specific player profile
+
+### **Health Check**
+- `GET /health` - Server health and capabilities
+
+## 🎯 Player Styles
+
+### **LeBron James**
+- **Style**: Power-based, athletic motion
+- **Characteristics**: Explosive motion, strong follow-through, consistent form
+- **Motion Curve**: Power acceleration
+- **Frame Count**: 90 frames
+
+### **Stephen Curry**
+- **Style**: Quick release with smooth motion
+- **Characteristics**: Fast release, smooth motion flow, quick acceleration
+- **Motion Curve**: Quick acceleration
+- **Frame Count**: 85 frames
+
+### **Kevin Durant**
+- **Style**: Tall shooter with smooth motion
+- **Characteristics**: High release point, smooth motion, very consistent
+- **Motion Curve**: Smooth S-curve
+- **Frame Count**: 85 frames
+
+### **Kawhi Leonard**
+- **Style**: Controlled, deliberate motion
+- **Characteristics**: Controlled motion, deliberate form, defensive focus
+- **Motion Curve**: Linear motion
+- **Frame Count**: 88 frames
+
+### **James Harden**
+- **Style**: Step-back specialist with unique rhythm
+- **Characteristics**: Step-back specialist, unique rhythm, smooth variations
+- **Motion Curve**: Smooth S-curve
+- **Frame Count**: 87 frames
+
+## 📊 Analysis Results
+
+The system provides:
+
+- **Overall Similarity Score**: Percentage match with selected player
+- **Phase-by-Phase Scores**: Individual scores for each shooting phase
+- **Recommendations**: Specific improvement suggestions
+- **Comparison Metrics**: Motion consistency, release timing, follow-through
+
+## 🛠️ Technical Architecture
+
+### **Frontend (React Native)**
+- Camera integration with Expo
+- Real-time video recording
+- Player selection interface
+- Results visualization
+
+### **Backend (FastAPI)**
+- Video processing pipeline
+- Synthetic profile generation
+- Comparison algorithms
+- RESTful API endpoints
+
+### **Synthetic Profiles**
+- Biomechanically accurate motion data
+- Normalized coordinates with noise simulation
+- JSON export format
+- Caching for performance
+
+## 🔄 Integration Flow
+
+1. **User selects NBA player** → Mobile app sends player ID
+2. **User records shot** → Video uploaded to backend
+3. **Backend processes video** → Pose detection and phase segmentation
+4. **Synthetic profile loaded** → Player-specific motion data retrieved
+5. **Comparison executed** → Similarity scores calculated
+6. **Results returned** → Mobile app displays analysis
+
+## 📁 Project Structure
+
+```
+basketball-form-analyzer/
+├── mobile-frontend/          # React Native mobile app
+│   ├── CameraScreen.js       # Video recording interface
+│   ├── PlayerSelectionScreen.js  # Player selection
+│   ├── ResultsScreen.js      # Analysis results display
+│   └── config.js            # App configuration
+├── backend/                  # FastAPI backend
+│   ├── main.py              # Main server file
+│   └── requirements.txt     # Python dependencies
+├── synthetic_profiles/       # Synthetic data generation
+│   ├── motion_profile_generator.py  # Profile generator
+│   └── README.md            # Synthetic profiles documentation
+└── README.md                # This file
 ```
 
-## Shooting Phase Definitions
+## 🎮 Usage Examples
 
-| Phase           | Description                                              |
-|-----------------|---------------------------------------------------------|
-| General         | Neutral state before shooting sequence                  |
-| Set-up          | Ball is held, ready to shoot                            |
-| Loading         | Lower body bends, preparing to jump                     |
-| Rising          | Arms and body rise for the shot                         |
-| Release         | Ball is released                                        |
-| Follow-through  | Arm remains extended after release                      |
-
-## Shooting Phase Transition Summary
-
-- **General → Set-up**: Ball is held in hand (close contact)
-- **Set-up → Loading**: Hip and/or shoulder move downward
-- **Loading → Rising**: Wrist and elbow move upward relative to hip
-- **Rising → Release**: Ball is released (distance from wrist increases, proper form)
-- **Release → Follow-through**: Ball has fully left the hand (distance > threshold)
-- **Follow-through → General**: Wrist drops below eyes relative to hip, or ball is caught
-
-All transition logic is implemented in the HybridFPSPhaseDetector and matches the latest research and codebase.
-
-## Keypoints
-
-MoveNet detects 17 keypoints:
-- nose, left_eye, right_eye, left_ear, right_ear
-- left_shoulder, right_shoulder, left_elbow, right_elbow
-- left_wrist, right_wrist, left_hip, right_hip
-- left_knee, right_knee, left_ankle, right_ankle
-
-## Model Files
-
-**Note:** The YOLOv8 model file (`yolov8n736-customContinue.pt`) required for ball detection is not included in this repository due to its large size.
-
-To use the shooting analysis model, please download the `.pt` file from the following link:
-
-[Download yolov8n736-customContinue.pt from Google Drive](https://drive.google.com/file/d/1ndN5pBUZ4IDE31kZioMTKsHTJu2x2_IK/view)
-
-After downloading, place the file in the `ball_extraction/models` folder:
-
-```
-ball_extraction/models/yolov8n736-customContinue.pt
+### **Basic Analysis**
+```bash
+curl -X POST "http://localhost:8000/analysis/analyze-video" \
+  -F "video=@shot.mp4"
 ```
 
-Without this file, ball detection and full shooting analysis will not work.
+### **Player Comparison**
+```bash
+curl -X POST "http://localhost:8000/analysis/compare-with-player" \
+  -F "video=@shot.mp4" \
+  -F "player_id=curry" \
+  -F "player_style=quick"
+```
 
-## Video Preparation
+### **Get Player Profiles**
+```bash
+curl "http://localhost:8000/synthetic/player-profiles"
+```
 
-- Place the video you want to analyze in the `data/video` folder.
-- The program will only show videos located in this folder for selection.
+## 🔮 Future Enhancements
 
-## Notes
-- All code, logs, and comments are now in English.
-- For best results, use the HybridFPSPhaseDetector (default in the integrated pipeline).
-- If you encounter issues with large files, use Git LFS and check your .gitignore settings. 
+- **More Players**: Additional NBA player profiles
+- **Custom Profiles**: User-generated motion profiles
+- **Advanced Analytics**: Machine learning-based insights
+- **Real-time Feedback**: Live coaching during recording
+- **Social Features**: Share and compare with friends
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+For questions or issues:
+1. Check the documentation
+2. Review existing issues
+3. Create a new issue with detailed information
+
+---
+
+**Built with ❤️ for basketball players everywhere** 
