@@ -24,6 +24,7 @@ const CameraScreen = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
+  const [isCameraReady, setIsCameraReady] = useState(false);
   
   const recordingTimerRef = useRef(null);
   const videoRef = useRef(null);
@@ -69,12 +70,10 @@ const CameraScreen = () => {
   }, [isRecording]);
 
   const startRecording = async () => {
-    if (!camera) return;
-
-    // Debug: Log available methods on camera
-    console.log('Camera object:', camera);
-    console.log('Camera methods:', Object.getOwnPropertyNames(camera));
-    console.log('Camera prototype methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(camera)));
+    if (!camera || !isCameraReady) {
+      Alert.alert('Camera not ready', 'Please wait for the camera to be ready.');
+      return;
+    }
 
     try {
       setIsRecording(true);
@@ -272,6 +271,10 @@ const CameraScreen = () => {
         style={styles.camera}
         facing="back"
         ref={(ref) => setCamera(ref)}
+        onCameraReady={() => {
+          console.log('Camera is ready!');
+          setIsCameraReady(true);
+        }}
       />
       
       {/* Overlay positioned absolutely */}
@@ -292,20 +295,24 @@ const CameraScreen = () => {
             Basketball Form Analyzer
           </Text>
           <Text style={styles.instructionsText}>
-            Position yourself in the frame and tap record to capture your shot
+            {isCameraReady 
+              ? 'Position yourself in the frame and tap record to capture your shot'
+              : 'Initializing camera...'
+            }
           </Text>
         </View>
 
         {/* Recording button */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[
-              styles.recordButton,
-              isRecording && styles.recordingButton,
-            ]}
-            onPress={isRecording ? stopRecording : startRecording}
-            disabled={isAnalyzing}
-          >
+                      <TouchableOpacity
+              style={[
+                styles.recordButton,
+                isRecording && styles.recordingButton,
+                !isCameraReady && styles.disabledButton,
+              ]}
+              onPress={isRecording ? stopRecording : startRecording}
+              disabled={isAnalyzing || !isCameraReady}
+            >
             {isRecording ? (
               <View style={styles.stopIcon} />
             ) : (
@@ -395,6 +402,11 @@ const styles = StyleSheet.create({
   recordingButton: {
     backgroundColor: '#FF3B30',
     borderColor: '#FF3B30',
+  },
+  disabledButton: {
+    backgroundColor: '#8E8E93',
+    borderColor: '#8E8E93',
+    opacity: 0.5,
   },
   recordIcon: {
     width: 32,
