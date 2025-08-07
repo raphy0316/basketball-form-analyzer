@@ -35,7 +35,7 @@ const CameraScreen = ({ navigation }) => {
     const loadCamera = async () => {
       try {
         const expoCamera = await import('expo-camera');
-        setCameraComponent(() => expoCamera.Camera); // Use Camera instead of CameraView
+        setCameraComponent(expoCamera.Camera); // Set the component directly, not as a function
         console.log('Camera component loaded successfully');
       } catch (error) {
         console.error('Failed to load camera component:', error);
@@ -266,7 +266,8 @@ const CameraScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-              <CameraComponent
+      {CameraComponent && (
+        <CameraComponent
           ref={cameraRef}
           style={styles.camera}
           type="back"
@@ -278,6 +279,7 @@ const CameraScreen = ({ navigation }) => {
             setIsCameraReady(true);
           }}
         />
+      )}
       
       {/* Overlay positioned absolutely */}
       <View style={styles.overlay}>
