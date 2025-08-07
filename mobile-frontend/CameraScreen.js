@@ -9,7 +9,7 @@ import {
   Dimensions,
   SafeAreaView,
 } from 'react-native';
-import { Camera, useCameraPermissions } from 'expo-camera';
+import * as ExpoCamera from 'expo-camera';
 import { Video } from 'expo-video';
 import axios from 'axios';
 import { CONFIG, getApiUrl } from './config';
@@ -17,7 +17,7 @@ import { CONFIG, getApiUrl } from './config';
 const { width, height } = Dimensions.get('window');
 
 const CameraScreen = ({ navigation }) => {
-  const [permission, requestPermission] = useCameraPermissions();
+  const [permission, requestPermission] = ExpoCamera.useCameraPermissions();
   const [isRecording, setIsRecording] = useState(false);
   const [recordedVideo, setRecordedVideo] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -168,6 +168,18 @@ const CameraScreen = ({ navigation }) => {
     );
   }
 
+  // Check if Camera is available
+  if (!ExpoCamera.Camera) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Camera not available</Text>
+        <Text style={styles.errorSubtext}>
+          Please make sure expo-camera is properly installed.
+        </Text>
+      </View>
+    );
+  }
+
   if (!permission.granted) {
     return (
       <View style={styles.container}>
@@ -226,10 +238,10 @@ const CameraScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Camera
+      <ExpoCamera.Camera
         ref={cameraRef}
         style={styles.camera}
-        type={Camera.Constants.Type.back}
+        type="back"
         video={true}
       />
       
