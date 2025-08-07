@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { Camera, useCameraDevices, useFrameProcessor } from 'react-native-vision-camera';
 import { runOnJS } from 'react-native-reanimated';
-import { Video } from 'expo-video';
 import axios from 'axios';
 import { CONFIG, getApiUrl } from './config';
 
@@ -31,7 +30,6 @@ const CameraScreen = ({ navigation }) => {
   const [frameCount, setFrameCount] = useState(0);
   
   const recordingTimerRef = useRef(null);
-  const videoRef = useRef(null);
   const cameraRef = useRef(null);
 
   // Request camera permissions
@@ -239,20 +237,10 @@ const CameraScreen = ({ navigation }) => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.previewContainer}>
-          <Video
-            ref={videoRef}
-            source={{ uri: recordedVideo }}
-            style={styles.previewVideo}
-            useNativeControls
-            resizeMode="contain"
-            isLooping
-            onError={(error) => {
-              console.error('Video playback error:', error);
-            }}
-            onLoad={() => {
-              console.log('Video loaded successfully');
-            }}
-          />
+          <View style={styles.videoPreviewPlaceholder}>
+            <Text style={styles.videoPreviewText}>Video Recorded Successfully!</Text>
+            <Text style={styles.videoPreviewSubtext}>Path: {recordedVideo}</Text>
+          </View>
           
           <View style={styles.previewControls}>
             <TouchableOpacity
@@ -467,8 +455,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  previewVideo: {
+  videoPreviewPlaceholder: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+  },
+  videoPreviewText: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  videoPreviewSubtext: {
+    color: '#888',
+    fontSize: 14,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
   previewControls: {
     flexDirection: 'row',
