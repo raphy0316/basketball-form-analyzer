@@ -24,6 +24,12 @@ class AnalysisInterpreter:
     def __init__(self):
         self.interpretation_results = {}
     
+    # Handle 'Undefined' values
+    def safe_float(self, value):
+        if value == 'Undefined' or value is None:
+            return 0.0
+        return float(value)
+        
     def interpret_comparison_results(self, comparison_results: Dict) -> Dict:
         """
         Interpret comparison results and generate text analysis.
@@ -212,27 +218,16 @@ class AnalysisInterpreter:
         angles2 = video2.get('hip_knee_ankle_angles', {})
         
         if angles1 and angles2:
-            left_avg1 = angles1.get('left', {}).get('average', 0)
-            right_avg1 = angles1.get('right', {}).get('average', 0)
-            left_avg2 = angles2.get('left', {}).get('average', 0)
-            right_avg2 = angles2.get('right', {}).get('average', 0)
+            left_avg1 = self.safe_float(angles1.get('left', {}).get('average', 0))
+            right_avg1 = self.safe_float(angles1.get('right', {}).get('average', 0))
+            left_avg2 = self.safe_float(angles2.get('left', {}).get('average', 0))
+            right_avg2 = self.safe_float(angles2.get('right', {}).get('average', 0))
             
             # Check stability first (std > 5 degrees indicates instability)
-            left_std1 = angles1.get('left', {}).get('std', 0)
-            left_std2 = angles2.get('left', {}).get('std', 0)
-            right_std1 = angles1.get('right', {}).get('std', 0)
-            right_std2 = angles2.get('right', {}).get('std', 0)
-            
-            # Handle 'Undefined' values
-            def safe_float(value):
-                if value == 'Undefined' or value is None:
-                    return 0.0
-                return float(value)
-
-            left_std1 = safe_float(left_std1)
-            left_std2 = safe_float(left_std2)
-            right_std1 = safe_float(right_std1)
-            right_std2 = safe_float(right_std2)
+            left_std1 = self.safe_float(angles1.get('left', {}).get('std', 0))
+            left_std2 = self.safe_float(angles2.get('left', {}).get('std', 0))
+            right_std1 = self.safe_float(angles1.get('right', {}).get('std', 0))
+            right_std2 = self.safe_float(angles2.get('right', {}).get('std', 0))
             
             # Convert averages to float safely
             left_avg1 = safe_float(left_avg1)
@@ -318,27 +313,16 @@ class AnalysisInterpreter:
         ball_dist2 = video2.get('ball_hip_distances', {})
         
         if ball_dist1 and ball_dist2:
-            vert_avg1 = ball_dist1.get('average_vertical', 0)
-            vert_avg2 = ball_dist2.get('average_vertical', 0)
-            horiz_avg1 = ball_dist1.get('average_horizontal', 0)
-            horiz_avg2 = ball_dist2.get('average_horizontal', 0)
+            vert_avg1 = self.safe_float(ball_dist1.get('average_vertical', 0))
+            vert_avg2 = self.safe_float(ball_dist2.get('average_vertical', 0))
+            horiz_avg1 = self.safe_float(ball_dist1.get('average_horizontal', 0))
+            horiz_avg2 = self.safe_float(ball_dist2.get('average_horizontal', 0))
             
             # Check stability (std > 0.05 for vertical, std > 0.05 * aspect_ratio for horizontal) (DISABLED)
-            vert_std1 = ball_dist1.get('std_vertical', 0)
-            vert_std2 = ball_dist2.get('std_vertical', 0)
-            horiz_std1 = ball_dist1.get('std_horizontal', 0)
-            horiz_std2 = ball_dist2.get('std_horizontal', 0)
-            
-            # Handle 'Undefined' values
-            def safe_float(value):
-                if value == 'Undefined' or value is None:
-                    return 0.0
-                return float(value)
-            
-            vert_std1 = safe_float(vert_std1)
-            vert_std2 = safe_float(vert_std2)
-            horiz_std1 = safe_float(horiz_std1)
-            horiz_std2 = safe_float(horiz_std2)
+            vert_std1 = self.safe_float(ball_dist1.get('std_vertical', 0))
+            vert_std2 = self.safe_float(ball_dist2.get('std_vertical', 0))
+            horiz_std1 = self.safe_float(ball_dist1.get('std_horizontal', 0))
+            horiz_std2 = self.safe_float(ball_dist2.get('std_horizontal', 0))
             
             # Assume 16:9 aspect ratio for horizontal threshold (0.05 * 16/9 ≈ 0.089)
             horiz_threshold = 0.089
@@ -426,32 +410,21 @@ class AnalysisInterpreter:
             # Calculate stance width for both videos
             if left_foot1 and right_foot1 and left_foot2 and right_foot2:
                 # Get foot positions
-                left_x1 = left_foot1.get('average_x', 0)
-                right_x1 = right_foot1.get('average_x', 0)
-                left_x2 = left_foot2.get('average_x', 0)
-                right_x2 = right_foot2.get('average_x', 0)
+                left_x1 = self.safe_float(left_foot1.get('average_x', 0))
+                right_x1 = self.safe_float(right_foot1.get('average_x', 0))
+                left_x2 = self.safe_float(left_foot2.get('average_x', 0))
+                right_x2 = self.safe_float(right_foot2.get('average_x', 0))
                 
                 # Calculate stance width (distance between feet)
                 stance_width1 = abs(left_x1 - right_x1)
                 stance_width2 = abs(left_x2 - right_x2)
                 
                 # Check stability for both feet
-                left_std_x1 = left_foot1.get('std_x', 0)
-                left_std_x2 = left_foot2.get('std_x', 0)
-                right_std_x1 = right_foot1.get('std_x', 0)
-                right_std_x2 = right_foot2.get('std_x', 0)
-                
-                # Handle 'Undefined' values
-                def safe_float(value):
-                    if value == 'Undefined' or value is None:
-                        return 0.0
-                    return float(value)
-                
-                left_std_x1 = safe_float(left_std_x1)
-                left_std_x2 = safe_float(left_std_x2)
-                right_std_x1 = safe_float(right_std_x1)
-                right_std_x2 = safe_float(right_std_x2)
-                
+                left_std_x1 = self.safe_float(left_foot1.get('std_x', 0))
+                left_std_x2 = self.safe_float(left_foot2.get('std_x', 0))
+                right_std_x1 = self.safe_float(right_foot1.get('std_x', 0))
+                right_std_x2 = self.safe_float(right_foot2.get('std_x', 0))
+            
                 # Assume 16:9 aspect ratio for horizontal threshold
                 horiz_threshold = 0.089
                 
@@ -505,21 +478,12 @@ class AnalysisInterpreter:
         shoulder_tilt2 = video2.get('shoulder_tilt', {})
         
         if shoulder_tilt1 and shoulder_tilt2:
-            tilt_avg1 = shoulder_tilt1.get('average', 0)
-            tilt_avg2 = shoulder_tilt2.get('average', 0)
+            tilt_avg1 = self.safe_float(shoulder_tilt1.get('average', 0))
+            tilt_avg2 = self.safe_float(shoulder_tilt2.get('average', 0))
             
             # Check stability
-            tilt_std1 = shoulder_tilt1.get('std', 0)
-            tilt_std2 = shoulder_tilt2.get('std', 0)
-            
-            # Handle 'Undefined' values
-            def safe_float(value):
-                if value == 'Undefined' or value is None:
-                    return 0.0
-                return float(value)
-            
-            tilt_std1 = safe_float(tilt_std1)
-            tilt_std2 = safe_float(tilt_std2)
+            tilt_std1 = self.safe_float(shoulder_tilt1.get('std', 0))
+            tilt_std2 = self.safe_float(shoulder_tilt2.get('std', 0))
             
             # Check for instability (std > 5 degrees) (DISABLED)
             # if tilt_std1 > 5:
@@ -772,8 +736,8 @@ class AnalysisInterpreter:
         jump2 = video2.get('jump_analysis', {})
         
         if jump1 and jump2:
-            height1 = jump1.get('max_jump_height', 0)
-            height2 = jump2.get('max_jump_height', 0)
+            height1 = self.safe_float(jump1.get('max_jump_height', 0))
+            height2 = self.safe_float(jump2.get('max_jump_height', 0))
             has_jump1 = jump1.get('has_significant_jump', True)
             has_jump2 = jump2.get('has_significant_jump', True)
             

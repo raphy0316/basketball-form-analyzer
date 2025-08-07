@@ -1388,12 +1388,12 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                     
                     # Rising cancellation: Different conditions based on wrist position relative to shoulder
                     wrist_above_shoulder = wrist_y < shoulder_y
-                    
+
                     if wrist_above_shoulder:
                         # When above shoulder: cancel when wrist goes below shoulder
                         # Check if current wrist is below shoulder
                         wrist_below_shoulder = wrist_y >= shoulder_y
-                        
+
                         if ball_detected:
                             # Check if ball is also below shoulder
                             ball_below_shoulder = ball_y >= shoulder_y
