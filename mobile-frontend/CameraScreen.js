@@ -29,12 +29,23 @@ const CameraScreen = () => {
   const recordingTimerRef = useRef(null);
   const videoRef = useRef(null);
 
+  // Debug: Log Camera availability
+  console.log('Camera import status:', !!Camera);
+  console.log('Camera.Constants:', Camera?.Constants);
+
   useEffect(() => {
     (async () => {
       try {
+        console.log('Requesting camera permissions...');
         const { status } = await Camera.requestCameraPermissionsAsync();
+        console.log('Camera permission status:', status);
+        
         const audioStatus = await Camera.requestMicrophonePermissionsAsync();
-        setHasPermission(status === 'granted' && audioStatus.status === 'granted');
+        console.log('Audio permission status:', audioStatus.status);
+        
+        const hasBothPermissions = status === 'granted' && audioStatus.status === 'granted';
+        console.log('Has both permissions:', hasBothPermissions);
+        setHasPermission(hasBothPermissions);
       } catch (error) {
         console.error('Error requesting permissions:', error);
         setHasPermission(false);
@@ -241,8 +252,8 @@ const CameraScreen = () => {
     );
   }
 
-  // Check if Camera is available
-  if (!Camera || !Camera.Constants) {
+  // Check if Camera is available - only check if Camera import failed
+  if (!Camera) {
     return (
       <View style={styles.container}>
         <Text style={styles.errorText}>Camera not available</Text>
@@ -257,7 +268,7 @@ const CameraScreen = () => {
     <SafeAreaView style={styles.container}>
       <Camera
         style={styles.camera}
-        type={Camera.Constants.Type?.back || 'back'}
+        type="back"
         ref={(ref) => setCamera(ref)}
       >
         <View style={styles.overlay}>
