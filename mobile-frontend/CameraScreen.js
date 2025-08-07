@@ -101,13 +101,10 @@ const CameraScreen = ({ navigation }) => {
     console.log('Recording state before stop:', isRecording);
     
     try {
-      const video = await cameraRef.current.stopRecordingAsync();
-      console.log('Recording stopped successfully');
-      console.log('Video captured:', video.uri);
-      
-      setRecordedVideo(video.uri);
-      setShowPreview(true);
+      // For CameraView, just set isRecording to false to stop recording
+      // The video URI will come from onRecordingFinish callback
       setIsRecording(false);
+      console.log('Recording stopped successfully');
     } catch (error) {
       console.error('Error stopping recording:', error);
       setIsRecording(false);
@@ -255,6 +252,18 @@ const CameraScreen = ({ navigation }) => {
           console.log('Camera is ready!');
           console.log('Camera ref in onCameraReady:', !!cameraRef.current);
           setIsCameraReady(true);
+        }}
+        onRecordingFinish={(video) => {
+          console.log('Recording finished, video:', video);
+          if (video && video.uri) {
+            setRecordedVideo(video.uri);
+            setShowPreview(true);
+            setIsRecording(false);
+          }
+        }}
+        onRecordingError={(error) => {
+          console.error('Recording error:', error);
+          setIsRecording(false);
         }}
       />
       
