@@ -31,6 +31,12 @@ export const getApiUrl = (endpoint) => {
 
 // Helper function to get video quality constant
 export const getVideoQuality = () => {
-  const { Camera } = require('expo-camera');
-  return Camera.Constants.VideoQuality[CONFIG.RECORDING.QUALITY.toUpperCase()];
+  try {
+    const { Camera } = require('expo-camera');
+    return Camera.Constants.VideoQuality[CONFIG.RECORDING.QUALITY.toUpperCase()];
+  } catch (error) {
+    console.error('Error getting video quality:', error);
+    // Fallback to default quality
+    return '720p';
+  }
 };

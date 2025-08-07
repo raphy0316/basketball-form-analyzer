@@ -31,9 +31,14 @@ const CameraScreen = () => {
 
   useEffect(() => {
     (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      const audioStatus = await Camera.requestMicrophonePermissionsAsync();
-      setHasPermission(status === 'granted' && audioStatus.status === 'granted');
+      try {
+        const { status } = await Camera.requestCameraPermissionsAsync();
+        const audioStatus = await Camera.requestMicrophonePermissionsAsync();
+        setHasPermission(status === 'granted' && audioStatus.status === 'granted');
+      } catch (error) {
+        console.error('Error requesting permissions:', error);
+        setHasPermission(false);
+      }
     })();
   }, []);
 
@@ -162,6 +167,7 @@ const CameraScreen = () => {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Loading camera...</Text>
       </View>
     );
   }
@@ -173,6 +179,25 @@ const CameraScreen = () => {
         <Text style={styles.errorSubtext}>
           Please enable camera permissions in your device settings.
         </Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => {
+            setHasPermission(null);
+            // Retry permission request
+            (async () => {
+              try {
+                const { status } = await Camera.requestCameraPermissionsAsync();
+                const audioStatus = await Camera.requestMicrophonePermissionsAsync();
+                setHasPermission(status === 'granted' && audioStatus.status === 'granted');
+              } catch (error) {
+                console.error('Error requesting permissions:', error);
+                setHasPermission(false);
+              }
+            })();
+          }}
+        >
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -216,11 +241,23 @@ const CameraScreen = () => {
     );
   }
 
+  // Check if Camera is available
+  if (!Camera || !Camera.Constants) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Camera not available</Text>
+        <Text style={styles.errorSubtext}>
+          Please restart the app and try again.
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <Camera
         style={styles.camera}
-        type={Camera.Constants.Type.back}
+        type={Camera.Constants.Type?.back || 'back'}
         ref={(ref) => setCamera(ref)}
       >
         <View style={styles.overlay}>
@@ -398,6 +435,25 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingHorizontal: 40,
     opacity: 0.8,
+  },
+  loadingText: {
+    color: 'white',
+    fontSize: 18,
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 25,
+    marginTop: 30,
+    alignSelf: 'center',
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
