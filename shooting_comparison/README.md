@@ -162,6 +162,8 @@ shooting_comparison/
 * height reversed y(rising, release)
 * dip point angles are not calculated
 * made up toes and fingers
+* safe float function in interpreter
+* refactor interpreter configs
 
 ### TODO 
 * frame numbers in jump height is not actual frame number of the whole video, it's just the frame index of rising frames(debug)
