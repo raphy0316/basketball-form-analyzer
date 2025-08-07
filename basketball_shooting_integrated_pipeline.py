@@ -259,10 +259,22 @@ class BasketballShootingIntegratedPipeline:
         """Prompt user to select processing mode with multiple selection support"""
         # Get available videos from analyzer
         self.available_videos = self.analyzer.list_available_videos()
-        standard_videos = [v for v in self.available_videos if 'Standard' in v]
-        edgecase_videos = [v for v in self.available_videos if 'EdgeCase' in v]
-        bakke_videos = [v for v in self.available_videos if 'Bakke' in v]
-        test_videos = [v for v in self.available_videos if 'test' in v.lower()]
+        
+        # 실제 디렉토리에 있는 파일들만 정확히 카운트
+        standard_videos = []
+        edgecase_videos = []
+        bakke_videos = []
+        test_videos = []
+        
+        for video in self.available_videos:
+            if self.analyzer.standard_video_dir in video:
+                standard_videos.append(video)
+            elif self.analyzer.edgecase_video_dir in video:
+                edgecase_videos.append(video)
+            elif 'Bakke' in video:
+                bakke_videos.append(video)
+            elif 'test' in video.lower():
+                test_videos.append(video)
         
         print("\n🎬 STEP 0: Select processing mode")
         print("=" * 50)
@@ -533,9 +545,9 @@ def main():
         if isinstance(selection, str) and selection.endswith("_all"):
             # Process all videos in category
             if selection == "standard_all":
-                videos = [v for v in pipeline.available_videos if 'Standard' in v]
+                videos = [v for v in pipeline.available_videos if pipeline.analyzer.standard_video_dir in v]
             elif selection == "edgecase_all":
-                videos = [v for v in pipeline.available_videos if 'EdgeCase' in v]
+                videos = [v for v in pipeline.available_videos if pipeline.analyzer.edgecase_video_dir in v]
             elif selection == "bakke_all":
                 videos = [v for v in pipeline.available_videos if 'Bakke' in v]
             elif selection == "test_all":

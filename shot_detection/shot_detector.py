@@ -460,7 +460,7 @@ class ShotDetector:
         right_hip = pose['right_hip']
         
         # Confidence threshold for valid measurements
-        confidence_threshold = 0.3
+        confidence_threshold = 0.2  # 0.3 → 0.2로 낮춤
         
         valid_torso_lengths = []
         
