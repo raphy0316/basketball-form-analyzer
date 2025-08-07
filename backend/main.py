@@ -13,6 +13,7 @@ import tempfile
 import shutil
 from typing import Dict, List, Optional
 from pathlib import Path
+from backend.utils.save_file import save_json_to_directory
 
 # Add current directory to path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -26,6 +27,7 @@ import uvicorn
 # Import existing routes
 from backend.routes.model_routes import model_router
 import backend.routes.llm_routes as llm_routes
+from shooting_comparison.shooting_comparison_pipeline import ShootingComparisonPipeline
 
 # Import synthetic profiles
 try:
@@ -181,7 +183,7 @@ async def analyze_video(video: UploadFile = File(...)):
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
             shutil.copyfileobj(video.file, tmp_file)
             video_path = tmp_file.name
-        
+        print("end point")
         # Run analysis pipeline
         if ANALYSIS_AVAILABLE:
             pipeline = BasketballShootingIntegratedPipeline()
@@ -212,17 +214,28 @@ async def compare_with_player(
         
         # Get synthetic profile for the player
         synthetic_profile = get_synthetic_profile(player_id)
-        
+        # print(type(synthetic_profile[0]))
+        print(synthetic_profile)
+        save_json_to_directory(synthetic_profile, "/", f"{player_id}_profile.json")
+
+        print(f"Using synthetic profile for player: {player_id}")
+        print("video_path", video_path)
         # Analyze user's video
         if ANALYSIS_AVAILABLE:
             pipeline = BasketballShootingIntegratedPipeline()
-            user_result = pipeline.run_pipeline(video_path)
+            user_result = pipeline.run_full_pipeline(video_path, overwrite_mode=True, use_existing_extraction=False)
         else:
             user_result = mock_analyze_video(video_path)
         
-        # Compare with synthetic player data
-        comparison_result = mock_compare_with_player(user_result, player_id)
-        
+            # Compare with synthetic player data
+            comparison_result = mock_compare_with_player(user_result, player_id)
+
+        comparison_pipeline = ShootingComparisonPipeline()
+        user_processed_data = comparison_pipeline.process_video_data(video_path)
+        player_processed_data = comparison_pipeline.process_video_data(synthetic_profile)
+        # print(synthetic_profile)
+        comparison_pipeline.perform_comparison(user_processed_data, player_processed_data)
+
         # Clean up temporary file
         os.unlink(video_path)
         
