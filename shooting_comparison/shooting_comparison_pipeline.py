@@ -521,8 +521,14 @@ class ShootingComparisonPipeline:
         range_count = 0
         
         for frame in frames:
-            frame_idx = frame.get('frame_idx', 0)
-            shot_id = frame.get('shot_id')
+            frame_idx = frame.get('frame_index', frame.get('frame_idx', 0))
+            
+            # Get shot_id from frame data (basketball_shooting_analyzer.py uses 'shot' field)
+            shot_id = frame.get('shot')  # 먼저 'shot' 필드 확인
+            
+            # Fallback to 'shot_id' field if 'shot' is not available
+            if shot_id is None:
+                shot_id = frame.get('shot_id')
             
             # Include frame if it belongs to the selected shot
             # Handle both string and numeric shot IDs
