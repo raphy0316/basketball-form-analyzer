@@ -8,7 +8,7 @@ that can be sent to LLM for further analysis and coaching recommendations.
 import json
 from typing import Dict, List, Tuple, Optional
 import numpy as np
-import config
+from . import config
 
 class AnalysisInterpreter:
     """
@@ -33,7 +33,7 @@ class AnalysisInterpreter:
         
         Args:
             comparison_results: Raw comparison data from pipeline
-            
+
         Returns:
             Dictionary containing both raw data and interpreted text
         """

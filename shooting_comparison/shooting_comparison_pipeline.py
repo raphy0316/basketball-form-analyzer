@@ -40,6 +40,7 @@ class ShootingComparisonPipeline:
         self.results_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "results")
         self.comparison_results_dir = os.path.join(os.path.dirname(__file__), "results")
         self.selected_hand = 'right'  # Default hand
+        self.prompt_file_name = None  # Path to saved LLM prompt
         # Create comparison results directory if it doesn't exist
         os.makedirs(self.comparison_results_dir, exist_ok=True)
 
@@ -1435,7 +1436,7 @@ class ShootingComparisonPipeline:
         # Save LLM prompt to file
         prompt_filename = f"llm_prompt_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
         prompt_path = os.path.join(self.comparison_results_dir, prompt_filename)
-        
+        self.prompt_file_name= prompt_filename
         try:
             with open(prompt_path, 'w', encoding='utf-8') as f:
                 f.write(llm_prompt)

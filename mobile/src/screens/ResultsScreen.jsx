@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -7,13 +7,24 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Dimensions,
+  Modal,
 } from 'react-native';
 import { CONFIG, getSimilarityColor, getSimilarityLabel } from '../utils/config';
-
+import DetailedAnalysisScreen from './DetailedAnalysisScreen'; // Adjust path if needed
 const { width, height } = Dimensions.get('window');
+import { initializeTtsListeners, playTTS } from '../utils/ttsListener';
 
 const ResultsScreen = ({ navigation, route }) => {
   const { analysisResult, selectedPlayer } = route.params || {};
+  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+
+  useEffect(() => {
+      initializeTtsListeners();
+
+      setTimeout(() => {
+        playTTS(analysisResult.llm_response); // or Tts.speak(message)
+      }, 1000);
+    }, []);
 
   const renderPhaseScore = (phase, score) => {
     const color = getSimilarityColor(score);
@@ -126,6 +137,13 @@ const ResultsScreen = ({ navigation, route }) => {
         <View style={styles.actionsContainer}>
           <TouchableOpacity
             style={styles.actionButton}
+            onPress={() => setIsDetailModalVisible(true)}
+          >
+            <Text style={styles.actionButtonText}>View Detailed Analysis</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.actionButton}
             onPress={() => navigation.navigate('PlayerSelection')}
           >
             <Text style={styles.actionButtonText}>Try Another Player</Text>
@@ -139,6 +157,32 @@ const ResultsScreen = ({ navigation, route }) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Detail Screen Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isDetailModalVisible}
+        onRequestClose={() => setIsDetailModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Detailed Analysis</Text>
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => setIsDetailModalVisible(false)}
+              >
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+            < DetailedAnalysisScreen
+              detailedResult={analysisResult} 
+              selectedPlayer={selectedPlayer}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -308,6 +352,40 @@ const styles = StyleSheet.create({
     borderColor: '#007AFF',
   },
   secondaryButtonText: {
+    color: '#007AFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: width * 0.9,
+    height: height * 0.8,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  closeButton: {
+    padding: 8,
+  },
+  closeButtonText: {
     color: '#007AFF',
     fontSize: 16,
     fontWeight: '600',

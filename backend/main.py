@@ -213,14 +213,15 @@ async def compare_with_player(
             video_path = tmp_file.name
         
         # Get synthetic profile for the player
-        synthetic_profile = get_synthetic_profile(player_id)
+        # synthetic_profile = get_synthetic_profile(player_id)
         
         # Save synthetic profile to JSON format for comparison pipeline
-        synthetic_json_path = generator.export_for_comparison_pipeline(player_id, synthetic_profile, "/tmp")
+        print("check")
+        # synthetic_json_path = generator.export_for_comparison_pipeline(player_id, synthetic_profile)
         
         print(f"Using synthetic profile for player: {player_id}")
         print("video_path", video_path)
-        print("synthetic_json_path", synthetic_json_path)
+        # print("synthetic_json_path", synthetic_json_path)
         
         # Analyze user's video using the integrated pipeline
         if ANALYSIS_AVAILABLE:
@@ -232,14 +233,16 @@ async def compare_with_player(
         # Use comparison pipeline to compare user video with synthetic profile
         comparison_pipeline = ShootingComparisonPipeline()
         
+        # print("Output directory for comparison:", output_dir)
         # Process user video data (this loads the JSON file created by the integrated pipeline)
         user_processed_data = comparison_pipeline.process_video_data(video_path)
         
         # Process synthetic profile data (this loads the JSON file we just created)
         # The comparison pipeline expects the base name without the _normalized_output.json suffix
-        synthetic_base_path = f"/tmp/{player_id.lower()}_synthetic_profile"
+        synthetic_base_path = f"output_dir/{player_id.lower()}"
+        # print(synthetic_base_path)
         synthetic_processed_data = comparison_pipeline.process_video_data(synthetic_base_path)
-        
+
         if user_processed_data and synthetic_processed_data:
             # Set up the comparison pipeline with the processed data
             comparison_pipeline.video1_data = user_processed_data
@@ -249,84 +252,9 @@ async def compare_with_player(
             
             # Perform the comparison
             comparison_result = comparison_pipeline.perform_comparison()
-            
+            # print(comparison_result)
             if comparison_result:
-                # Extract results from the comparison pipeline
-                interpretation = comparison_result.get('interpretation', {})
-                phase_statistics = comparison_result.get('phase_statistics', {})
-                
-                # Calculate overall similarity from phase analysis
-                phase_scores = {}
-                overall_similarity = 0.0
-                phase_count = 0
-                
-                # Extract phase scores from the comparison results
-                for phase_name in ["General", "Set-up", "Loading", "Rising", "Release", "Follow-through"]:
-                    # Look for phase analysis in the comparison results
-                    phase_key = f"{phase_name.lower().replace('-', '_')}_analysis"
-                    if phase_key in comparison_result:
-                        phase_analysis = comparison_result[phase_key]
-                        # Calculate similarity score (this would need to be implemented based on the actual analysis)
-                        phase_score = 0.75  # Default score - this should be calculated from the analysis
-                        phase_scores[phase_name] = phase_score
-                        overall_similarity += phase_score
-                        phase_count += 1
-                    else:
-                        phase_scores[phase_name] = 0.7  # Default score for missing phases
-                        overall_similarity += 0.7
-                        phase_count += 1
-                
-                if phase_count > 0:
-                    overall_similarity /= phase_count
-                
-                # Generate recommendations based on interpretation
-                recommendations = []
-                if interpretation:
-                    insights = interpretation.get('insights', [])
-                    for insight in insights:
-                        if isinstance(insight, str):
-                            recommendations.append(insight)
-                        elif isinstance(insight, dict):
-                            recommendations.append(insight.get('message', 'Focus on improving your form'))
-                
-                # Add default recommendations if none from interpretation
-                if not recommendations:
-                    if overall_similarity < 0.6:
-                        recommendations = [
-                            "Focus on improving your shooting form consistency",
-                            "Practice the release phase for better accuracy",
-                            "Work on your follow-through technique"
-                        ]
-                    elif overall_similarity < 0.8:
-                        recommendations = [
-                            "Good form! Work on fine-tuning your motion",
-                            "Focus on consistency in your release phase",
-                            "Your follow-through looks excellent"
-                        ]
-                    else:
-                        recommendations = [
-                            "Excellent form! Keep up the great work",
-                            "Your technique is very consistent",
-                            "Great job on all phases of your shot"
-                        ]
-                
-                # Format the result for the mobile app
-                formatted_result = {
-                    "success": True,
-                    "player_id": player_id,
-                    "overall_similarity": round(overall_similarity, 2),
-                    "phase_scores": phase_scores,
-                    "recommendations": recommendations,
-                    "comparison_metrics": {
-                        "motion_consistency": round(overall_similarity * 0.9, 2),
-                        "release_timing": round(phase_scores.get("Release", 0.7), 2),
-                        "follow_through": round(phase_scores.get("Follow-through", 0.7), 2)
-                    },
-                    "raw_comparison_data": {
-                        "phase_statistics": phase_statistics,
-                        "interpretation": interpretation
-                    }
-                }
+                print("Comparison successful")
             else:
                 # Fallback to mock comparison if pipeline comparison fails
                 comparison_result = mock_compare_with_player(user_result, player_id)
@@ -335,13 +263,28 @@ async def compare_with_player(
             # Fallback to mock comparison if data processing fails
             comparison_result = mock_compare_with_player(user_result, player_id)
             formatted_result = comparison_result
-
         # Clean up temporary files
         os.unlink(video_path)
-        if os.path.exists(synthetic_json_path):
-            os.unlink(synthetic_json_path)
-        
-        return JSONResponse(content=formatted_result)
+        print("Comparison result debug")
+
+        interpretation = comparison_result.get("interpretation", "No interpretation available")
+        comparison_pipeline._display_interpretation_results(interpretation)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        output_dir = os.path.join(current_dir, "../shooting_comparison/results")
+        output_dir = os.path.abspath(output_dir)
+        print("Output directory:", output_dir)
+        prompt_file_name = comparison_pipeline.prompt_file_name
+        print("Prompt file name:", prompt_file_name)
+        output_dir = os.path.join(output_dir, prompt_file_name)
+        print("Output directory with prompt file name:", output_dir)
+        llm_service = llm_routes.LLMService(output_dir)
+        llm_response  = llm_service.generate_response()
+        results= {}
+        results["comparison_result"] = comparison_result
+        print(results["comparison_result"])
+        results["llm_response"] = llm_response
+        print("LLM Response:", llm_response)
+        return JSONResponse(content=results)
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Comparison failed: {str(e)}")

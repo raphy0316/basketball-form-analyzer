@@ -1,20 +1,21 @@
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-import json
 
 class LLMService:
 
-    def __init__(self, json_file_path):
+    def __init__(self, txt_file_path):
         self.model = self._load_model()
-        self.json_file_path = json_file_path
+        self.txt_file_path = txt_file_path
 
     def _load_model(self):
         """
         Load the LLM model from environment variables.
         """
+        print("Loading LLM model...")
         load_dotenv()
         api_key = os.getenv("OPENAI_API_KEY")
+        print("API Key loaded:", api_key is not None)
         if not api_key:
             raise ValueError("API key for OpenAI is not set in environment variables.")
         
@@ -22,7 +23,7 @@ class LLMService:
 
     def _load_prompt_id(self):
         """
-        Load the prompt from a JSON file.
+        Load the prompt from a txt file.
         """
         load_dotenv()
         prompt_id = os.getenv("PROMPT_ID")
@@ -31,32 +32,37 @@ class LLMService:
 
     def _load_prompt(self):
         try:
-            with open("./llm/prompts/system.txt", "r") as file:
+            with open("./backend/llm/prompts/system.txt", "r") as file:
                 system_prompt = file.read()
             return system_prompt
 
         except FileNotFoundError:
             raise FileNotFoundError("System prompt file not found. Please ensure the file exists at './llm/prompts/system.txt'.")
 
-    def load_json_data(self):
+    def load_txt_data(self):
         """
-        Load JSON data from the specified file path.
+        Load text data from the specified file path.
         """
-        if not os.path.exists(self.json_file_path):
-            raise FileNotFoundError(f"JSON file not found at {self.json_file_path}")
+        print("Loading text data from:", self.txt_file_path)
+        if not os.path.exists(self.txt_file_path):
+            raise FileNotFoundError(f"Text file not found at {self.txt_file_path}")
         
-        with open(self.json_file_path, 'r') as file:
-            data = json.load(file)
+        with open(self.txt_file_path, 'r') as file:
+            data = file.read()
         
         return data
 
     def generate_response(self):
         try: 
+            print("Generating response using LLM...")
             prompt_id = self._load_prompt_id()
-            data_input = self.load_json_data()
+            print("Prompt ID loaded:", prompt_id)
+            data_input = self.load_txt_data()
+            print("Data input loaded:", type(data_input))
             system_prompt = self._load_prompt()
-            # Convert data_input to a JSON string
-            data_input_str = json.dumps(data_input, indent=2)
+            print("System prompt loaded:", system_prompt)
+            # Convert data_input to a txt string
+            data_input_str = data_input
             # print("Data input loaded:", type(data_input_str))
             response = self.model.responses.create(
                 model="gpt-4o-2024-08-06",
@@ -72,8 +78,8 @@ class LLMService:
             return None
 
 if __name__ == "__main__":
-    json_file_path = "./dummy.json"
-    llm_service = LLMService(json_file_path)
+    txt_file_path = "./dummy.txt"     
+    llm_service = LLMService(txt_file_path)
     response = llm_service.generate_response()
     if response:
         print("Generated Response:", response.output[0].content[0].text)
