@@ -21,7 +21,8 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 
 # Import existing routes
@@ -85,6 +86,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="data/results"), name="static")
 
 # Include existing routes
 app.include_router(model_router, prefix="/api", tags=["Model Routes"])
@@ -380,6 +384,33 @@ async def health_check():
         "player_count": len(PLAYER_STYLES),
         "analysis_available": ANALYSIS_AVAILABLE
     }
+
+@app.get("/video/normalized-analysis/{video_name}")
+async def get_normalized_analysis_video(video_name: str):
+    """Serve normalized analysis video files"""
+    try:
+        # Look for the video in the results directory
+        video_path = os.path.join("data", "results", video_name)
+        
+        if os.path.exists(video_path):
+            return FileResponse(
+                path=video_path,
+                media_type="video/mp4",
+                filename=video_name
+            )
+        else:
+            # Also check in /tmp directory
+            tmp_video_path = os.path.join("/tmp", video_name)
+            if os.path.exists(tmp_video_path):
+                return FileResponse(
+                    path=tmp_video_path,
+                    media_type="video/mp4",
+                    filename=video_name
+                )
+            else:
+                raise HTTPException(status_code=404, detail="Video not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error serving video: {str(e)}")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
