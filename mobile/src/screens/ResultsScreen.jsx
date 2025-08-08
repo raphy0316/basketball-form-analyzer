@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Dimensions,
   Modal,
+  Image,
 } from 'react-native';
 import { CONFIG, getSimilarityColor, getSimilarityLabel } from '../utils/config';
 import DetailedAnalysisScreen from './DetailedAnalysisScreen'; // Adjust path if needed
@@ -17,14 +18,35 @@ import { initializeTtsListeners, playTTS } from '../utils/ttsListener';
 const ResultsScreen = ({ navigation, route }) => {
   const { analysisResult, selectedPlayer } = route.params || {};
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+  const [isImageModalVisible, setIsImageModalVisible] = useState(false);
+  const [currentImagePath, setCurrentImagePath] = useState('');
+  const [screenDimensions, setScreenDimensions] = useState({
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height
+  });
 
   useEffect(() => {
-      initializeTtsListeners();
+    initializeTtsListeners();
 
-      setTimeout(() => {
-        playTTS(analysisResult.llm_response); // or Tts.speak(message)
-      }, 1000);
-    }, []);
+    setTimeout(() => {
+      playTTS(analysisResult?.llm_response); 
+    }, 3000);
+    
+    // Fix for Dimensions API - use the newer subscription-based API
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setScreenDimensions({
+        width: window.width,
+        height: window.height
+      });
+    });
+    
+    // Clean up properly using the subscription object
+    return () => {
+      if (subscription?.remove) {
+        subscription.remove();
+      }
+    };
+  }, [analysisResult]);
 
   const renderPhaseScore = (phase, score) => {
     const color = getSimilarityColor(score);
@@ -109,7 +131,13 @@ const ResultsScreen = ({ navigation, route }) => {
     );
   };
 
-  
+  // Function to open image in modal
+  const openImageViewer = (imagePath) => {
+    setCurrentImagePath(imagePath);
+    setIsImageModalVisible(true);
+  };
+
+    
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -127,6 +155,14 @@ const ResultsScreen = ({ navigation, route }) => {
         {renderPhaseBreakdown()}
 
         <View style={styles.actionsContainer}>
+          {/* Image viewer button - placed above detailed analysis */}
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => openImageViewer(analysisResult?.image_path)}
+          >
+            <Text style={styles.actionButtonText}>View Shot Image</Text>
+          </TouchableOpacity>
+          
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => setIsDetailModalVisible(true)}
@@ -172,6 +208,57 @@ const ResultsScreen = ({ navigation, route }) => {
               detailedResult={analysisResult} 
               selectedPlayer={selectedPlayer}
             />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Image Viewer Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={isImageModalVisible}
+        onRequestClose={() => setIsImageModalVisible(false)}
+        supportedOrientations={['portrait', 'landscape']}
+      >
+        <View style={styles.modalContainer}>
+          <View style={[
+            styles.imageModalContent, 
+            {
+              width: screenDimensions.width * 0.95,
+              height: screenDimensions.height * 0.85
+            }
+          ]}>
+            <View style={styles.compactModalHeader}>
+              <Text style={styles.compactModalTitle}>Pinch to zoom, drag to move</Text>
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => setIsImageModalVisible(false)}
+              >
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {/* Fix ScrollView layout issue by removing style props from ScrollView and putting them in contentContainerStyle */}
+            <ScrollView
+              style={styles.imageScrollContainer}
+              contentContainerStyle={styles.imageContentContainer}
+              maximumZoomScale={5}
+              minimumZoomScale={1}
+              showsHorizontalScrollIndicator={false}
+              showsVerticalScrollIndicator={false}
+              pinchGestureEnabled={true}
+              scrollEnabled={true}
+            >
+              {currentImagePath ? (
+                <Image
+                  source={{ uri: `${CONFIG.BACKEND.BASE_URL}${currentImagePath}` }}
+                  style={styles.zoomableImage}
+                  resizeMode="contain"
+                />
+              ) : (
+                <Text style={styles.noImageText}>No image to display</Text>
+              )}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -381,6 +468,48 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  imageModalContent: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  compactModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 8,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  compactModalTitle: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500',
+  },
+  imageScrollContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  imageContentContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  zoomableImage: {
+    width: width * 0.95,
+    height: height * 0.8,
+    resizeMode: 'contain',
+  },
+  noImageText: {
+    color: '#888',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 

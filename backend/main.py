@@ -65,12 +65,17 @@ try:
 except ImportError:
     ANALYSIS_AVAILABLE = False
     print("Warning: Basketball analysis pipeline not available. Using mock analysis.")
+from fastapi.staticfiles import StaticFiles
+
 
 app = FastAPI(
     title="Basketball Form Analyzer - Synthetic Profiles Integration",
     description="API for analyzing basketball shooting form with synthetic NBA player comparisons",
     version="1.0.0"
 )
+
+results_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../shooting_comparison/results"))
+app.mount("/results", StaticFiles(directory=results_dir), name="results")
 
 # Configure CORS
 app.add_middleware(
@@ -238,7 +243,7 @@ async def compare_with_player(
         # Process user video data (this loads the JSON file created by the integrated pipeline)
         # user_processed_data = comparison_pipeline.process_video_data(video_path)
         synthetic_base_path = f"output_dir/{player_id.lower()}"
-        comparison_result = enhanced_pipeline.run_comparison(video_path, synthetic_base_path, save_results=True, include_dtw=True, create_visualizations=False, enable_shot_selection=False)
+        comparison_result = enhanced_pipeline.run_comparison(video_path, synthetic_base_path, save_results=True, include_dtw=True, create_visualizations=True, enable_shot_selection=False)
         # Process synthetic profile data (this loads the JSON file we just created)
         # The comparison pipeline expects the base name without the _normalized_output.json suffix
         # synthetic_base_path = f"output_dir/{player_id.lower()}"
@@ -281,6 +286,7 @@ async def compare_with_player(
         prompt_file_name = f"llm_prompt_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
         # prompt_file_name = comparison_pipeline.prompt_file_name
         # print("Prompt file name:", prompt_file_name)
+        prefix_dir =output_dir
         output_dir = os.path.join(output_dir, prompt_file_name)
 
         try:
@@ -297,6 +303,11 @@ async def compare_with_player(
         results["comparison_result"] = comparison_result
         # print(results["comparison_result"])
         results["llm_response"] = llm_response
+        file_name = os.path.basename(video_path)           # 'tmpabcd1234.mp4'
+        base_name = os.path.splitext(file_name)[0] 
+        image_rel_path = f"dtw_viz_{base_name}_vs_{player_id}/trajectory_comparison.png"
+        results['image_path'] = f"/results/{image_rel_path}"        
+        print(results['image_path'])
         # print("LLM Response:", llm_response)
         return JSONResponse(content=results)
 
