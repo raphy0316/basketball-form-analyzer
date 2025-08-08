@@ -407,7 +407,7 @@ class DTWFeatureExtractor(SafeCoordinateMixin):
         # Handle NaN values more generously
         valid_mask = ~np.isnan(trajectory).any(axis=1)
         
-        if np.sum(valid_mask) < 2:
+        if np.sum(valid_mask).item() < 2:
             # If too few valid points, return original with NaN handling
             return trajectory.tolist()
         
@@ -451,7 +451,7 @@ class DTWFeatureExtractor(SafeCoordinateMixin):
         # Handle NaN values more generously
         valid_mask = ~np.isnan(series)
         
-        if np.sum(valid_mask) < 2:
+        if np.sum(valid_mask).item() < 2:
             # If too few valid points, return original with NaN handling
             return series.tolist()
         

@@ -1,0 +1,66 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="shooting-flow-pro" name="Shooting Flow">
+    <mxGraphModel>
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- React Native -->
+        <mxCell id="2" value="📱 React Native App&#xa;(Capture Shooting Video)" style="rounded=1;fillColor=#A9D18E;strokeColor=#548235;fontSize=16;fontStyle=1;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="40" y="200" width="220" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- FastAPI Backend -->
+        <mxCell id="3" value="🚀 FastAPI Backend&#xa;(Video Frame Processing)" style="rounded=1;fillColor=#FFD966;strokeColor=#BF9000;fontSize=16;fontStyle=1;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="300" y="200" width="240" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Keypoint Extraction -->
+        <mxCell id="4" value="🧍 Pose Estimation&#xa;(MoveNet-Thunder)" style="rounded=1;fillColor=#9DC3E6;strokeColor=#2E75B6;fontSize=16;fontStyle=1;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="580" y="100" width="240" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Ball Detection -->
+        <mxCell id="5" value="🏀 Ball Detection&#xa;(YOLO)" style="rounded=1;fillColor=#9DC3E6;strokeColor=#2E75B6;fontSize=16;fontStyle=1;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="580" y="300" width="240" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Phase Detection -->
+        <mxCell id="6" value="⚙️ Phase Detection" style="rounded=1;fillColor=#F4B183;strokeColor=#C55A11;fontSize=16;fontStyle=1;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="860" y="200" width="220" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Normalization -->
+        <mxCell id="7" value="📊 Motion Normalization" style="rounded=1;fillColor=#D9CCE3;strokeColor=#7B4F9D;fontSize=16;fontStyle=1;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="1120" y="200" width="240" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Shooting Comparison -->
+        <mxCell id="8" value="📈 Shooting Form Comparison" style="rounded=1;fillColor=#FAC08F;strokeColor=#E46C0A;fontSize=16;fontStyle=1;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="1400" y="200" width="260" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- OpenAI -->
+        <mxCell id="9" value="🤖 OpenAI API&#xa;(LLM Feedback)" style="rounded=1;fillColor=#BDD7EE;strokeColor=#2E75B6;fontSize=16;fontStyle=1;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="1700" y="200" width="220" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Mobile Display -->
+        <mxCell id="10" value="📱 Mobile Display&#xa;(Show Feedback)" style="rounded=1;fillColor=#A9D18E;strokeColor=#548235;fontSize=16;fontStyle=1;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="1960" y="200" width="220" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Arrows Main Flow -->
+        <mxCell id="11" edge="1" parent="1" source="2" target="3" style="endArrow=block;endFill=1;strokeWidth=3;strokeColor=#000000" />
+        <mxCell id="12" edge="1" parent="1" source="3" target="4" style="endArrow=block;endFill=1;strokeWidth=3;strokeColor=#000000" />
+        <mxCell id="13" edge="1" parent="1" source="3" target="5" style="endArrow=block;endFill=1;strokeWidth=3;strokeColor=#000000" />
+        <mxCell id="14" edge="1" parent="1" source="4" target="6" style="endArrow=block;endFill=1;strokeWidth=3;strokeColor=#000000" />
+        <mxCell id="15" edge="1" parent="1" source="5" target="6" style="endArrow=block;endFill=1;strokeWidth=3;strokeColor=#000000" />
+        <mxCell id="16" edge="1" parent="1" source="6" target="7" style="endArrow=block;endFill=1;strokeWidth=3;strokeColor=#000000" />
+        <mxCell id="17" edge="1" parent="1" source="7" target="8" style="endArrow=block;endFill=1;strokeWidth=3;strokeColor=#000000" />
+        <mxCell id="18" edge="1" parent="1" source="8" target="9" style="endArrow=block;endFill=1;strokeWidth=3;strokeColor=#000000" />
+        <mxCell id="19" edge="1" parent="1" source="9" target="10" style="endArrow=block;endFill=1;strokeWidth=3;strokeColor=#000000" />
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

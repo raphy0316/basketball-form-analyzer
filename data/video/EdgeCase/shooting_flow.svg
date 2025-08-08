@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="2000" height="520" viewBox="0 0 2000 520" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .box { rx:14; ry:14; stroke-width:2; font-family: Inter, Arial, sans-serif; font-size:18px; }
+    .title { font-weight:700; }
+    .sub { font-size:14px; fill:#333; }
+    .arrow { stroke:#111; stroke-width:3; marker-end:url(#arrow); fill:none; }
+  </style>
+
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#111" />
+    </marker>
+    <!-- Shadows -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+
+  <!-- Lanes labels -->
+  <text x="20" y="32" class="title" fill="#222">Mobile</text>
+  <text x="20" y="52" class="sub">Capture / Display</text>
+
+  <text x="360" y="32" class="title" fill="#222">Backend</text>
+  <text x="360" y="52" class="sub">API / Processing</text>
+
+  <text x="980" y="32" class="title" fill="#222">Analysis Pipeline</text>
+  <text x="980" y="52" class="sub">Vision → Phases → Normalize → Compare</text>
+
+  <text x="1700" y="32" class="title" fill="#222">LLM</text>
+  <text x="1700" y="52" class="sub">Feedback</text>
+
+  <!-- Boxes -->
+  <!-- 1: React Native App -->
+  <g transform="translate(40,120)">
+    <rect class="box" width="240" height="100" fill="#A9D18E" stroke="#548235" filter="url(#shadow)"/>
+    <text x="16" y="40" class="title" fill="#0b3d0b">📱 React Native App</text>
+    <text x="16" y="70" class="sub">Capture shooting video</text>
+  </g>
+
+  <!-- 2: FastAPI Backend -->
+  <g transform="translate(340,120)">
+    <rect class="box" width="260" height="100" fill="#FFD966" stroke="#BF9000" filter="url(#shadow)"/>
+    <text x="16" y="40" class="title" fill="#634b00">🚀 FastAPI Backend</text>
+    <text x="16" y="70" class="sub">Frame ingestion & preproc</text>
+  </g>
+
+  <!-- 3a: Pose Estimation -->
+  <g transform="translate(660,60)">
+    <rect class="box" width="300" height="100" fill="#9DC3E6" stroke="#2E75B6" filter="url(#shadow)"/>
+    <text x="16" y="40" class="title" fill="#1c4e7a">🧍 Pose Estimation</text>
+    <text x="16" y="70" class="sub">MoveNet-Thunder (keypoints)</text>
+  </g>
+
+  <!-- 3b: Ball Detection -->
+  <g transform="translate(660,240)">
+    <rect class="box" width="300" height="100" fill="#9DC3E6" stroke="#2E75B6" filter="url(#shadow)"/>
+    <text x="16" y="40" class="title" fill="#1c4e7a">🏀 Ball Detection</text>
+    <text x="16" y="70" class="sub">YOLO (ball center/size)</text>
+  </g>
+
+  <!-- 4: Phase Detection -->
+  <g transform="translate(1020,150)">
+    <rect class="box" width="260" height="100" fill="#F4B183" stroke="#C55A11" filter="url(#shadow)"/>
+    <text x="16" y="40" class="title" fill="#7b3606">⚙️ Phase Detection</text>
+    <text x="16" y="70" class="sub">Set-up → Loading → Rising → Release</text>
+  </g>
+
+  <!-- 5: Normalization -->
+  <g transform="translate(1310,150)">
+    <rect class="box" width="260" height="100" fill="#D9CCE3" stroke="#7B4F9D" filter="url(#shadow)"/>
+    <text x="16" y="40" class="title" fill="#4a2a63">📊 Normalization</text>
+    <text x="16" y="70" class="sub">Torso lock, scaling, flip policy</text>
+  </g>
+
+  <!-- 6: Shooting Comparison -->
+  <g transform="translate(1600,150)">
+    <rect class="box" width="280" height="100" fill="#FAC08F" stroke="#E46C0A" filter="url(#shadow)"/>
+    <text x="16" y="40" class="title" fill="#7d3c07">📈 Shooting Comparison</text>
+    <text x="16" y="70" class="sub">Angles, timing, trajectories</text>
+  </g>
+
+  <!-- 7: OpenAI -->
+  <g transform="translate(1600,320)">
+    <rect class="box" width="280" height="100" fill="#BDD7EE" stroke="#2E75B6" filter="url(#shadow)"/>
+    <text x="16" y="40" class="title" fill="#1c4e7a">🤖 OpenAI API</text>
+    <text x="16" y="70" class="sub">LLM-generated feedback</text>
+  </g>
+
+  <!-- 8: Mobile Display -->
+  <g transform="translate(1880,320)">
+    <rect class="box" width="260" height="100" fill="#A9D18E" stroke="#548235" filter="url(#shadow)"/>
+    <text x="16" y="40" class="title" fill="#0b3d0b">📱 Mobile Display</text>
+    <text x="16" y="70" class="sub">Results & highlights</text>
+  </g>
+
+  <!-- Arrows -->
+  <line class="arrow" x1="280" y1="170" x2="340" y2="170"/>
+  <line class="arrow" x1="600" y1="170" x2="660" y2="110"/>
+  <line class="arrow" x1="600" y1="170" x2="660" y2="270"/>
+  <line class="arrow" x1="960" y1="110" x2="1020" y2="200"/>
+  <line class="arrow" x1="960" y1="290" x2="1020" y2="200"/>
+  <line class="arrow" x1="1280" y1="200" x2="1310" y2="200"/>
+  <line class="arrow" x1="1570" y1="200" x2="1600" y2="200"/>
+  <line class="arrow" x1="1740" y1="250" x2="1740" y2="320"/>
+  <line class="arrow" x1="1880" y1="370" x2="1880" y2="370" />
+  <line class="arrow" x1="1880" y1="370" x2="1880" y2="370" />
+
+  <!-- Arrow from OpenAI to Mobile Display -->
+  <line class="arrow" x1="1880" y1="370" x2="1880" y2="370" />
+  <line class="arrow" x1="1880" y1="370" x2="1880" y2="370" />
+  <line class="arrow" x1="1880" y1="370" x2="1880" y2="370" />
+  <line class="arrow" x1="1880" y1="370" x2="2140" y2="370" />
+</svg>
