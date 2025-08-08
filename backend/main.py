@@ -314,7 +314,7 @@ async def compare_with_player(
         print(results['image_path'])
         # print("LLM Response:", llm_response)
         return JSONResponse(content=results)
-
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Comparison failed: {str(e)}")
 
@@ -389,26 +389,23 @@ async def health_check():
 async def get_normalized_analysis_video(video_name: str):
     """Serve normalized analysis video files"""
     try:
-        # Look for the video in the results directory
-        video_path = os.path.join("data", "results", video_name)
+        # Look for the video in multiple possible locations
+        possible_paths = [
+            os.path.join("data", "visualized_video", video_name),
+            os.path.join("data", "results", video_name),
+            os.path.join("/tmp", video_name)
+        ]
         
-        if os.path.exists(video_path):
-            return FileResponse(
-                path=video_path,
-                media_type="video/mp4",
-                filename=video_name
-            )
-        else:
-            # Also check in /tmp directory
-            tmp_video_path = os.path.join("/tmp", video_name)
-            if os.path.exists(tmp_video_path):
+        for video_path in possible_paths:
+            if os.path.exists(video_path):
                 return FileResponse(
-                    path=tmp_video_path,
+                    path=video_path,
                     media_type="video/mp4",
                     filename=video_name
                 )
-            else:
-                raise HTTPException(status_code=404, detail="Video not found")
+        
+        # If not found in any location, return 404
+        raise HTTPException(status_code=404, detail=f"Video '{video_name}' not found in any expected location")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error serving video: {str(e)}")
 
