@@ -15,7 +15,6 @@ const DetailedAnalysisScreen = ({ detailedResult, selectedPlayer }) => {
   // const { detailedResult, selectedPlayer } = route.params || {};
   console.log("detailed: ", detailedResult);
  
-
   const renderPhaseTransitions = () => {
     const transitions = detailedResult.comparison_result.interpretation.phase_transition_analysis || {};
     return (
@@ -78,15 +77,6 @@ const DetailedAnalysisScreen = ({ detailedResult, selectedPlayer }) => {
         <View style={styles.llmContainer}>
           <Text style={styles.llmTitle}>Coach's advice</Text>
           <Text style={styles.llmText}>{detailedResult?.llm_response || 'No response available.'}</Text>
-        </View>
-
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.actionButtonText}>Back to Results</Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>

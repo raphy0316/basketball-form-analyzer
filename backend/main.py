@@ -14,7 +14,7 @@ import shutil
 from typing import Dict, List, Optional
 from pathlib import Path
 from backend.utils.save_file import save_json_to_directory
-
+from datetime import datetime
 # Add current directory to path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
@@ -28,6 +28,8 @@ import uvicorn
 from backend.routes.model_routes import model_router
 import backend.routes.llm_routes as llm_routes
 from shooting_comparison.shooting_comparison_pipeline import ShootingComparisonPipeline
+from shooting_comparison.enhanced_pipeline import EnhancedShootingComparisonPipeline
+from shooting_comparison.analysis_interpreter import AnalysisInterpreter
 
 # Import synthetic profiles
 try:
@@ -229,63 +231,75 @@ async def compare_with_player(
             user_result = pipeline.run_full_pipeline(video_path, overwrite_mode=True, use_existing_extraction=False)
         else:
             user_result = mock_analyze_video(video_path)
-        
         # Use comparison pipeline to compare user video with synthetic profile
-        comparison_pipeline = ShootingComparisonPipeline()
-        
+        # comparison_pipeline = ShootingComparisonPipeline()
+        enhanced_pipeline = EnhancedShootingComparisonPipeline()
         # print("Output directory for comparison:", output_dir)
         # Process user video data (this loads the JSON file created by the integrated pipeline)
-        user_processed_data = comparison_pipeline.process_video_data(video_path)
-        
+        # user_processed_data = comparison_pipeline.process_video_data(video_path)
+        synthetic_base_path = f"output_dir/{player_id.lower()}"
+        comparison_result = enhanced_pipeline.run_comparison(video_path, synthetic_base_path, save_results=True, include_dtw=True, create_visualizations=False, enable_shot_selection=False)
         # Process synthetic profile data (this loads the JSON file we just created)
         # The comparison pipeline expects the base name without the _normalized_output.json suffix
-        synthetic_base_path = f"output_dir/{player_id.lower()}"
-        # print(synthetic_base_path)
-        synthetic_processed_data = comparison_pipeline.process_video_data(synthetic_base_path)
+        # synthetic_base_path = f"output_dir/{player_id.lower()}"
+        # # print(synthetic_base_path)
+        # synthetic_processed_data = comparison_pipeline.process_video_data(synthetic_base_path)
 
-        if user_processed_data and synthetic_processed_data:
-            # Set up the comparison pipeline with the processed data
-            comparison_pipeline.video1_data = user_processed_data
-            comparison_pipeline.video2_data = synthetic_processed_data
-            comparison_pipeline.video1_path = video_path
-            comparison_pipeline.video2_path = synthetic_base_path
+        # if user_processed_data and synthetic_processed_data:
+        #     # Set up the comparison pipeline with the processed data
+        #     comparison_pipeline.video1_data = user_processed_data
+        #     comparison_pipeline.video2_data = synthetic_processed_data
+        #     comparison_pipeline.video1_path = video_path
+        #     comparison_pipeline.video2_path = synthetic_base_path
             
-            # Perform the comparison
-            comparison_result = comparison_pipeline.perform_comparison()
-            # print(comparison_result)
-            if comparison_result:
-                print("Comparison successful")
-            else:
-                # Fallback to mock comparison if pipeline comparison fails
-                comparison_result = mock_compare_with_player(user_result, player_id)
-                formatted_result = comparison_result
-        else:
-            # Fallback to mock comparison if data processing fails
-            comparison_result = mock_compare_with_player(user_result, player_id)
-            formatted_result = comparison_result
-        # Clean up temporary files
+        #     # Perform the comparison
+        #     comparison_result = comparison_pipeline.perform_comparison()
+        #     # print(comparison_result)
+        #     if comparison_result:
+        #         print("Comparison successful")
+        #     else:
+        #         # Fallback to mock comparison if pipeline comparison fails
+        #         comparison_result = mock_compare_with_player(user_result, player_id)
+        #         formatted_result = comparison_result
+        # else:
+        #     # Fallback to mock comparison if data processing fails
+        #     comparison_result = mock_compare_with_player(user_result, player_id)
+        #     formatted_result = comparison_result
+        # # Clean up temporary files
         os.unlink(video_path)
-        print("Comparison result debug")
-
+        # print("Comparison result debug")
         interpretation = comparison_result.get("interpretation", "No interpretation available")
-        comparison_pipeline._display_interpretation_results(interpretation)
+        # print(interpretation)
+        # comparison_pipeline._display_interpretation_results(interpretation)
         current_dir = os.path.dirname(os.path.abspath(__file__))
         output_dir = os.path.join(current_dir, "../shooting_comparison/results")
         output_dir = os.path.abspath(output_dir)
-        print("Output directory:", output_dir)
-        prompt_file_name = comparison_pipeline.prompt_file_name
-        print("Prompt file name:", prompt_file_name)
+        # print("Output directory:", output_dir)
+        interpreter = AnalysisInterpreter()
+        # print("Generating LLM prompt")
+        llm_prompt = interpreter.generate_llm_prompt(interpretation)
+        prompt_file_name = f"llm_prompt_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        # prompt_file_name = comparison_pipeline.prompt_file_name
+        # print("Prompt file name:", prompt_file_name)
         output_dir = os.path.join(output_dir, prompt_file_name)
-        print("Output directory with prompt file name:", output_dir)
+
+        try:
+            with open(output_dir, 'w', encoding='utf-8') as f:
+                f.write(llm_prompt)
+            print(f"    LLM prompt saved: {prompt_file_name}")
+        except Exception as e:
+            print(f"   Error saving LLM prompt: {e}")
+        # print("Output directory with prompt file name:", output_dir)
+
         llm_service = llm_routes.LLMService(output_dir)
         llm_response  = llm_service.generate_response()
         results= {}
         results["comparison_result"] = comparison_result
-        print(results["comparison_result"])
+        # print(results["comparison_result"])
         results["llm_response"] = llm_response
-        print("LLM Response:", llm_response)
+        # print("LLM Response:", llm_response)
         return JSONResponse(content=results)
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Comparison failed: {str(e)}")
 

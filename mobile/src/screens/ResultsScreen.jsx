@@ -47,7 +47,7 @@ const ResultsScreen = ({ navigation, route }) => {
   };
 
   const renderOverallScore = () => {
-    const overallScore = analysisResult?.overall_similarity || 0.5;
+    const overallScore = analysisResult?.comparison_result?.dtw_analysis?.overall_similarity || 50;
     const color = getSimilarityColor(overallScore);
     const label = getSimilarityLabel(overallScore);
     
@@ -56,7 +56,7 @@ const ResultsScreen = ({ navigation, route }) => {
         <Text style={styles.overallScoreTitle}>Overall Similarity</Text>
         <View style={styles.overallScoreCircle}>
           <Text style={[styles.overallScoreText, { color }]}>
-            {(overallScore * 100).toFixed(0)}%
+            {(overallScore).toFixed(0)}%
           </Text>
         </View>
         <Text style={[styles.overallScoreLabel, { color }]}>{label}</Text>
@@ -87,36 +87,29 @@ const ResultsScreen = ({ navigation, route }) => {
   };
 
   const renderPhaseBreakdown = () => {
-    const phaseScores = analysisResult?.phase_scores || {};
     
+    const phaseScores = analysisResult?.comparison_result?.dtw_analysis?.phase_similarities || {};
+  
     return (
       <View style={styles.phaseBreakdownContainer}>
         <Text style={styles.phaseBreakdownTitle}>Phase-by-Phase Analysis</Text>
-        {CONFIG.SYNTHETIC.PHASES.map(phase => {
-          const score = phaseScores[phase] || 0.5;
-          return renderPhaseScore(phase, score);
+        {Object.entries(phaseScores).map(([phase, data]) => {
+          const score = (data.similarity ?? 50) / 100; // Convert to 0-1 range for progress bar
+          return (
+            <View key={phase} style={styles.phaseScoreContainer}>
+              {renderPhaseScore(phase, score)}
+              {/* <Text style={styles.phaseDetail}>
+                Frames: {data.frame_count_1} vs {data.frame_count_2} | Features: {data.feature_count}
+              </Text>
+              <Text style={styles.phaseNote}>{data.note}</Text> */}
+            </View>
+          );
         })}
       </View>
     );
   };
 
-  const renderRecommendations = () => {
-    const recommendations = analysisResult?.recommendations || [];
-    
-    if (recommendations.length === 0) return null;
-    
-    return (
-      <View style={styles.recommendationsContainer}>
-        <Text style={styles.recommendationsTitle}>Recommendations</Text>
-        {recommendations.map((rec, index) => (
-          <View key={index} style={styles.recommendationItem}>
-            <Text style={styles.recommendationText}>• {rec}</Text>
-          </View>
-        ))}
-      </View>
-    );
-  };
-
+  
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -132,7 +125,6 @@ const ResultsScreen = ({ navigation, route }) => {
         {renderOverallScore()}
         {renderPlayerComparison()}
         {renderPhaseBreakdown()}
-        {renderRecommendations()}
 
         <View style={styles.actionsContainer}>
           <TouchableOpacity

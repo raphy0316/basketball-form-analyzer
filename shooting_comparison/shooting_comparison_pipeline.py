@@ -466,7 +466,17 @@ class ShootingComparisonPipeline:
             Filtered data or None if no frames match
         """
         if selected_shot is None:
-            return data  # Return all data
+             # Check if there are multiple shots - if so, use only the first shot
+            shots = data.get('metadata', {}).get('shots', {})
+            if isinstance(shots, list) and len(shots) > 1:
+                print("🔍 Multiple shots detected - using only the first shot instead of full integration")
+                selected_shot = "shot1"  # Force to use first shot
+            elif isinstance(shots, dict) and len(shots) > 1:
+                print("🔍 Multiple shots detected - using only the first shot instead of full integration") 
+                first_shot_key = list(shots.keys())[0]
+                selected_shot = first_shot_key  # Use first shot key
+            else:
+                return data  # Return all data if single shot or no shots
         
         frames = data.get('frames', [])
         shots = data.get('metadata', {}).get('shots', {})
@@ -512,9 +522,15 @@ class ShootingComparisonPipeline:
         range_count = 0
         
         for frame in frames:
-            frame_idx = frame.get('frame_idx', 0)
-            shot_id = frame.get('shot_id')
+            frame_idx = frame.get('frame_index', frame.get('frame_idx', 0))
             
+            # Get shot_id from frame data (basketball_shooting_analyzer.py uses 'shot' field)
+            shot_id = frame.get('shot')  # 먼저 'shot' 필드 확인
+            
+            # Fallback to 'shot_id' field if 'shot' is not available
+            if shot_id is None:
+                shot_id = frame.get('shot_id')
+
             # Include frame if it belongs to the selected shot
             # Handle both string and numeric shot IDs
             shot_matches = False

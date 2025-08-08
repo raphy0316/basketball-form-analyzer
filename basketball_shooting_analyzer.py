@@ -84,6 +84,12 @@ class BasketballShootingAnalyzer:
                 pattern = os.path.join(bakke_video_dir, ext)
                 videos.extend(glob.glob(pattern))
         
+        player_video_dir = os.path.join(self.video_dir, "PlayerProfile")
+        if os.path.exists(player_video_dir):
+            for ext in video_extensions:
+                pattern = os.path.join(player_video_dir, ext)
+                videos.extend(glob.glob(pattern))
+    
         # Check test folder
         test_video_dir = os.path.join(self.video_dir, "test")  # "Test" → "test"로 수정
         if os.path.exists(test_video_dir):

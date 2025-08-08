@@ -8,7 +8,7 @@ that can be sent to LLM for further analysis and coaching recommendations.
 import json
 from typing import Dict, List, Tuple, Optional
 import numpy as np
-from . import config
+from shooting_comparison import config
 
 class AnalysisInterpreter:
     """
@@ -1920,7 +1920,7 @@ class AnalysisInterpreter:
         # Add phase-by-phase analysis
         for phase, analysis in text_analysis.items():
             prompt += f"{phase.upper()} PHASE:\n"
-            
+            print("debug phase:", phase)  # Debugging line
             differences = analysis.get('differences', [])
             if differences:
                 prompt += "Key Differences:\n"

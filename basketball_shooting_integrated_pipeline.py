@@ -265,7 +265,8 @@ class BasketballShootingIntegratedPipeline:
         edgecase_videos = []
         bakke_videos = []
         test_videos = []
-        
+        player_videos = []
+
         for video in self.available_videos:
             if self.analyzer.standard_video_dir in video:
                 standard_videos.append(video)
@@ -275,7 +276,8 @@ class BasketballShootingIntegratedPipeline:
                 bakke_videos.append(video)
             elif 'test' in video.lower():
                 test_videos.append(video)
-        
+            elif 'PlayerProfile' in video:
+                player_videos.append(video)
         print("\n🎬 STEP 0: Select processing mode")
         print("=" * 50)
         print("Available processing options:")
@@ -284,6 +286,7 @@ class BasketballShootingIntegratedPipeline:
         print(f"[3] Process all EdgeCase videos ({len(edgecase_videos)} videos)")
         print(f"[4] Process all Bakke videos ({len(bakke_videos)} videos)")
         print(f"[5] Process all Test videos ({len(test_videos)} videos)")
+        print(f"[8] Process all Player Profile videos ({len(player_videos)} videos)")
         print(f"[6] Process all videos ({len(self.available_videos)} videos)")
         print("[7] Cancel")
         print("\n💡 Tip: You can select multiple options (e.g., '2,1,3' to process Standard → Multiple → EdgeCase)")
@@ -411,6 +414,13 @@ class BasketballShootingIntegratedPipeline:
                             print(f"✅ Added: Process all videos ({len(self.available_videos)} videos)")
                         else:
                             print("❌ No videos found.")
+                            continue
+                    elif selection == "8":
+                        if player_videos:
+                            selected_modes.append("player_all")
+                            print(f"✅ Added: Process all Player Profile videos ({len(player_videos)} videos)")
+                        else:
+                            print("❌ No Player Profile videos found.")
                             continue
                     else:
                         print(f"❌ Invalid choice: {selection}")
@@ -550,6 +560,8 @@ def main():
                 videos = [v for v in pipeline.available_videos if pipeline.analyzer.edgecase_video_dir in v]
             elif selection == "bakke_all":
                 videos = [v for v in pipeline.available_videos if 'Bakke' in v]
+            elif selection == "player_all":
+                videos = [v for v in pipeline.available_videos if 'PlayerProfile' in v]
             elif selection == "test_all":
                 test_dir = os.path.join(pipeline.video_dir, "test", "clips")
                 video_extensions = ['.mp4', '.mov', '.avi', '.mkv']
