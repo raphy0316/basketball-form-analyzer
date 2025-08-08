@@ -305,15 +305,27 @@ class SyntheticProfileGenerator:
         """Export synthetic profile in the format expected by the comparison pipeline"""
         os.makedirs(output_dir, exist_ok=True)
         
+        # Determine hand based on keypoint analysis (similar to the existing pipeline logic)
+        hand = self._determine_shooting_hand(frames)
+        
         # Convert frames to the format expected by the comparison pipeline
         json_frames = []
         for frame in frames:
+            # Convert ball position to normalized_ball format
+            ball_x, ball_y = frame.ball_position
+            normalized_ball = {
+                "center_x": ball_x,
+                "center_y": ball_y,
+                "width": 0.05,  # Default ball width in normalized coordinates
+                "height": 0.05  # Default ball height in normalized coordinates
+            }
+            
             json_frame = {
                 "frame_idx": frame.frame_index,
                 "phase": frame.phase.value,
                 "timestamp": frame.timestamp,
                 "keypoints": {},
-                "ball_position": list(frame.ball_position),
+                "normalized_ball": normalized_ball,
                 "ball_confidence": frame.ball_confidence,
                 "shot_id": 1,  # Synthetic profiles are single shots
                 "torso_length": 0.15,  # Default torso length
@@ -335,7 +347,7 @@ class SyntheticProfileGenerator:
             "total_frames": len(frames),
             "fps": 30,
             "resolution": self.resolution,
-            "hand": "right",  # Default to right hand
+            "hand": hand,  # Use detected hand instead of hardcoded "right"
             "shots": {
                 "shot1": {
                     "start_frame": 0,
@@ -361,6 +373,90 @@ class SyntheticProfileGenerator:
         
         print(f"✅ Exported for comparison pipeline: {output_file}")
         return output_file
+
+    def _determine_shooting_hand(self, frames: List[FrameData]) -> str:
+        """
+        Determine shooting hand using the same logic as the existing basketball_shooting_analyzer.
+        This replicates the select_primary_hand_from_original_data method logic.
+        """
+        left_hand_stats = {"close_frames": 0, "total_detected": 0, "wrist_detected": 0, "elbow_detected": 0}
+        right_hand_stats = {"close_frames": 0, "total_detected": 0, "wrist_detected": 0, "elbow_detected": 0}
+        
+        # Use the same threshold as the original analyzer
+        original_threshold = 0.3 * 2.0  # Roughly 2x the normalized threshold
+        
+        # Stage 1: Collect proximity and detection statistics
+        for frame in frames:
+            keypoints = frame.keypoints
+            
+            # Get ball position
+            ball_x, ball_y = frame.ball_position
+            
+            # Check left hand
+            left_wrist = keypoints.get('left_wrist')
+            left_elbow = keypoints.get('left_elbow')
+            if left_wrist and hasattr(left_wrist, 'x') and hasattr(left_wrist, 'y'):
+                left_wrist_x = left_wrist.x
+                left_wrist_y = left_wrist.y
+                left_distance = ((ball_x - left_wrist_x)**2 + (ball_y - left_wrist_y)**2)**0.5
+                
+                if left_distance < original_threshold:
+                    left_hand_stats["close_frames"] += 1
+                    left_hand_stats["wrist_detected"] += 1
+                    if left_elbow and hasattr(left_elbow, 'x') and hasattr(left_elbow, 'y'):
+                        left_hand_stats["elbow_detected"] += 1
+                left_hand_stats["total_detected"] += 1
+            
+            # Check right hand
+            right_wrist = keypoints.get('right_wrist')
+            right_elbow = keypoints.get('right_elbow')
+            if right_wrist and hasattr(right_wrist, 'x') and hasattr(right_wrist, 'y'):
+                right_wrist_x = right_wrist.x
+                right_wrist_y = right_wrist.y
+                right_distance = ((ball_x - right_wrist_x)**2 + (ball_y - right_wrist_y)**2)**0.5
+                
+                if right_distance < original_threshold:
+                    right_hand_stats["close_frames"] += 1
+                    right_hand_stats["wrist_detected"] += 1
+                    if right_elbow and hasattr(right_elbow, 'x') and hasattr(right_elbow, 'y'):
+                        right_hand_stats["elbow_detected"] += 1
+                right_hand_stats["total_detected"] += 1
+        
+        # Calculate proximity ratios
+        left_proximity_ratio = 0.0
+        right_proximity_ratio = 0.0
+        
+        if left_hand_stats["total_detected"] > 0:
+            left_proximity_ratio = left_hand_stats["close_frames"] / left_hand_stats["total_detected"]
+        if right_hand_stats["total_detected"] > 0:
+            right_proximity_ratio = right_hand_stats["close_frames"] / right_hand_stats["total_detected"]
+        
+        # Calculate detection stability scores
+        left_stability_score = 0.0
+        right_stability_score = 0.0
+        
+        if left_hand_stats["close_frames"] > 0:
+            wrist_ratio = left_hand_stats["wrist_detected"] / left_hand_stats["close_frames"]
+            elbow_ratio = left_hand_stats["elbow_detected"] / left_hand_stats["close_frames"]
+            left_stability_score = (wrist_ratio + elbow_ratio) / 2
+        
+        if right_hand_stats["close_frames"] > 0:
+            wrist_ratio = right_hand_stats["wrist_detected"] / right_hand_stats["close_frames"]
+            elbow_ratio = right_hand_stats["elbow_detected"] / right_hand_stats["close_frames"]
+            right_stability_score = (wrist_ratio + elbow_ratio) / 2
+        
+        # Stage 2: Use the same decision logic as the original analyzer
+        proximity_difference = abs(left_proximity_ratio - right_proximity_ratio)
+        proximity_threshold = 0.2  # 20% difference threshold
+        
+        if proximity_difference > proximity_threshold:
+            # Significant difference in proximity - use proximity as primary criterion
+            selected_hand = "left" if left_proximity_ratio > right_proximity_ratio else "right"
+        else:
+            # Similar proximity - use detection stability as secondary criterion
+            selected_hand = "left" if left_stability_score > right_stability_score else "right"
+        
+        return selected_hand
 
 # --- Player Style Definitions ---
 def create_lebron_style():
