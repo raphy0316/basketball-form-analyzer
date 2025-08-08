@@ -5,6 +5,10 @@ Extends existing AnalysisInterpreter with DTW analysis capabilities.
 Works by adding DTW insights to existing interpretation results.
 """
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 try:
     from .analysis_interpreter import AnalysisInterpreter
     from .dtw_analysis.dtw_analyzer import DTWAnalyzer

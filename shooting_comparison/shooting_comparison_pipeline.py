@@ -465,7 +465,17 @@ class ShootingComparisonPipeline:
             Filtered data or None if no frames match
         """
         if selected_shot is None:
-            return data  # Return all data
+            # Check if there are multiple shots - if so, use only the first shot
+            shots = data.get('metadata', {}).get('shots', {})
+            if isinstance(shots, list) and len(shots) > 1:
+                print("🔍 Multiple shots detected - using only the first shot instead of full integration")
+                selected_shot = "shot1"  # Force to use first shot
+            elif isinstance(shots, dict) and len(shots) > 1:
+                print("🔍 Multiple shots detected - using only the first shot instead of full integration") 
+                first_shot_key = list(shots.keys())[0]
+                selected_shot = first_shot_key  # Use first shot key
+            else:
+                return data  # Return all data if single shot or no shots
         
         frames = data.get('frames', [])
         shots = data.get('metadata', {}).get('shots', {})

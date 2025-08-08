@@ -11,6 +11,10 @@ from datetime import datetime
 from typing import Dict, Optional, Tuple
 import numpy as np
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 try:
     # Try relative imports first (when used as package)
     from .shooting_comparison_pipeline import ShootingComparisonPipeline
@@ -19,7 +23,7 @@ try:
 except ImportError:
     # Fallback to absolute imports (when run directly)
     from shooting_comparison_pipeline import ShootingComparisonPipeline
-    from analysis_interpreter import AnalysisInterpreter
+    from analysis_interpreter import AnalysisInterpreter  
     from dtw_interpreter_extension import DTWInterpreterExtension
 
 

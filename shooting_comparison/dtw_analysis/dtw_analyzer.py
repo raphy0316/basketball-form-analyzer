@@ -4,6 +4,10 @@ DTW Analyzer
 Main DTW analysis coordinator that integrates with existing comparison system.
 """
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 try:
     from .dtw_feature_extractor import DTWFeatureExtractor
     from .dtw_similarity_calculator import DTWSimilarityCalculator
