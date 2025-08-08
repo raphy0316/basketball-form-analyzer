@@ -301,10 +301,20 @@ class SyntheticProfileGenerator:
         print(f"✅ Exported: {output_file}")
         return output_file
 
-    def export_for_comparison_pipeline(self, player_name: str, frames: List[FrameData], output_dir="/tmp"):
+    def export_for_comparison_pipeline(self, player_name: str, frames: List[FrameData]):
         """Export synthetic profile in the format expected by the comparison pipeline"""
-        os.makedirs(output_dir, exist_ok=True)
-        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        output_dir = os.path.join(current_dir, "../data/results")
+        output_dir = os.path.abspath(output_dir)
+      
+        if output_dir is None:
+            os.makedirs(output_dir, exist_ok=True)
+            base_name = f"{player_name.lower()}_synthetic_profile"
+            output_dir = os.path.join(output_dir, f"{base_name}_normalized_output.json")
+        else:
+            print("Using provided output path:",output_dir)
+            os.makedirs(output_dir, exist_ok=True)  # Ensure target directory exists
+        print("Exporting for comparison pipeline...")
         # Convert frames to the format expected by the comparison pipeline
         json_frames = []
         for frame in frames:
@@ -328,7 +338,7 @@ class SyntheticProfileGenerator:
                 }
             
             json_frames.append(json_frame)
-        
+        print("✅ Converted frames to comparison pipeline format")
         # Create metadata in the format expected by the comparison pipeline
         metadata = {
             "video_path": f"synthetic_{player_name}",
