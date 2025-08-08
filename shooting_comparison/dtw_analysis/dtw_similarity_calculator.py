@@ -9,6 +9,14 @@ from typing import Dict, List, Tuple, Optional
 import warnings
 warnings.filterwarnings("ignore")
 
+try:
+    from scipy import signal
+    from scipy.spatial.distance import euclidean
+    SCIPY_AVAILABLE = True
+except ImportError:
+    SCIPY_AVAILABLE = False
+    print("Warning: scipy not available, using fallback implementations for global motion analysis")
+
 # Import thresholds from config
 try:
     import sys
@@ -1627,6 +1635,291 @@ class DTWSimilarityCalculator:
             # Poor similarity: 10-50%
             excess_diff = min(ratio_diff - high_thresh, high_thresh)  # Cap excess difference
             return max(10, 50 - (excess_diff / high_thresh) * 40)
+
+    def compute_global_score(self, user_data: Dict, ref_data: Dict, config: Dict = None) -> Dict:
+        """
+        전체 구간 글로벌 모션 유사도 계산.
+        기존 feature-based similarity를 대체하는 개선된 방법.
+        
+        Args:
+            user_data: 사용자 영상 데이터 (wrist_y, com_y, fps, phases 포함)
+            ref_data: 참조 영상 데이터 (wrist_y, com_y, fps, phases 포함)
+            config: 설정 파라미터 (weights 등)
+            
+        Returns:
+            글로벌 유사도 점수와 세부 분석 결과
+        """
+        if config is None:
+            config = {
+                'w_dtw_wrist': 0.25,
+                'w_dtw_com': 0.20, 
+                'w_Tvec': 0.20,
+                'w_timing': 0.20,
+                'lambda_boundary': 0.15
+            }
+        
+        print("🌐 Computing global motion similarity score...")
+        
+        try:
+            # 1. 데이터 smoothing
+            smoothed_user = self._smooth_motion_data(user_data)
+            smoothed_ref = self._smooth_motion_data(ref_data)
+            
+            # 2. Phase Timing Vector 계산
+            timing_score = self._calculate_phase_timing_similarity(user_data, ref_data)
+            
+            # 3. Timing Relationship Metrics
+            timing_metrics_score = self._calculate_timing_relationship_metrics(user_data, ref_data)
+            
+            # 4. Global DTW 계산
+            dtw_wrist_score = self._calculate_global_dtw(smoothed_user.get('wrist_y', []), 
+                                                       smoothed_ref.get('wrist_y', []))
+            dtw_com_score = self._calculate_global_dtw(smoothed_user.get('com_y', []), 
+                                                     smoothed_ref.get('com_y', []))
+            
+            # 5. Boundary Smoothness Penalty
+            boundary_penalty = self._calculate_boundary_penalty(user_data, ref_data)
+            
+            # 6. 최종 글로벌 점수 계산
+            global_score = (
+                config['w_dtw_wrist'] * dtw_wrist_score +
+                config['w_dtw_com'] * dtw_com_score +
+                config['w_Tvec'] * timing_score +
+                config['w_timing'] * timing_metrics_score -
+                config['lambda_boundary'] * boundary_penalty
+            )
+            
+            # 점수 정규화 (0-100)
+            global_score = max(10.0, min(100.0, global_score))
+            
+            result = {
+                'global_score': float(global_score),
+                'component_scores': {
+                    'dtw_wrist_similarity': float(dtw_wrist_score),
+                    'dtw_com_similarity': float(dtw_com_score),
+                    'phase_timing_similarity': float(timing_score),
+                    'timing_metrics_similarity': float(timing_metrics_score),
+                    'boundary_smoothness_penalty': float(boundary_penalty)
+                },
+                'weights': config,
+                'analysis_method': 'global_motion_similarity'
+            }
+            
+            print(f"   ✅ Global motion similarity: {global_score:.1f}%")
+            print(f"      • DTW Wrist: {dtw_wrist_score:.1f}%")
+            print(f"      • DTW COM: {dtw_com_score:.1f}%") 
+            print(f"      • Phase Timing: {timing_score:.1f}%")
+            print(f"      • Timing Metrics: {timing_metrics_score:.1f}%")
+            print(f"      • Boundary Penalty: {boundary_penalty:.1f}")
+            
+            return result
+            
+        except Exception as e:
+            print(f"   ❌ Error in global score calculation: {e}")
+            return {
+                'global_score': 0.0,
+                'component_scores': {},
+                'error': str(e),
+                'analysis_method': 'global_motion_similarity'
+            }
+    
+    def _smooth_motion_data(self, data: Dict) -> Dict:
+        """모션 데이터 스무딩 (Savitzky-Golay 또는 Butterworth filter)"""
+        smoothed = {}
+        
+        for key in ['wrist_y', 'com_y']:
+            if key in data and data[key]:
+                series = np.array(data[key])
+                if len(series) > 5:
+                    if SCIPY_AVAILABLE:
+                        # Savitzky-Golay filter
+                        window_length = min(9, len(series) if len(series) % 2 == 1 else len(series) - 1)
+                        if window_length >= 3:
+                            smoothed[key] = signal.savgol_filter(series, window_length, 2).tolist()
+                        else:
+                            smoothed[key] = series.tolist()
+                    else:
+                        # 간단한 moving average fallback
+                        window = 3
+                        smoothed_series = []
+                        for i in range(len(series)):
+                            start = max(0, i - window//2)
+                            end = min(len(series), i + window//2 + 1)
+                            smoothed_series.append(np.mean(series[start:end]))
+                        smoothed[key] = smoothed_series
+                else:
+                    smoothed[key] = data[key]
+            else:
+                smoothed[key] = []
+        
+        return smoothed
+    
+    def _calculate_phase_timing_similarity(self, user_data: Dict, ref_data: Dict) -> float:
+        """Phase Timing Vector 비교"""
+        try:
+            user_phases = user_data.get('phases', {})
+            ref_phases = ref_data.get('phases', {})
+            
+            if not user_phases or not ref_phases:
+                return 50.0  # 기본값
+            
+            # 전체 duration 계산
+            user_total = sum([phase.get('duration', 0) for phase in user_phases.values()])
+            ref_total = sum([phase.get('duration', 0) for phase in ref_phases.values()])
+            
+            if user_total == 0 or ref_total == 0:
+                return 50.0
+            
+            # Phase ratio vectors 계산
+            user_ratios = []
+            ref_ratios = []
+            
+            phase_names = ['prep', 'load', 'rise', 'release', 'ft']
+            for phase_name in phase_names:
+                user_duration = user_phases.get(phase_name, {}).get('duration', 0)
+                ref_duration = ref_phases.get(phase_name, {}).get('duration', 0)
+                
+                user_ratios.append(user_duration / user_total)
+                ref_ratios.append(ref_duration / ref_total)
+            
+            # L1 distance 계산
+            l1_distance = sum(abs(u - r) for u, r in zip(user_ratios, ref_ratios))
+            
+            # 유사도로 변환 (0-100)
+            similarity = max(0, 100 - (l1_distance * 200))  # L1 distance를 similarity로 변환
+            
+            return float(similarity)
+            
+        except Exception as e:
+            print(f"      Warning: Phase timing calculation error: {e}")
+            return 50.0
+    
+    def _calculate_timing_relationship_metrics(self, user_data: Dict, ref_data: Dict) -> float:
+        """타이밍 관계 메트릭 비교"""
+        try:
+            similarities = []
+            
+            # Peak COM offset 비교
+            user_com_y = user_data.get('com_y', [])
+            ref_com_y = ref_data.get('com_y', [])
+            
+            if user_com_y and ref_com_y:
+                user_peak_idx = np.argmax(user_com_y) if len(user_com_y) > 0 else 0
+                ref_peak_idx = np.argmax(ref_com_y) if len(ref_com_y) > 0 else 0
+                
+                user_release_frame = user_data.get('phases', {}).get('release', {}).get('start', len(user_com_y))
+                ref_release_frame = ref_data.get('phases', {}).get('release', {}).get('start', len(ref_com_y))
+                
+                if len(user_com_y) > 0 and len(ref_com_y) > 0:
+                    user_offset = (user_release_frame - user_peak_idx) / len(user_com_y)
+                    ref_offset = (ref_release_frame - ref_peak_idx) / len(ref_com_y)
+                    
+                    offset_diff = abs(user_offset - ref_offset)
+                    offset_sim = max(0, 100 - (offset_diff * 200))
+                    similarities.append(offset_sim)
+            
+            # Rise:Prep ratio 비교
+            user_phases = user_data.get('phases', {})
+            ref_phases = ref_data.get('phases', {})
+            
+            if user_phases and ref_phases:
+                user_rise_dur = user_phases.get('rise', {}).get('duration', 1)
+                user_prep_dur = user_phases.get('prep', {}).get('duration', 1)
+                ref_rise_dur = ref_phases.get('rise', {}).get('duration', 1)
+                ref_prep_dur = ref_phases.get('prep', {}).get('duration', 1)
+                
+                if user_prep_dur > 0 and ref_prep_dur > 0:
+                    user_ratio = user_rise_dur / user_prep_dur
+                    ref_ratio = ref_rise_dur / ref_prep_dur
+                    
+                    ratio_diff = abs(user_ratio - ref_ratio) / max(user_ratio, ref_ratio)
+                    ratio_sim = max(0, 100 - (ratio_diff * 100))
+                    similarities.append(ratio_sim)
+            
+            return np.mean(similarities) if similarities else 50.0
+            
+        except Exception as e:
+            print(f"      Warning: Timing relationship calculation error: {e}")
+            return 50.0
+    
+    def _calculate_global_dtw(self, series1: List[float], series2: List[float]) -> float:
+        """글로벌 DTW 유사도 계산"""
+        if not series1 or not series2 or len(series1) < 2 or len(series2) < 2:
+            return 0.0
+        
+        try:
+            if self.dtw_available:
+                distance = dtw.distance(series1, series2, window=int(len(series1) * 0.3))
+            else:
+                distance = self._fallback_dtw_distance(series1, series2)
+            
+            # 거리를 유사도로 변환
+            max_possible_distance = max(max(series1) - min(series1), max(series2) - min(series2))
+            if max_possible_distance > 0:
+                normalized_distance = distance / max_possible_distance
+                similarity = max(0, 100 - (normalized_distance * 100))
+            else:
+                similarity = 100.0
+            
+            return float(similarity)
+            
+        except Exception as e:
+            print(f"      Warning: Global DTW calculation error: {e}")
+            return 0.0
+    
+    def _calculate_boundary_penalty(self, user_data: Dict, ref_data: Dict) -> float:
+        """경계면 부드러움 패널티 계산"""
+        try:
+            penalty = 0.0
+            
+            # Phase boundary에서의 급격한 변화를 체크
+            user_phases = user_data.get('phases', {})
+            ref_phases = ref_data.get('phases', {})
+            
+            if not user_phases or not ref_phases:
+                return 0.0
+            
+            # 간단한 phase 경계 부드러움 체크
+            phase_transitions = [('prep', 'load'), ('load', 'rise'), ('rise', 'release'), ('release', 'ft')]
+            
+            for phase1, phase2 in phase_transitions:
+                if phase1 in user_phases and phase2 in user_phases:
+                    # 경계에서의 변화량 체크 (예시)
+                    transition_smoothness = self._check_transition_smoothness(
+                        user_data, user_phases[phase1], user_phases[phase2]
+                    )
+                    if transition_smoothness < 0.5:  # 급격한 변화가 있다면
+                        penalty += 10.0
+            
+            return min(50.0, penalty)  # 최대 50점 패널티
+            
+        except Exception as e:
+            print(f"      Warning: Boundary penalty calculation error: {e}")
+            return 0.0
+    
+    def _check_transition_smoothness(self, data: Dict, phase1: Dict, phase2: Dict) -> float:
+        """Phase 전환 부드러움 체크"""
+        try:
+            wrist_y = data.get('wrist_y', [])
+            if not wrist_y:
+                return 1.0
+            
+            phase1_end = phase1.get('end', 0)
+            phase2_start = phase2.get('start', 0)
+            
+            if phase1_end < len(wrist_y) and phase2_start < len(wrist_y):
+                # 간단한 기울기 변화량 체크
+                if phase1_end > 0 and phase2_start < len(wrist_y) - 1:
+                    slope1 = wrist_y[phase1_end] - wrist_y[phase1_end - 1]
+                    slope2 = wrist_y[phase2_start + 1] - wrist_y[phase2_start]
+                    
+                    slope_diff = abs(slope1 - slope2)
+                    return max(0, 1 - slope_diff)  # 기울기 차이가 클수록 부드러움 감소
+            
+            return 1.0
+            
+        except Exception as e:
+            return 1.0
 
     def _calculate_single_frame_similarity(self, features1: Dict, features2: Dict) -> float:
         """Calculate similarity for single frame comparison (any phase with few frames)"""

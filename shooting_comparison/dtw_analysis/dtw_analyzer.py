@@ -72,32 +72,26 @@ class DTWAnalyzer:
         if 'error' in features2:
             return {'error': f'Video 2 feature extraction failed: {features2["error"]}'}
         
-        # Calculate similarities for each feature category
-        print("Calculating feature similarities...")
-        feature_similarities = {}
-        detailed_analyses = {}
+        # Calculate global motion similarity (대체된 feature similarity 계산)
+        print("Calculating global motion similarity...")
         
-        feature_categories = [
-            'ball_wrist_trajectory', 'shooting_arm_kinematics', 
-            'lower_body_stability', 'phase_timing_patterns', 'body_alignment'
-        ]
+        # 글로벌 모션 유사도를 위한 데이터 준비
+        user_motion_data = self._prepare_global_motion_data(video1_data, features1)
+        ref_motion_data = self._prepare_global_motion_data(video2_data, features2)
         
-        for feature_name in feature_categories:
-            if feature_name in features1 and feature_name in features2:
-                print(f"   Analyzing {feature_name}...")
-                
-                similarity_result = self.similarity_calculator.calculate_feature_similarity(
-                    features1[feature_name], features2[feature_name], feature_name
-                )
-                
-                feature_similarities[feature_name] = similarity_result['overall_similarity']
-                detailed_analyses[feature_name] = similarity_result
-                
-                print(f"     {feature_name}: {similarity_result['overall_similarity']:.1f}%")
-            else:
-                print(f"     Warning: {feature_name}: Missing data")
-                feature_similarities[feature_name] = 0.0
-                detailed_analyses[feature_name] = {'error': 'Missing feature data'}
+        # 글로벌 점수 계산 
+        global_result = self.similarity_calculator.compute_global_score(user_motion_data, ref_motion_data)
+        
+        # 기존 구조와의 호환성을 위해 결과 매핑
+        global_similarity = global_result.get('global_score', 0.0)
+        
+        # 기존 feature_similarities 구조 유지 (하위호환성)
+        feature_similarities = {
+            'global_motion_similarity': global_similarity
+        }
+        detailed_analyses = {
+            'global_motion_analysis': global_result
+        }
         
         # Calculate phase-specific similarities
         print("Calculating phase-specific similarities...")
@@ -455,6 +449,65 @@ class DTWAnalyzer:
         
         return overall_similarity
     
+    def _prepare_global_motion_data(self, video_data: Dict, features: Dict) -> Dict:
+        """글로벌 모션 유사도 계산을 위한 데이터 준비"""
+        try:
+            frames = video_data.get('frames', [])
+            
+            # wrist_y와 com_y 추출
+            wrist_y = []
+            com_y = []
+            
+            for frame in frames:
+                # wrist 좌표 추출 (shooting hand)
+                keypoints = frame.get('keypoints', [])
+                if keypoints and len(keypoints) > 10:  # 손목은 일반적으로 인덱스 9, 10
+                    wrist_y.append(keypoints[10][1])  # 오른손 손목 Y 좌표
+                else:
+                    wrist_y.append(0.0)
+                
+                # center of mass Y 계산 (간단한 approximation)
+                if keypoints and len(keypoints) > 0:
+                    valid_points = [kp[1] for kp in keypoints if len(kp) > 1]
+                    if valid_points:
+                        com_y.append(sum(valid_points) / len(valid_points))
+                    else:
+                        com_y.append(0.0)
+                else:
+                    com_y.append(0.0)
+            
+            # Phase 정보 준비
+            phases = {}
+            phase_frames = self._organize_frames_by_phase(frames)
+            
+            for phase_name, phase_frame_list in phase_frames.items():
+                if phase_frame_list:
+                    start_idx = min([f.get('frame_index', 0) for f in phase_frame_list])
+                    end_idx = max([f.get('frame_index', 0) for f in phase_frame_list])
+                    duration = (end_idx - start_idx + 1) / 30.0  # 30fps 가정
+                    
+                    phases[phase_name.lower()] = {
+                        'start': start_idx,
+                        'end': end_idx,
+                        'duration': duration
+                    }
+            
+            return {
+                'wrist_y': wrist_y,
+                'com_y': com_y,
+                'fps': 30,  # 기본값
+                'phases': phases
+            }
+            
+        except Exception as e:
+            print(f"   Warning: Error preparing global motion data: {e}")
+            return {
+                'wrist_y': [],
+                'com_y': [],
+                'fps': 30,
+                'phases': {}
+            }
+    
     def _organize_frames_by_phase(self, frames: list) -> Dict[str, list]:
         """Organize frames by shooting phase"""
         phase_frames = {
@@ -503,17 +556,8 @@ class DTWAnalyzer:
     def _calculate_overall_similarity(self, feature_similarities: Dict, phase_similarities: Dict) -> float:
         """Calculate overall similarity from feature and phase similarities"""
         
-        # Calculate weighted feature similarity
-        feature_similarity = 0.0
-        total_feature_weight = 0.0
-        
-        for feature_name, similarity in feature_similarities.items():
-            weight = self.feature_weights.get(feature_name, 0.1)
-            feature_similarity += similarity * weight
-            total_feature_weight += weight
-        
-        if total_feature_weight > 0:
-            feature_similarity /= total_feature_weight
+        # 글로벌 모션 유사도 가져오기 (기존 feature similarity를 대체)
+        global_motion_similarity = feature_similarities.get('global_motion_similarity', 0.0)
         
         # Calculate weighted phase similarity
         phase_similarity = 0.0
@@ -552,20 +596,16 @@ class DTWAnalyzer:
                 return max(10, similarity - 50)  # Drastically reduce extremely low similarity
         
         # Apply differentiation enhancement
-        feature_similarity_enhanced = enhance_differentiation(feature_similarity)
+        global_similarity_enhanced = enhance_differentiation(global_motion_similarity)
         phase_similarity_enhanced = enhance_differentiation(phase_similarity)
         
-        # Combine feature and phase similarities with weights
-        # Feature similarity gets more weight (70%), phase similarity gets less (30%)
-        overall_similarity = (feature_similarity_enhanced * 0.7) + (phase_similarity_enhanced * 0.3)
+        # 글로벌 모션 점수와 페이즈 점수 결합 (글로벌 65%, 페이즈 35%)
+        overall_similarity = (global_similarity_enhanced * 0.65) + (phase_similarity_enhanced * 0.35)
         
         # Ensure reasonable bounds
         overall_similarity = max(10.0, min(100.0, overall_similarity))
         
-        print(f"   📊 Feature similarities:")
-        for feature_name, similarity in feature_similarities.items():
-            weight = self.feature_weights.get(feature_name, 0.1)
-            print(f"      • {feature_name}: {similarity:.1f} (weight: {weight:.2f})")
+        print(f"   📊 Global Motion Similarity: {global_motion_similarity:.1f}")
         
         print(f"   📊 Phase similarities:")
         for phase_name, phase_data in phase_similarities.items():
@@ -577,9 +617,10 @@ class DTWAnalyzer:
             weight = self.phase_weights.get(phase_name, 0.1)
             print(f"      • {phase_name}: {similarity:.1f} (weight: {weight:.2f})")
         
-        print(f"   🎯 Feature similarity: {feature_similarity:.1f}")
-        print(f"   🎯 Phase similarity: {phase_similarity:.1f}")
-        print(f"   🎯 Overall similarity: {overall_similarity:.1f}")
+        print(f"   🎯 Overall calculation:")
+        print(f"      • Global motion: {global_motion_similarity:.1f} → Enhanced: {global_similarity_enhanced:.1f}")
+        print(f"      • Phase similarity: {phase_similarity:.1f} → Enhanced: {phase_similarity_enhanced:.1f}")
+        print(f"      • Final overall: {overall_similarity:.1f} (65% global + 35% phase)")
         
         return overall_similarity
     
