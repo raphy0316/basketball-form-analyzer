@@ -8,9 +8,10 @@ It extracts key information from Release phase including arm angles, ball positi
 import numpy as np
 from typing import Dict, List, Tuple, Optional, Union
 import json
+from .safe_coordinate_mixin import SafeCoordinateMixin
 
 
-class ReleaseAnalyzer:
+class ReleaseAnalyzer(SafeCoordinateMixin):
     """
     Analyzer for release phase information.
     
@@ -98,13 +99,19 @@ class ReleaseAnalyzer:
                 self._has_valid_coordinates(right_shoulder, right_elbow, right_wrist) and
                 self._has_valid_coordinates(left_hip, right_hip)):
                 
-                # Calculate hip center for vertical reference
-                hip_center_x = (left_hip.get('x', 0) + right_hip.get('x', 0)) / 2
-                hip_center_y = (left_hip.get('y', 0) + right_hip.get('y', 0)) / 2
+                # Safe hip center calculation for vertical reference
+                hip_center = self._safe_hip_center(pose)
+                if hip_center is None:
+                    continue  # Skip frame without valid hip data
+                hip_center_x = hip_center['x']
+                hip_center_y = hip_center['y']
                 
-                # Calculate shoulder center for torso reference
-                shoulder_center_x = (left_shoulder.get('x', 0) + right_shoulder.get('x', 0)) / 2
-                shoulder_center_y = (left_shoulder.get('y', 0) + right_shoulder.get('y', 0)) / 2
+                # Safe shoulder center calculation for torso reference
+                shoulder_center = self._safe_shoulder_center(pose)
+                if shoulder_center is None:
+                    continue  # Skip frame without valid shoulder data
+                shoulder_center_x = shoulder_center['x']
+                shoulder_center_y = shoulder_center['y']
                 
                 # Analyze left arm
                 left_arm_angles = self._calculate_arm_angles(
@@ -236,19 +243,26 @@ class ReleaseAnalyzer:
             left_eye = pose.get('left_eye', {})
             right_eye = pose.get('right_eye', {})
             
-            if (self._has_valid_coordinates(left_eye, right_eye) and
-                'center_x' in ball and 'center_y' in ball):
+            # Safe eye center calculation
+            if (self._has_valid_coordinates(left_eye, right_eye)):
+                left_eye_x, left_eye_y = left_eye.get('x'), left_eye.get('y') 
+                right_eye_x, right_eye_y = right_eye.get('x'), right_eye.get('y')
                 
-                # Calculate eye center
-                eye_center_x = (left_eye.get('x', 0) + right_eye.get('x', 0)) / 2
-                eye_center_y = (left_eye.get('y', 0) + right_eye.get('y', 0)) / 2
-                
-                # Calculate ball position relative to eyes
-                ball_x = ball.get('center_x', 0)
-                ball_y = ball.get('center_y', 0)
-                
-                relative_x = ball_x - eye_center_x
-                relative_y = ball_y - eye_center_y
+                if all(coord is not None for coord in [left_eye_x, left_eye_y, right_eye_x, right_eye_y]):
+                    # Safe eye center calculation (though coordinates already validated above)
+                    eye_center_x = (left_eye_x + right_eye_x) / 2
+                    eye_center_y = (left_eye_y + right_eye_y) / 2
+                    
+                    # Safe ball coordinate extraction (critical frame handling)
+                    ball_x = self._safe_ball_coordinate(release_frames, i, 'center_x', 'release_point')
+                    ball_y = self._safe_ball_coordinate(release_frames, i, 'center_y', 'release_point')
+                    
+                    if ball_x is not None and ball_y is not None:
+                        relative_x = ball_x - eye_center_x
+                        relative_y = ball_y - eye_center_y
+                    else:
+                        # Skip this frame if ball data is not recoverable
+                        continue
                 
                 ball_positions.append({
                     'relative_x': relative_x,
@@ -261,28 +275,26 @@ class ReleaseAnalyzer:
                 
                 # Calculate ball vector (velocity) if we have next frame
                 if i < len(release_frames) - 1:
-                    next_frame = release_frames[i + 1]
-                    next_ball = next_frame.get('normalized_ball', {})
+                    # Safe next ball coordinate extraction
+                    next_ball_x = self._safe_ball_coordinate(release_frames, i + 1, 'center_x', 'release_point')
+                    next_ball_y = self._safe_ball_coordinate(release_frames, i + 1, 'center_y', 'release_point')
                     
-                    if 'center_x' in next_ball and 'center_y' in next_ball:
-                        next_ball_x = next_ball.get('center_x', 0)
-                        next_ball_y = next_ball.get('center_y', 0)
-                        
-                        # Calculate velocity vector
-                        velocity_x = next_ball_x - ball_x
-                        velocity_y = next_ball_y - ball_y
-                        
-                        # Calculate vector magnitude and angle
-                        magnitude = np.sqrt(velocity_x**2 + velocity_y**2)
-                        angle = np.degrees(np.arctan2(velocity_y, velocity_x))
-                        
-                        ball_vectors.append({
-                            'velocity_x': velocity_x,
-                            'velocity_y': velocity_y,
-                            'magnitude': magnitude,
-                            'angle': angle,
-                            'frame_index': i
-                        })
+                    if next_ball_x is not None and next_ball_y is not None:
+                        # Safe velocity calculation
+                        velocity_x = self._safe_coordinate_diff(next_ball_x, ball_x, 0)
+                        velocity_y = self._safe_coordinate_diff(next_ball_y, ball_y, 0)
+                    
+                    # Calculate vector magnitude and angle
+                    magnitude = np.sqrt(velocity_x**2 + velocity_y**2)
+                    angle = np.degrees(np.arctan2(velocity_y, velocity_x))
+                    
+                    ball_vectors.append({
+                        'velocity_x': velocity_x,
+                        'velocity_y': velocity_y,
+                        'magnitude': magnitude,
+                        'angle': angle,
+                        'frame_index': i
+                    })
         
         result = {}
         
@@ -444,13 +456,19 @@ class ReleaseAnalyzer:
         if not self._has_valid_coordinates(left_hip, right_hip, left_shoulder, right_shoulder):
             return None
         
-        # Calculate hip center
-        hip_center_x = (left_hip.get('x', 0) + right_hip.get('x', 0)) / 2
-        hip_center_y = (left_hip.get('y', 0) + right_hip.get('y', 0)) / 2
+        # Safe hip center calculation
+        hip_center = self._safe_hip_center(pose)
+        if hip_center is None:
+            return None
+        hip_center_x = hip_center['x']
+        hip_center_y = hip_center['y']
         
-        # Calculate shoulder center
-        shoulder_center_x = (left_shoulder.get('x', 0) + right_shoulder.get('x', 0)) / 2
-        shoulder_center_y = (left_shoulder.get('y', 0) + right_shoulder.get('y', 0)) / 2
+        # Safe shoulder center calculation
+        shoulder_center = self._safe_shoulder_center(pose)
+        if shoulder_center is None:
+            return None
+        shoulder_center_x = shoulder_center['x']
+        shoulder_center_y = shoulder_center['y']
         
         # Calculate tilt angle
         dx = shoulder_center_x - hip_center_x
@@ -554,8 +572,13 @@ class ReleaseAnalyzer:
             right_ankle = pose.get('right_ankle', {})
             
             if self._has_valid_coordinates(left_ankle, right_ankle):
-                # Use average ankle height as jump height indicator
-                ankle_height = (left_ankle.get('y', 0) + right_ankle.get('y', 0)) / 2
+                # Use average ankle height as jump height indicator (safe calculation)
+                left_y = left_ankle.get('y')
+                right_y = right_ankle.get('y')
+                if left_y is not None and right_y is not None:
+                    ankle_height = (left_y + right_y) / 2
+                else:
+                    continue  # Skip frame with incomplete ankle data
                 
                 if ankle_height < max_jump_height:
                     max_jump_height = ankle_height
@@ -602,11 +625,18 @@ class ReleaseAnalyzer:
         if not self._has_valid_coordinates(left_shoulder, right_shoulder, left_hip, right_hip):
             return None
         
-        # Calculate shoulder and hip centers
-        shoulder_center_x = (left_shoulder.get('x', 0) + right_shoulder.get('x', 0)) / 2
-        shoulder_center_y = (left_shoulder.get('y', 0) + right_shoulder.get('y', 0)) / 2
-        hip_center_x = (left_hip.get('x', 0) + right_hip.get('x', 0)) / 2
-        hip_center_y = (left_hip.get('y', 0) + right_hip.get('y', 0)) / 2
+        # Safe shoulder and hip center calculations
+        shoulder_center = self._safe_shoulder_center(pose)
+        if shoulder_center is None:
+            return None
+        shoulder_center_x = shoulder_center['x']
+        shoulder_center_y = shoulder_center['y']
+        
+        hip_center = self._safe_hip_center(pose)
+        if hip_center is None:
+            return None
+        hip_center_x = hip_center['x']
+        hip_center_y = hip_center['y']
         
         # Calculate angle from vertical
         dx = shoulder_center_x - hip_center_x

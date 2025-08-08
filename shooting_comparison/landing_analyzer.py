@@ -8,9 +8,10 @@ It extracts key information about foot landing position and torso angle at landi
 import numpy as np
 from typing import Dict, List, Tuple, Optional, Union
 import json
+from .safe_coordinate_mixin import SafeCoordinateMixin
 
 
-class LandingAnalyzer:
+class LandingAnalyzer(SafeCoordinateMixin):
     """
     Analyzer for landing phase information after follow-through.
     
@@ -367,13 +368,19 @@ class LandingAnalyzer:
             if (self._has_valid_coordinates(left_hip, right_hip) and 
                 self._has_valid_coordinates(left_shoulder, right_shoulder)):
                 
-                # Calculate hip center
-                hip_center_x = (left_hip.get('x', 0) + right_hip.get('x', 0)) / 2
-                hip_center_y = (left_hip.get('y', 0) + right_hip.get('y', 0)) / 2
+                # Safe hip center calculation
+                hip_center = self._safe_hip_center(pose)
+                if hip_center is None:
+                    continue  # Skip frame without valid hip data
+                hip_center_x = hip_center['x']
+                hip_center_y = hip_center['y']
                 
-                # Calculate shoulder center
-                shoulder_center_x = (left_shoulder.get('x', 0) + right_shoulder.get('x', 0)) / 2
-                shoulder_center_y = (left_shoulder.get('y', 0) + right_shoulder.get('y', 0)) / 2
+                # Safe shoulder center calculation
+                shoulder_center = self._safe_shoulder_center(pose)
+                if shoulder_center is None:
+                    continue  # Skip frame without valid shoulder data
+                shoulder_center_x = shoulder_center['x']
+                shoulder_center_y = shoulder_center['y']
                 
                 # Calculate torso angle relative to vertical
                 dx = shoulder_center_x - hip_center_x

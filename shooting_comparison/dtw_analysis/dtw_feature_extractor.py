@@ -13,9 +13,15 @@ try:
 except ImportError:
     from dtw_config import DTW_FEATURE_WEIGHTS, PHASE_IMPORTANCE_WEIGHTS
 import pandas as pd
+import sys
+import os
+
+# Add parent directory to path to import SafeCoordinateMixin
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from safe_coordinate_mixin import SafeCoordinateMixin
 
 
-class DTWFeatureExtractor:
+class DTWFeatureExtractor(SafeCoordinateMixin):
     """
     Extracts DTW-compatible features from normalized shooting data.
     
@@ -228,7 +234,8 @@ class DTWFeatureExtractor:
             left_hip = pose.get('left_hip', {})
             right_hip = pose.get('right_hip', {})
             
-            if (left_hip.get('x') is not None and right_hip.get('x') is not None):
+            if (left_hip.get('x') is not None and right_hip.get('x') is not None and
+                left_hip.get('y') is not None and right_hip.get('y') is not None):
                 hip_center_x = (float(left_hip['x']) + float(right_hip['x'])) / 2
                 hip_center_y = (float(left_hip['y']) + float(right_hip['y'])) / 2
                 hip_positions.append([hip_center_x, hip_center_y])
@@ -323,7 +330,8 @@ class DTWFeatureExtractor:
             
             # Torso angle (simplified)
             left_hip = pose.get('left_hip', {})
-            if (left_shoulder.get('x') is not None and left_hip.get('x') is not None):
+            if (left_shoulder.get('x') is not None and left_hip.get('x') is not None and
+                left_shoulder.get('y') is not None and left_hip.get('y') is not None):
                 dx = float(left_shoulder['x']) - float(left_hip['x'])
                 dy = float(left_shoulder['y']) - float(left_hip['y'])
                 if dy != 0:

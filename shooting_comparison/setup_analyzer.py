@@ -8,9 +8,10 @@ It extracts key information from the 3 frames before the Loading phase.
 import numpy as np
 from typing import Dict, List, Tuple, Optional, Union
 import json
+from .safe_coordinate_mixin import SafeCoordinateMixin
 
 
-class SetupAnalyzer:
+class SetupAnalyzer(SafeCoordinateMixin):
     """
     Analyzer for set-up phase information.
     
@@ -230,13 +231,19 @@ class SetupAnalyzer:
             if (self._has_valid_coordinates(left_hip, right_hip) and 
                 self._has_valid_coordinates(left_shoulder, right_shoulder)):
                 
-                # Calculate hip center
-                hip_center_x = (left_hip.get('x', 0) + right_hip.get('x', 0)) / 2
-                hip_center_y = (left_hip.get('y', 0) + right_hip.get('y', 0)) / 2
+                # Safe hip center calculation
+                hip_center = self._safe_hip_center(pose)
+                if hip_center is None:
+                    continue  # Skip frame without valid hip data
+                hip_center_x = hip_center['x']
+                hip_center_y = hip_center['y']
                 
-                # Calculate shoulder center
-                shoulder_center_x = (left_shoulder.get('x', 0) + right_shoulder.get('x', 0)) / 2
-                shoulder_center_y = (left_shoulder.get('y', 0) + right_shoulder.get('y', 0)) / 2
+                # Safe shoulder center calculation
+                shoulder_center = self._safe_shoulder_center(pose)
+                if shoulder_center is None:
+                    continue  # Skip frame without valid shoulder data
+                shoulder_center_x = shoulder_center['x']
+                shoulder_center_y = shoulder_center['y']
                 
                 # Calculate tilt angle (angle between vertical line and hip-shoulder line)
                 dx = shoulder_center_x - hip_center_x
@@ -264,7 +271,7 @@ class SetupAnalyzer:
         vertical_distances = []
         horizontal_distances = []
         
-        for frame in setup_frames:
+        for i, frame in enumerate(setup_frames):
             pose = frame.get('normalized_pose', {})
             ball = frame.get('normalized_ball', {})
             
@@ -280,24 +287,25 @@ class SetupAnalyzer:
             has_valid_ball = (ball != {} and 
                             'center_x' in ball and 'center_y' in ball)
             
-            if has_valid_hip and has_valid_ball:
-                # Calculate hip center (use available hip)
-                if self._has_valid_coordinates(left_hip) and self._has_valid_coordinates(right_hip):
-                    hip_center_x = (left_hip.get('x', 0) + right_hip.get('x', 0)) / 2
-                    hip_center_y = (left_hip.get('y', 0) + right_hip.get('y', 0)) / 2
-                elif self._has_valid_coordinates(left_hip):
-                    hip_center_x = left_hip.get('x', 0)
-                    hip_center_y = left_hip.get('y', 0)
-                else:  # right_hip is valid
-                    hip_center_x = right_hip.get('x', 0)
-                    hip_center_y = right_hip.get('y', 0)
+            if has_valid_hip:
+                # Safe hip center calculation with interpolation strategy
+                hip_center = self._safe_hip_center(pose, use_interpolation=True)
+                if hip_center is not None:
+                    hip_center_x = hip_center['x']
+                    hip_center_y = hip_center['y']
+                else:
+                    continue  # Skip frame without valid hip data
                 
-                # Calculate distances using ball center coordinates
-                ball_x = ball.get('center_x', 0)
-                ball_y = ball.get('center_y', 0)
+                # Safe ball coordinate extraction for setup point (critical frame)
+                ball_x = self._safe_ball_coordinate(setup_frames, i, 'center_x', 'setup_point')
+                ball_y = self._safe_ball_coordinate(setup_frames, i, 'center_y', 'setup_point')
                 
-                vertical_distance = abs(ball_y - hip_center_y)
-                horizontal_distance = abs(ball_x - hip_center_x)
+                if ball_x is not None and ball_y is not None and hip_center_x is not None and hip_center_y is not None:
+                    vertical_distance = abs(ball_y - hip_center_y)
+                    horizontal_distance = abs(ball_x - hip_center_x)
+                else:
+                    # Skip frame with incomplete data
+                    continue
                 
                 vertical_distances.append(vertical_distance)
                 horizontal_distances.append(horizontal_distance)

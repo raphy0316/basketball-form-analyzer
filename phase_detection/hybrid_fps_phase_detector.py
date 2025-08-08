@@ -819,67 +819,55 @@ class HybridFPSPhaseDetector(BasePhaseDetector):
                 left_shoulder = pose.get('left_shoulder', {})
                 right_shoulder = pose.get('right_shoulder', {})
                 
-                if (isinstance(left_hip, dict) and 'y' in left_hip and
-                    isinstance(right_hip, dict) and 'y' in right_hip and
-                    isinstance(left_shoulder, dict) and 'y' in left_shoulder and
-                    isinstance(right_shoulder, dict) and 'y' in right_shoulder):
+                # Early validation: check if all required current frame data exists and is not None
+                if not (isinstance(left_hip, dict) and 'y' in left_hip and left_hip['y'] is not None and
+                        isinstance(right_hip, dict) and 'y' in right_hip and right_hip['y'] is not None and
+                        isinstance(left_shoulder, dict) and 'y' in left_shoulder and left_shoulder['y'] is not None and
+                        isinstance(right_shoulder, dict) and 'y' in right_shoulder and right_shoulder['y'] is not None):
+                    return current_phase  # Skip transition check if essential data is missing
+                
+                prev_frame_idx = self._get_previous_valid_frame(frame_idx, pose_data, ball_data)
+                if prev_frame_idx is not None:
+                    prev_pose = self.get_pose_info(prev_frame_idx, pose_data)
                     
-                    prev_frame_idx = self._get_previous_valid_frame(frame_idx, pose_data, ball_data)
-                    if prev_frame_idx is not None:
-                        prev_pose = self.get_pose_info(prev_frame_idx, pose_data)
-                        
-                        # Calculate current hip and shoulder positions
-                        left_hip_y = left_hip.get('y', None)
-                        right_hip_y = right_hip.get('y', None)
-                        if left_hip_y is not None and right_hip_y is not None:
-                            hip_y = (left_hip_y + right_hip_y) / 2  # Use average
-                        elif left_hip_y is not None:
-                            hip_y = left_hip_y
-                        elif right_hip_y is not None:
-                            hip_y = right_hip_y
-                        else:
-                            hip_y = 0
-                        
-                        shoulder_y = (left_shoulder['y'] + right_shoulder['y']) / 2
-                        
-                        # Calculate previous hip and shoulder positions
-                        prev_left_hip = prev_pose.get('left_hip', {'y': None})
-                        prev_right_hip = prev_pose.get('right_hip', {'y': None})
-                        prev_left_shoulder = prev_pose.get('left_shoulder', {'y': None})
-                        prev_right_shoulder = prev_pose.get('right_shoulder', {'y': None})
-                        
-                        prev_left_hip_y = prev_left_hip.get('y', None)
-                        prev_right_hip_y = prev_right_hip.get('y', None)
-                        if prev_left_hip_y is not None and prev_right_hip_y is not None:
-                            prev_hip_y = (prev_left_hip_y + prev_right_hip_y) / 2  # Use average
-                        elif prev_left_hip_y is not None:
-                            prev_hip_y = prev_left_hip_y
-                        elif prev_right_hip_y is not None:
-                            prev_hip_y = prev_right_hip_y
-                        else:
-                            prev_hip_y = 0
-                        
-                        # Validate previous shoulder data
-                        if (isinstance(prev_left_shoulder, dict) and 'y' in prev_left_shoulder and
-                            isinstance(prev_right_shoulder, dict) and 'y' in prev_right_shoulder):
-                            prev_shoulder_y = (prev_left_shoulder['y'] + prev_right_shoulder['y']) / 2
-                            
-                            # Calculate movement changes
-                            d_hip_y = hip_y - prev_hip_y
-                            d_shoulder_y = shoulder_y - prev_shoulder_y
-                            
-                            # Calculate thresholds for Rising→Loading-Rising transition (separate from movement)
-                            rising_to_loading_rising_threshold = self.calculate_hybrid_threshold(pose, "rising_to_loading_rising")
-                            
-                            conditions = []
-                            
-                            # Hip moving downward (y-coordinate increasing)
-                            if d_hip_y > rising_to_loading_rising_threshold:
-                                conditions.append("hip_down")
-                            
-                            # Shoulder moving downward
-                            if d_shoulder_y > rising_to_loading_rising_threshold:
-                                conditions.append("shoulder_down")
+                    # Validate previous frame data
+                    prev_left_hip = prev_pose.get('left_hip', {})
+                    prev_right_hip = prev_pose.get('right_hip', {})
+                    prev_left_shoulder = prev_pose.get('left_shoulder', {})
+                    prev_right_shoulder = prev_pose.get('right_shoulder', {})
+                    
+                    # Early validation: check if all required previous frame data exists and is not None
+                    if not (isinstance(prev_left_hip, dict) and 'y' in prev_left_hip and prev_left_hip['y'] is not None and
+                            isinstance(prev_right_hip, dict) and 'y' in prev_right_hip and prev_right_hip['y'] is not None and
+                            isinstance(prev_left_shoulder, dict) and 'y' in prev_left_shoulder and prev_left_shoulder['y'] is not None and
+                            isinstance(prev_right_shoulder, dict) and 'y' in prev_right_shoulder and prev_right_shoulder['y'] is not None):
+                        return current_phase  # Skip transition check if essential previous data is missing
+                    
+                    # All required data is validated as not None, safe to calculate
+                    # Calculate current hip and shoulder positions
+                    hip_y = (left_hip['y'] + right_hip['y']) / 2
+                    shoulder_y = (left_shoulder['y'] + right_shoulder['y']) / 2
+                    
+                    # Calculate previous hip and shoulder positions  
+                    prev_hip_y = (prev_left_hip['y'] + prev_right_hip['y']) / 2
+                    prev_shoulder_y = (prev_left_shoulder['y'] + prev_right_shoulder['y']) / 2
+                    
+                    # Calculate movement changes
+                    d_hip_y = hip_y - prev_hip_y
+                    d_shoulder_y = shoulder_y - prev_shoulder_y
+                    
+                    # Calculate thresholds for Rising→Loading-Rising transition (separate from movement)
+                    rising_to_loading_rising_threshold = self.calculate_hybrid_threshold(pose, "rising_to_loading_rising")
+                    
+                    conditions = []
+                    
+                    # Hip moving downward (y-coordinate increasing)
+                    if d_hip_y > rising_to_loading_rising_threshold:
+                        conditions.append("hip_down")
+                    
+                    # Shoulder moving downward
+                    if d_shoulder_y > rising_to_loading_rising_threshold:
+                        conditions.append("shoulder_down")
                             
                             # Knee angles decreasing (squatting motion)
                             # Knee angle calculation validation

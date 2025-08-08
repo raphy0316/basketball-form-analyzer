@@ -13,9 +13,10 @@ import os
 import cv2
 import tkinter as tk
 from tkinter import filedialog
+from .safe_coordinate_mixin import SafeCoordinateMixin
 
 
-class RisingAnalyzer:
+class RisingAnalyzer(SafeCoordinateMixin):
     """
     Analyzer for rising phase information.
     
@@ -365,30 +366,49 @@ class RisingAnalyzer:
         normalized_wrist = []
         normalized_elbow = []
         
+        # First pass: collect all data (valid and invalid) to maintain frame alignment
+        raw_ball_data = []
+        raw_wrist_data = []  
+        raw_elbow_data = []
+        
         for frame in trajectory_frames:
-            # Normalize ball
-            if frame.get('ball'):
-                norm_ball = {
+            # Ball data with None preservation for interpolation
+            if (frame.get('ball') and 
+                frame['ball'].get('x') is not None and frame['ball'].get('y') is not None and
+                dip_ball and dip_ball.get('x') is not None and dip_ball.get('y') is not None):
+                raw_ball_data.append({
                     'x': frame['ball']['x'] - dip_ball['x'],
                     'y': frame['ball']['y'] - dip_ball['y']
-                }
-                normalized_ball.append(norm_ball)
+                })
+            else:
+                raw_ball_data.append(None)
             
-            # Normalize wrist
-            if frame.get('wrist') and dip_wrist:
-                norm_wrist = {
+            # Wrist data with None preservation
+            if (frame.get('wrist') and dip_wrist and
+                frame['wrist'].get('x') is not None and frame['wrist'].get('y') is not None and
+                dip_wrist.get('x') is not None and dip_wrist.get('y') is not None):
+                raw_wrist_data.append({
                     'x': frame['wrist']['x'] - dip_wrist['x'],
                     'y': frame['wrist']['y'] - dip_wrist['y']
-                }
-                normalized_wrist.append(norm_wrist)
+                })
+            else:
+                raw_wrist_data.append(None)
             
-            # Normalize elbow
-            if frame.get('elbow') and dip_elbow:
-                norm_elbow = {
+            # Elbow data with None preservation
+            if (frame.get('elbow') and dip_elbow and
+                frame['elbow'].get('x') is not None and frame['elbow'].get('y') is not None and
+                dip_elbow.get('x') is not None and dip_elbow.get('y') is not None):
+                raw_elbow_data.append({
                     'x': frame['elbow']['x'] - dip_elbow['x'],
                     'y': frame['elbow']['y'] - dip_elbow['y']
-                }
-                normalized_elbow.append(norm_elbow)
+                })
+            else:
+                raw_elbow_data.append(None)
+        
+        # Second pass: interpolate missing values for shape analysis
+        normalized_ball = self._interpolate_missing_coordinates(raw_ball_data)
+        normalized_wrist = self._interpolate_missing_coordinates(raw_wrist_data)
+        normalized_elbow = self._interpolate_missing_coordinates(raw_elbow_data)
         
         return {
             'ball': normalized_ball,
@@ -410,8 +430,10 @@ class RisingAnalyzer:
             left_hip = pose.get('left_hip', {})
             right_hip = pose.get('right_hip', {})
             
-            if self._has_valid_coordinates(left_hip, right_hip):
-                hip_y = (left_hip.get('y', 0) + right_hip.get('y', 0)) / 2
+            # Safe hip center calculation for jump height analysis
+            hip_center = self._safe_hip_center(pose)
+            if hip_center is not None:
+                hip_y = hip_center['y']
                 hip_positions.append(hip_y)
                 frame_indices.append(i)
         
@@ -502,8 +524,12 @@ class RisingAnalyzer:
             right_ankle = pose.get('right_ankle', {})
             
             if self._has_valid_coordinates(left_ankle, right_ankle):
-                foot_height = (left_ankle.get('y', 0) + right_ankle.get('y', 0)) / 2
-                foot_heights.append(foot_height)
+                # Safe ankle height calculation
+                left_y = left_ankle.get('y')
+                right_y = right_ankle.get('y')
+                if left_y is not None and right_y is not None:
+                    foot_height = (left_y + right_y) / 2
+                    foot_heights.append(foot_height)
         
         if not foot_heights:
             return None
@@ -523,9 +549,11 @@ class RisingAnalyzer:
             left_hip = pose.get('left_hip', {})
             right_hip = pose.get('right_hip', {})
             
-            if self._has_valid_coordinates(left_hip, right_hip):
-                # Calculate average hip height
-                hip_height = (left_hip.get('y', 0) + right_hip.get('y', 0)) / 2
+            # Safe hip center calculation for max jump frame detection
+            hip_center = self._safe_hip_center(pose)
+            if hip_center is not None:
+                # Get hip height for jump detection
+                hip_height = hip_center['y']
                 
                 if hip_height < max_height:
                     max_height = hip_height
@@ -587,13 +615,19 @@ class RisingAnalyzer:
         if not self._has_valid_coordinates(left_hip, right_hip, left_shoulder, right_shoulder):
             return 0.0
         
-        # Calculate hip center
-        hip_center_x = (left_hip.get('x', 0) + right_hip.get('x', 0)) / 2
-        hip_center_y = (left_hip.get('y', 0) + right_hip.get('y', 0)) / 2
+        # Safe hip center calculation
+        hip_center = self._safe_hip_center(pose)
+        if hip_center is None:
+            return 0.0  # Return default value if hip data unavailable
+        hip_center_x = hip_center['x']
+        hip_center_y = hip_center['y']
         
-        # Calculate shoulder center
-        shoulder_center_x = (left_shoulder.get('x', 0) + right_shoulder.get('x', 0)) / 2
-        shoulder_center_y = (left_shoulder.get('y', 0) + right_shoulder.get('y', 0)) / 2
+        # Safe shoulder center calculation
+        shoulder_center = self._safe_shoulder_center(pose)
+        if shoulder_center is None:
+            return 0.0  # Return default value if shoulder data unavailable
+        shoulder_center_x = shoulder_center['x']
+        shoulder_center_y = shoulder_center['y']
         
         # Calculate tilt angle
         dx = shoulder_center_x - hip_center_x
@@ -690,6 +724,17 @@ class RisingAnalyzer:
             curr_point = trajectory[i]
             next_point = trajectory[i + 1]
             
+            # Note: trajectory should be interpolated, so no None values expected
+            # But keep safety check for robustness
+            coords = [
+                prev_point.get('x'), prev_point.get('y'),
+                curr_point.get('x'), curr_point.get('y'),
+                next_point.get('x'), next_point.get('y')
+            ]
+            
+            if None in coords:
+                continue
+            
             # Calculate curvature using the formula: |(x'y'' - x''y')| / (x'^2 + y'^2)^(3/2)
             # For discrete points, we use finite differences
             dx1 = curr_point['x'] - prev_point['x']
@@ -725,12 +770,82 @@ class RisingAnalyzer:
             point1 = trajectory[i]
             point2 = trajectory[i + 1]
             
+            # Note: trajectory should be interpolated, so no None values expected  
+            # But keep safety check for robustness
+            if (point1.get('x') is None or point1.get('y') is None or
+                point2.get('x') is None or point2.get('y') is None):
+                continue
+            
             dx = point2['x'] - point1['x']
             dy = point2['y'] - point1['y']
             segment_length = np.sqrt(dx**2 + dy**2)
             total_length += segment_length
         
         return total_length 
+    
+    def _interpolate_missing_coordinates(self, raw_data: List) -> List[Dict]:
+        """
+        Interpolate missing values in trajectory data for shape analysis.
+        Uses linear interpolation between valid points.
+        
+        Args:
+            raw_data: List with valid dict entries and None values
+            
+        Returns:
+            List of interpolated trajectory points (no None values)
+        """
+        if not raw_data:
+            return []
+        
+        # Find valid points for interpolation
+        valid_indices = []
+        valid_points = []
+        
+        for i, point in enumerate(raw_data):
+            if point is not None:
+                valid_indices.append(i)
+                valid_points.append(point)
+        
+        if len(valid_points) < 2:
+            # Not enough points to interpolate - return only valid points
+            return [p for p in raw_data if p is not None]
+        
+        interpolated = []
+        
+        for i, point in enumerate(raw_data):
+            if point is not None:
+                interpolated.append(point)
+            else:
+                # Find surrounding valid points for interpolation
+                prev_idx = None
+                next_idx = None
+                
+                for vi in valid_indices:
+                    if vi < i:
+                        prev_idx = vi
+                    elif vi > i and next_idx is None:
+                        next_idx = vi
+                        break
+                
+                if prev_idx is not None and next_idx is not None:
+                    # Linear interpolation
+                    prev_point = raw_data[prev_idx]
+                    next_point = raw_data[next_idx]
+                    
+                    t = (i - prev_idx) / (next_idx - prev_idx)
+                    interpolated_point = {
+                        'x': prev_point['x'] + t * (next_point['x'] - prev_point['x']),
+                        'y': prev_point['y'] + t * (next_point['y'] - prev_point['y'])
+                    }
+                    interpolated.append(interpolated_point)
+                elif prev_idx is not None:
+                    # Use last valid point
+                    interpolated.append(raw_data[prev_idx].copy())
+                elif next_idx is not None:
+                    # Use next valid point  
+                    interpolated.append(raw_data[next_idx].copy())
+        
+        return interpolated
 
 
     def _analyze_setup_point(self, rising_frames: List[Dict]) -> Dict:
@@ -834,9 +949,17 @@ class RisingAnalyzer:
                 'center_x' in ball and 'center_y' in ball):
             return {"error": "Invalid eye or ball coordinates"}
         
-        # Calculate eye center
-        eye_center_x = (left_eye.get('x', 0) + right_eye.get('x', 0)) / 2
-        eye_center_y = (left_eye.get('y', 0) + right_eye.get('y', 0)) / 2
+        # Safe eye center calculation
+        left_eye_x = left_eye.get('x')
+        left_eye_y = left_eye.get('y')
+        right_eye_x = right_eye.get('x')
+        right_eye_y = right_eye.get('y')
+        
+        if all(coord is not None for coord in [left_eye_x, left_eye_y, right_eye_x, right_eye_y]):
+            eye_center_x = (left_eye_x + right_eye_x) / 2
+            eye_center_y = (left_eye_y + right_eye_y) / 2
+        else:
+            return {"error": "Invalid eye coordinates"}
         
         # Get ball position
         ball_x = ball.get('center_x', 0)
