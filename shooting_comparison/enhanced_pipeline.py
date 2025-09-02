@@ -11,17 +11,9 @@ from datetime import datetime
 from typing import Dict, Optional, Tuple
 import numpy as np
 
-try:
-    # Try relative imports first (when used as package)
-    from .shooting_comparison_pipeline import ShootingComparisonPipeline
-    from .analysis_interpreter import AnalysisInterpreter
-    from .dtw_interpreter_extension import DTWInterpreterExtension
-except ImportError:
-    # Fallback to absolute imports (when run directly)
-    from shooting_comparison_pipeline import ShootingComparisonPipeline
-    from analysis_interpreter import AnalysisInterpreter
-    from dtw_interpreter_extension import DTWInterpreterExtension
-
+from .shooting_comparison_pipeline import ShootingComparisonPipeline
+from .analysis_interpreter import AnalysisInterpreter
+from .dtw_interpreter_extension import DTWInterpreterExtension
 
 class NumpyEncoder(json.JSONEncoder):
     """Custom JSON encoder for numpy types"""
@@ -33,7 +25,6 @@ class NumpyEncoder(json.JSONEncoder):
         elif isinstance(obj, np.ndarray):
             return obj.tolist()
         return super().default(obj)
-
 
 class EnhancedShootingComparisonPipeline(ShootingComparisonPipeline):
     """
@@ -48,7 +39,7 @@ class EnhancedShootingComparisonPipeline(ShootingComparisonPipeline):
         
         # Keep existing interpreter - just extend it
         self.existing_interpreter = AnalysisInterpreter()
-        self.prompt_file_name = None  
+        
         print("🔄 Enhanced Shooting Comparison Pipeline initialized")
         print("   📊 Existing phase analysis: ✅")
         print("   🎯 DTW motion analysis: ✅")
@@ -906,6 +897,7 @@ def run_enhanced_comparison(video1_path: str, video2_path: str,
     """
     pipeline = EnhancedShootingComparisonPipeline()
     return pipeline.run_comparison(video1_path, video2_path, save_results, include_dtw)
+
 
 if __name__ == "__main__":
     print("🏀 Enhanced Shooting Comparison Pipeline")

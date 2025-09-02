@@ -3,20 +3,20 @@
 export const CONFIG = {
   // Backend Configuration
   BACKEND: {
-    BASE_URL: 'http://192.168.0.165:8000', // Update with your backend URL
+    BASE_URL: 'http://192.168.1.97:8000', // Update with your backend URL
     ENDPOINTS: {
       ANALYZE_VIDEO: '/analysis/analyze-video',
       COMPARE_WITH_PLAYER: '/analysis/compare-with-player',
       GET_PLAYER_PROFILES: '/synthetic/player-profiles',
       GENERATE_SYNTHETIC: '/synthetic/generate-profile'
     },
-    TIMEOUT: 30000, // 30 seconds
+    TIMEOUT: 60000, // 6 seconds
   },
 
   // Recording Configuration
   RECORDING: {
     QUALITY: '720p',
-    MAX_DURATION: 5, // seconds
+    MAX_DURATION: 10000000, // seconds
     MUTE: false,
     FIELD_NAME: 'video'
   },
@@ -80,9 +80,9 @@ export const CONFIG = {
       'Follow-through'
     ],
     SIMILARITY_THRESHOLDS: {
-      EXCELLENT: 0.8,
-      GOOD: 0.6,
-      FAIR: 0.4,
+      EXCELLENT: 80,
+      GOOD: 60,
+      FAIR: 40,
       NEEDS_IMPROVEMENT: 0.0
     }
   }

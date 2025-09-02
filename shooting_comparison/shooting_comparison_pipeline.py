@@ -30,7 +30,6 @@ from shooting_comparison.follow_through_analyzer import FollowThroughAnalyzer
 from shooting_comparison.landing_analyzer import LandingAnalyzer
 from shooting_comparison.analysis_interpreter import AnalysisInterpreter
 
-
 class ShootingComparisonPipeline:
     """Pipeline for comparing basketball shooting forms between two videos"""
     
@@ -86,7 +85,7 @@ class ShootingComparisonPipeline:
         if not video2_path:
             print("❌ No video selected for Video 2")
             return None, None
-        
+
         # Allow same video selection
         if video1_path == video2_path:
             print("ℹ️  Same video selected for both. This will compare different shots from the same video.")
@@ -229,7 +228,7 @@ class ShootingComparisonPipeline:
             phase_data[phase].append(frame)
         
         return phase_data
-    
+
     def perform_comparison(self, selected_shot1: Optional[str] = None, selected_shot2: Optional[str] = None) -> Optional[Dict]:
         """
         Perform DTW-based comparison between the two videos
@@ -530,7 +529,7 @@ class ShootingComparisonPipeline:
             # Fallback to 'shot_id' field if 'shot' is not available
             if shot_id is None:
                 shot_id = frame.get('shot_id')
-
+            
             # Include frame if it belongs to the selected shot
             # Handle both string and numeric shot IDs
             shot_matches = False
@@ -1726,7 +1725,7 @@ class ShootingComparisonPipeline:
         print(f"   Video 2: {selected_shot2 if selected_shot2 else 'All shots'}")
         
         return selected_shot1, selected_shot2
-    
+
     def _extract_phase_transitions(self, video_data: Dict) -> List[str]:
         """
         Extract phase transition sequence from video data.

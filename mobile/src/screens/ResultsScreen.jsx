@@ -9,8 +9,6 @@ import {
   Dimensions,
   Modal,
   Image,
-  Linking,
-  Alert,
 } from 'react-native';
 import { CONFIG, getSimilarityColor, getSimilarityLabel } from '../utils/config';
 import DetailedAnalysisScreen from './DetailedAnalysisScreen'; // Adjust path if needed
@@ -140,51 +138,6 @@ const ResultsScreen = ({ navigation, route }) => {
   };
 
     
-  const renderRecommendations = () => {
-    const recommendations = analysisResult?.recommendations || [];
-    
-    if (recommendations.length === 0) {
-      return null;
-    }
-    
-    return (
-      <View style={styles.recommendationsContainer}>
-        <Text style={styles.recommendationsTitle}>Recommendations</Text>
-        {recommendations.map((recommendation, index) => (
-          <View key={index} style={styles.recommendationItem}>
-            <Text style={styles.recommendationText}>• {recommendation}</Text>
-          </View>
-        ))}
-      </View>
-    );
-  };
-
-  const handleViewAnalysisVideo = () => {
-    const videoPath = analysisResult?.normalized_video_path;
-    
-    if (!videoPath) {
-      Alert.alert(
-        "Video Not Available",
-        "The analysis video is not available for this shot.",
-        [{ text: "OK" }]
-      );
-      return;
-    }
-    
-    // Extract video name from path
-    const videoName = videoPath.split('/').pop();
-    const videoUrl = `${CONFIG.BACKEND.BASE_URL}/video/normalized-analysis/${videoName}`;
-    
-    // Try to open the video in the device's default video player
-    Linking.openURL(videoUrl).catch((err) => {
-      Alert.alert(
-        "Error Opening Video",
-        "Unable to open the analysis video. Please try again later.",
-        [{ text: "OK" }]
-      );
-    });
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -216,15 +169,6 @@ const ResultsScreen = ({ navigation, route }) => {
           >
             <Text style={styles.actionButtonText}>View Detailed Analysis</Text>
           </TouchableOpacity>
-          
-          {analysisResult?.normalized_video_path && (
-            <TouchableOpacity
-              style={[styles.actionButton, styles.videoButton]}
-              onPress={handleViewAnalysisVideo}
-            >
-              <Text style={styles.actionButtonText}>View Analysis Video</Text>
-            </TouchableOpacity>
-          )}
           
           <TouchableOpacity
             style={styles.actionButton}
@@ -490,9 +434,6 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontSize: 16,
     fontWeight: '600',
-  },
-  videoButton: {
-    backgroundColor: '#4CAF50', // Green color for video button
   },
   modalContainer: {
     flex: 1,

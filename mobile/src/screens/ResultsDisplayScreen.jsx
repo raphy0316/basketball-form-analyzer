@@ -2,10 +2,6 @@ import React, {useEffect} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { initializeTtsListeners, playTTS } from '../utils/ttsListener';
 
-const fetchResult = async () => {
-
-}
-
 const ResultsDisplayScreen = ({ navigation, route }) => {
   const { results } = route.params || {}; // Receive results from navigation params
 

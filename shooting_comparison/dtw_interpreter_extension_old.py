@@ -4,12 +4,18 @@ DTW Interpreter Extension
 Extends existing AnalysisInterpreter with DTW analysis capabilities.
 Works by adding DTW insights to existing interpretation results.
 """
+
+try:
+    from .analysis_interpreter import AnalysisInterpreter
+    from .dtw_analysis.dtw_analyzer import DTWAnalyzer
+    from .dtw_analysis.dtw_visualizer import DTWVisualizer
+except ImportError:
+    from analysis_interpreter import AnalysisInterpreter
+    from dtw_analysis.dtw_analyzer import DTWAnalyzer
+    from dtw_analysis.dtw_visualizer import DTWVisualizer
 from typing import Dict, List, Optional
 import numpy as np
 
-from .analysis_interpreter import AnalysisInterpreter
-from .dtw_analysis.dtw_analyzer import DTWAnalyzer
-from .dtw_analysis.dtw_visualizer import DTWVisualizer
 
 class DTWInterpreterExtension:
     """
@@ -59,16 +65,19 @@ class DTWInterpreterExtension:
         """
         print("🔄 Extending interpretation with DTW analysis...")
         
-        
-        # Perform DTW analysis with setup, release, loading, followthrough, and rising analysis data
-        setup_analysis = comparison_results.get('setup_analysis', {})
-        release_analysis = comparison_results.get('release_analysis', {})
-        loading_analysis = comparison_results.get('loading_analysis', {})
-        followthrough_analysis = comparison_results.get('followthrough_analysis', {})
-        rising_analysis = comparison_results.get('rising_analysis', {})
+        # # Perform DTW analysis
         dtw_results = self.dtw_analyzer.analyze_shooting_similarity(
-            video1_data, video2_data, selected_hand, setup_analysis, release_analysis, loading_analysis, followthrough_analysis, rising_analysis
+            video1_data, video2_data, selected_hand
         )
+        # Perform DTW analysis with setup, release, loading, followthrough, and rising analysis data
+        # setup_analysis = comparison_results.get('setup_analysis', {})
+        # release_analysis = comparison_results.get('release_analysis', {})
+        # loading_analysis = comparison_results.get('loading_analysis', {})
+        # followthrough_analysis = comparison_results.get('followthrough_analysis', {})
+        # rising_analysis = comparison_results.get('rising_analysis', {})
+        # dtw_results = self.dtw_analyzer.analyze_shooting_similarity(
+        #     video1_data, video2_data, selected_hand, setup_analysis, release_analysis, loading_analysis, followthrough_analysis, rising_analysis
+        # )
     
         if 'error' in dtw_results:
             print(f"⚠️ DTW analysis failed: {dtw_results['error']}")

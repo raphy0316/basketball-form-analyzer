@@ -7,13 +7,8 @@ Works with pre-normalized data (torso-scaled, hip-centered, direction-normalized
 
 import numpy as np
 from typing import Dict, List, Tuple, Optional
-import json
-try:
-    from .dtw_config import DTW_FEATURE_WEIGHTS, PHASE_IMPORTANCE_WEIGHTS
-except ImportError:
-    from dtw_config import DTW_FEATURE_WEIGHTS, PHASE_IMPORTANCE_WEIGHTS
 import pandas as pd
-
+from .dtw_config import DTW_FEATURE_WEIGHTS, PHASE_IMPORTANCE_WEIGHTS
 
 class DTWFeatureExtractor:
     """
@@ -111,10 +106,10 @@ class DTWFeatureExtractor:
         
         for frame in frames:
             pose = frame.get('normalized_pose', {})
-            ball = frame.get('normalized_ball', {})  # ball_info 대신 normalized_ball 사용
+            ball = frame.get('normalized_ball', {})  # Using normalized_ball instead of ball_info
             
-            # 디버깅: ball_info 구조 확인
-            if len(ball_positions) == 0:  # 첫 번째 프레임에서만 출력
+            # Debugging: Check ball_info structure
+            if len(ball_positions) == 0:  # Only print for the first frame
                 print(f"         🔍 Debug: frame keys = {list(frame.keys())}")
                 print(f"         🔍 Debug: normalized_ball = {ball}")
                 print(f"         🔍 Debug: normalized_ball type = {type(ball)}")
@@ -155,7 +150,7 @@ class DTWFeatureExtractor:
             'ball_trajectory': ball_positions,
             'wrist_trajectory': wrist_positions,
             'ball_wrist_distance': ball_wrist_distances,
-            'feature_type': 'ball_wrist_special'  # 특별한 타입으로 변경하여 더 관대한 처리
+            'feature_type': 'ball_wrist_special'  # Changed to a special type for more lenient processing
         }
     
     def _extract_arm_kinematics(self, frames: List[Dict], selected_hand: str) -> Dict:
@@ -399,7 +394,7 @@ class DTWFeatureExtractor:
         # Handle NaN values more generously
         valid_mask = ~np.isnan(trajectory).any(axis=1)
         
-        if np.sum(valid_mask) < 2:
+        if np.sum(valid_mask).item() < 2:
             # If too few valid points, return original with NaN handling
             return trajectory.tolist()
         
@@ -443,7 +438,7 @@ class DTWFeatureExtractor:
         # Handle NaN values more generously
         valid_mask = ~np.isnan(series)
         
-        if np.sum(valid_mask) < 2:
+        if np.sum(valid_mask).item() < 2:
             # If too few valid points, return original with NaN handling
             return series.tolist()
         

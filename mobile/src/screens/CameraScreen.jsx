@@ -79,7 +79,7 @@ const CameraScreen = ({navigation, route}) => {
       // Choose endpoint based on whether player is selected
       const endpoint = selectedPlayer 
         ? CONFIG.BACKEND.ENDPOINTS.COMPARE_WITH_PLAYER
-        : '/api/upload-video'; // Fallback to existing endpoint
+        : CONFIG.BACKEND.ENDPOINTS.ANALYZE_VIDEO; // Fallback to existing endpoint
 
       const response = await fetch(getApiUrl(endpoint), {
         method: 'POST',

@@ -1,7 +1,7 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import LandingScreen from '../screens/LandingScreen';
-import MainScreen from '../screens/MainScreen';
+// import MainScreen from '../screens/MainScreen';
 import ResultsScreen from '../screens/ResultsScreen';
 import ResultsDisplayScreen from '../screens/ResultsDisplayScreen';
 import CameraScreen from '../screens/CameraScreen';
